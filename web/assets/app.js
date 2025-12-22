@@ -134,6 +134,79 @@ const StandupHub = (() => {
     document.title = p ? `${p} • StandupHub` : "StandupHub";
   }
 
+  // =========================
+  // THEATER PLAYER (LIGHTBOX)
+  // =========================
+  let modalEl = null;
+  let modalFrame = null;
+  let modalTitleEl = null;
+
+  function ensureModal(){
+    if (modalEl) return;
+
+    modalEl = document.createElement("div");
+    modalEl.className = "ytModal";
+    modalEl.innerHTML = `
+      <div class="ytModalPanel" role="dialog" aria-modal="true">
+        <div class="ytModalTop">
+          <div class="ytModalTitle" id="ytModalTitle"></div>
+          <button class="ytModalClose" type="button" aria-label="Close">✕</button>
+        </div>
+        <div class="ytModalVideo">
+          <iframe class="ytModalFrame" id="ytModalFrame"
+            src=""
+            title="YouTube video"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modalEl);
+
+    modalFrame = modalEl.querySelector("#ytModalFrame");
+    modalTitleEl = modalEl.querySelector("#ytModalTitle");
+
+    // close handlers
+    modalEl.addEventListener("click", (e) => {
+      // close when clicking backdrop (not the panel)
+      if (e.target === modalEl) closeModal();
+    });
+
+    const closeBtn = modalEl.querySelector(".ytModalClose");
+    closeBtn.addEventListener("click", closeModal);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalEl.classList.contains("open")) closeModal();
+    });
+  }
+
+  function openModal({ videoId, title }){
+    ensureModal();
+    if (!videoId) return;
+
+    // stop any previous
+    modalFrame.src = "";
+    modalTitleEl.textContent = title || "";
+
+    // autoplay
+    const src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
+    modalFrame.src = src;
+
+    modalEl.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(){
+    if (!modalEl) return;
+    modalEl.classList.remove("open");
+    document.body.style.overflow = "";
+    if (modalFrame) modalFrame.src = ""; // stop playback
+  }
+
+  // =========================
+  // GRID
+  // =========================
   function renderGrid(videosPage){
     const grid = qs("grid");
     if (!grid) return;
@@ -147,7 +220,7 @@ const StandupHub = (() => {
       const thumbUrl = vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "";
 
       card.innerHTML = `
-        <div class="thumb" data-vid="${escapeAttr(vid)}"
+        <div class="thumb"
              style="background-image:url('${escapeAttr(thumbUrl)}'); background-size:cover; background-position:center;">
           <button class="playBtn" type="button" aria-label="Play">▶</button>
           <div class="duration">${fmtDuration(v.duration_sec)}</div>
@@ -165,30 +238,10 @@ const StandupHub = (() => {
         </div>
       `;
 
-      const thumb = card.querySelector(".thumb");
       const btn = card.querySelector(".playBtn");
-
-      function mountPlayer(){
-        if (!vid) return;
-        if (thumb.querySelector("iframe")) return;
-
-        thumb.style.backgroundImage = "none";
-        thumb.innerHTML = `
-          <iframe
-            class="ytFrame"
-            src="https://www.youtube.com/embed/${encodeURIComponent(vid)}?autoplay=1&rel=0&modestbranding=1"
-            title="${escapeAttr(v.title || "YouTube video")}"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-          ></iframe>
-        `;
-      }
-
-      btn.addEventListener("click", (e) => { e.preventDefault(); mountPlayer(); });
-      thumb.addEventListener("click", (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains("playBtn")) return;
-        mountPlayer();
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal({ videoId: vid, title: v.title || "YouTube video" });
       });
 
       grid.appendChild(card);
@@ -551,7 +604,6 @@ const StandupHub = (() => {
   }
 
   async function initAbout(){
-    // just load rating to paint sidebar
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
