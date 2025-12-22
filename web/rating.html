@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Рейтинг • StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <a class="brandLink" href="./index.html">
+          <span class="brandA">Standup</span><span class="brandB">Hub</span>
+        </a>
+      </div>
+
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+        </div>
+
+        <div class="controls">
+          <div class="control search">
+            <label>Пошук коміка</label>
+            <input id="ratingSearch" placeholder="Кремінь / Озарків / ..." />
+          </div>
+        </div>
+      </header>
+
+      <section class="tableWrap">
+        <table class="ratingTable" id="ratingTable"></table>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    StandupHub.initRating();
+  </script>
+</body>
+</html>

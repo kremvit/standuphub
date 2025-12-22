@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brandA">Standup</span><span class="brandB">Hub</span>
+      </div>
+
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label>Сортування</label>
+            <select id="sortSelect">
+              <option value="date_desc">Останні додані</option>
+              <option value="views_desc">Найбільше переглядів</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label>Період</label>
+            <select id="rangeSelect">
+              <option value="all">Увесь час</option>
+              <option value="1m">За місяць</option>
+              <option value="6m">За пів року</option>
+              <option value="1y">За рік</option>
+            </select>
+          </div>
+
+          <div class="control search">
+            <label>Пошук</label>
+            <input id="searchInput" placeholder="назва відео / комік" />
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <div id="grid" class="grid"></div>
+        <div id="pagination" class="pagination"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    StandupHub.init({ mode: "all", performer: null });
+  </script>
+</body>
+</html>

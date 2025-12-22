@@ -1,0 +1,457 @@
+const StandupHub = (() => {
+  const DATA = { videos: [], rating: [] };
+
+  const state = {
+    mode: "all",
+    performer: null,
+    sort: "date_desc",
+    range: "all",
+    page: 1,
+    pageSize: 10,
+    search: ""
+  };
+
+  function qs(id){ return document.getElementById(id); }
+
+  function parseISO(s){
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function fmtNum(n){
+    if (n == null) return "";
+    try { return new Intl.NumberFormat("uk-UA").format(n); }
+    catch { return String(n); }
+  }
+
+  function fmtDate(iso){
+    const d = parseISO(iso);
+    if (!d) return "";
+    return d.toLocaleDateString("uk-UA", {year:"numeric", month:"short", day:"2-digit"});
+  }
+
+  function fmtDuration(sec){
+    sec = Number(sec || 0);
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = Math.floor(sec%60);
+    if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    return `${m}:${String(s).padStart(2,"0")}`;
+  }
+
+  function nowUtc(){ return new Date(); }
+
+  function rangeCutoff(range){
+    const d = new Date(nowUtc().getTime());
+    if (range === "1m") d.setMonth(d.getMonth() - 1);
+    else if (range === "6m") d.setMonth(d.getMonth() - 6);
+    else if (range === "1y") d.setFullYear(d.getFullYear() - 1);
+    else return null;
+    return d;
+  }
+
+  function applyFilters(videos){
+    let out = videos.slice();
+
+    if (state.mode === "performer" && state.performer){
+      const p = String(state.performer || "").toLowerCase();
+      out = out.filter(v => String(v.performer || "").toLowerCase() === p);
+    }
+
+    const cutoff = rangeCutoff(state.range);
+    if (cutoff){
+      out = out.filter(v => {
+        const d = parseISO(v.published_at);
+        return d && d >= cutoff;
+      });
+    }
+
+    const q = String(state.search || "").trim().toLowerCase();
+    if (q){
+      out = out.filter(v => {
+        const t = String(v.title || "").toLowerCase();
+        const p = String(v.performer || "").toLowerCase();
+        return t.includes(q) || p.includes(q);
+      });
+    }
+
+    return out;
+  }
+
+  function applySort(videos){
+    const out = videos.slice();
+    if (state.sort === "views_desc"){
+      out.sort((a,b) => (Number(b.view_count||0) - Number(a.view_count||0)));
+      return out;
+    }
+    out.sort((a,b) => {
+      const da = parseISO(a.published_at)?.getTime() || 0;
+      const db = parseISO(b.published_at)?.getTime() || 0;
+      return db - da;
+    });
+    return out;
+  }
+
+  function paginate(videos){
+    const total = videos.length;
+    const pages = Math.max(1, Math.ceil(total / state.pageSize));
+    state.page = Math.min(Math.max(1, state.page), pages);
+
+    const start = (state.page - 1) * state.pageSize;
+    const slice = videos.slice(start, start + state.pageSize);
+    return { slice, total, pages };
+  }
+
+  function renderSidebar(){
+    const el = qs("sidebarTop");
+    if (!el) return;
+    el.innerHTML = "";
+    const top = (DATA.rating || []).slice(0, 10);
+    for (const r of top){
+      const a = document.createElement("a");
+      a.className = "sideItem";
+      a.href = `./comedian.html?p=${encodeURIComponent(r.performer)}`;
+      a.innerHTML = `
+        <div class="sideLeft">
+          <div class="sideName">${escapeHtml(r.performer)}</div>
+          <div class="sideMeta">${fmtNum(r.total_views)} переглядів • ${fmtNum(r.video_count)} відео</div>
+        </div>
+        <div class="sideRank">#${r.rank}</div>
+      `;
+      el.appendChild(a);
+    }
+  }
+
+  function renderHeaderForComedian(filteredAll){
+    const titleEl = qs("comedianTitle");
+    const metaEl = qs("comedianMeta");
+    if (!titleEl || !metaEl) return;
+
+    const p = state.performer || "";
+    titleEl.textContent = p || "Комік";
+    const count = filteredAll.length;
+    const views = filteredAll.reduce((s,v)=> s + Number(v.view_count||0), 0);
+    metaEl.textContent = `${fmtNum(count)} відео • ${fmtNum(views)} переглядів`;
+    document.title = p ? `${p} • StandupHub` : "StandupHub";
+  }
+
+  function renderGrid(videosPage){
+    const grid = qs("grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    for (const v of videosPage){
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const vid = v.video_id || "";
+      const thumbUrl = vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "";
+
+      card.innerHTML = `
+        <div class="thumb" data-vid="${escapeAttr(vid)}"
+             style="background-image:url('${escapeAttr(thumbUrl)}'); background-size:cover; background-position:center;">
+          <button class="playBtn" type="button" aria-label="Play">▶</button>
+          <div class="duration">${fmtDuration(v.duration_sec)}</div>
+        </div>
+
+        <div class="cardBody">
+          <div class="cardTitle">${escapeHtml(v.title)}</div>
+          <div class="cardMeta">
+            <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(v.performer || "")}">
+              ${escapeHtml(v.performer || "")}
+            </a>
+            <span class="badge">${fmtNum(v.view_count)} views</span>
+            <span class="badge">${fmtDate(v.published_at)}</span>
+          </div>
+        </div>
+      `;
+
+      const thumb = card.querySelector(".thumb");
+      const btn = card.querySelector(".playBtn");
+
+      function mountPlayer(){
+        if (!vid) return;
+        if (thumb.querySelector("iframe")) return;
+
+        thumb.style.backgroundImage = "none";
+        thumb.innerHTML = `
+          <iframe
+            class="ytFrame"
+            src="https://www.youtube.com/embed/${encodeURIComponent(vid)}?autoplay=1&rel=0&modestbranding=1"
+            title="${escapeAttr(v.title || "YouTube video")}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        `;
+      }
+
+      btn.addEventListener("click", (e) => { e.preventDefault(); mountPlayer(); });
+      thumb.addEventListener("click", (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains("playBtn")) return;
+        mountPlayer();
+      });
+
+      grid.appendChild(card);
+    }
+  }
+
+  function renderPagination(pages){
+    const el = qs("pagination");
+    if (!el) return;
+    el.innerHTML = "";
+
+    const maxButtons = 11;
+    const cur = state.page;
+    const total = pages;
+
+    let start = Math.max(1, cur - Math.floor(maxButtons/2));
+    let end = Math.min(total, start + maxButtons - 1);
+    start = Math.max(1, end - maxButtons + 1);
+
+    el.appendChild(pageButton("«", Math.max(1, cur-1), cur === 1));
+
+    for (let p = start; p <= end; p++){
+      el.appendChild(pageButton(String(p), p, false, p === cur));
+    }
+
+    el.appendChild(pageButton("»", Math.min(total, cur+1), cur === total));
+  }
+
+  function pageButton(text, page, disabled, active=false){
+    const b = document.createElement("button");
+    b.className = "pageBtn" + (active ? " active" : "");
+    b.textContent = text;
+    b.disabled = !!disabled;
+    b.addEventListener("click", () => {
+      state.page = page;
+      syncUrl();
+      render();
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+    return b;
+  }
+
+  function syncUrl(){
+    const params = new URLSearchParams(location.search);
+    params.set("sort", state.sort);
+    params.set("range", state.range);
+    params.set("page", String(state.page));
+    if (state.search) params.set("q", state.search);
+    else params.delete("q");
+
+    if (state.mode === "performer"){
+      params.set("p", state.performer || "");
+    }
+
+    const newUrl = `${location.pathname}?${params.toString()}`;
+    history.replaceState({}, "", newUrl);
+  }
+
+  function readUrl(){
+    const params = new URLSearchParams(location.search);
+    const sort = params.get("sort");
+    const range = params.get("range");
+    const page = parseInt(params.get("page") || "1", 10);
+    const q = params.get("q") || "";
+
+    if (sort === "views_desc" || sort === "date_desc") state.sort = sort;
+    if (["all","1m","6m","1y"].includes(range)) state.range = range;
+    if (Number.isFinite(page) && page > 0) state.page = page;
+    state.search = q;
+  }
+
+  function bindControls(){
+    const sortEl = qs("sortSelect");
+    const rangeEl = qs("rangeSelect");
+    const searchEl = qs("searchInput");
+
+    if (sortEl){
+      sortEl.value = state.sort;
+      sortEl.addEventListener("change", () => {
+        state.sort = sortEl.value;
+        state.page = 1;
+        syncUrl();
+        render();
+      });
+    }
+
+    if (rangeEl){
+      rangeEl.value = state.range;
+      rangeEl.addEventListener("change", () => {
+        state.range = rangeEl.value;
+        state.page = 1;
+        syncUrl();
+        render();
+      });
+    }
+
+    if (searchEl){
+      searchEl.value = state.search;
+      let t = null;
+      searchEl.addEventListener("input", () => {
+        state.search = searchEl.value;
+        state.page = 1;
+        syncUrl();
+        clearTimeout(t);
+        t = setTimeout(render, 120);
+      });
+    }
+  }
+
+  function render(){
+    let filtered = applyFilters(DATA.videos || []);
+    filtered = applySort(filtered);
+
+    if (state.mode === "performer"){
+      renderHeaderForComedian(filtered);
+    }
+
+    const { slice, pages } = paginate(filtered);
+    renderGrid(slice);
+    renderPagination(pages);
+  }
+
+  async function loadJson(path){
+    const r = await fetch(path, { cache: "no-cache" });
+    if (!r.ok) throw new Error(`Failed to load ${path}: ${r.status}`);
+    return await r.json();
+  }
+
+  function escapeHtml(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  async function init({mode, performer}){
+    state.mode = mode;
+    state.performer = performer;
+
+    readUrl();
+
+    const [videos, rating] = await Promise.all([
+      loadJson("data/videos.json"),
+      loadJson("data/rating.json"),
+    ]);
+
+    DATA.videos = videos || [];
+    DATA.rating = rating || [];
+
+    renderSidebar();
+    bindControls();
+    render();
+  }
+
+  async function initRating(){
+    const [rating] = await Promise.all([ loadJson("data/rating.json") ]);
+    DATA.rating = rating || [];
+    renderSidebar();
+
+    const table = qs("ratingTable");
+    const search = document.getElementById("ratingSearch");
+
+    const columns = [
+      { key:"rank", label:"#", type:"num" },
+      { key:"performer", label:"Комік", type:"text" },
+      { key:"score", label:"Score", type:"num" },
+      { key:"total_views", label:"Total views", type:"num" },
+      { key:"peak_views", label:"Peak", type:"num" },
+      { key:"video_count", label:"Videos", type:"num" },
+      { key:"total_minutes", label:"Minutes", type:"num" },
+      { key:"like_rate_smooth_pct", label:"Like %", type:"num" },
+    ];
+
+    let sortKey = "rank";
+    let sortDir = "asc";
+    let q = "";
+
+    function cmp(a,b){
+      const col = columns.find(c=>c.key===sortKey) || columns[0];
+      const av = a[sortKey], bv = b[sortKey];
+      let res = 0;
+
+      if (col.type === "num"){
+        res = (Number(av||0) - Number(bv||0));
+      } else {
+        res = String(av||"").localeCompare(String(bv||""), "uk");
+      }
+      return sortDir === "asc" ? res : -res;
+    }
+
+    function filteredRows(){
+      let rows = (DATA.rating || []).slice();
+      const qq = String(q||"").trim().toLowerCase();
+      if (qq){
+        rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
+      }
+      rows.sort(cmp);
+      return rows;
+    }
+
+    function renderTable(){
+      if (!table) return;
+      const rows = filteredRows();
+
+      const thead = `
+        <thead>
+          <tr>
+            ${columns.map(c => {
+              const active = c.key === sortKey;
+              const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "↕";
+              return `<th data-key="${escapeAttr(c.key)}">${escapeHtml(c.label)}<span class="sortHint">${arrow}</span></th>`;
+            }).join("")}
+          </tr>
+        </thead>
+      `;
+
+      const tbody = `
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              ${columns.map(c => {
+                if (c.key === "performer"){
+                  const p = r.performer || "";
+                  return `<td><a class="performerLink" href="./comedian.html?p=${encodeURIComponent(p)}">${escapeHtml(p)}</a></td>`;
+                }
+                const val = r[c.key];
+                if (c.type === "num"){
+                  const n = Number(val);
+                  const isInt = Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9;
+                  return `<td>${isInt ? fmtNum(n) : (Number.isFinite(n) ? n.toFixed(4) : "")}</td>`;
+                }
+                return `<td>${escapeHtml(val)}</td>`;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+
+      table.innerHTML = thead + tbody;
+
+      table.querySelectorAll("th[data-key]").forEach(th => {
+        th.addEventListener("click", () => {
+          const k = th.getAttribute("data-key");
+          if (k === sortKey) sortDir = (sortDir === "asc" ? "desc" : "asc");
+          else { sortKey = k; sortDir = "asc"; }
+          renderTable();
+        });
+      });
+    }
+
+    if (search){
+      search.addEventListener("input", () => {
+        q = search.value;
+        renderTable();
+      });
+    }
+
+    renderTable();
+  }
+
+  return { init, initRating };
+})();
