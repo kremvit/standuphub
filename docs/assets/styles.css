@@ -533,3 +533,35 @@ body{
   }
   .ytModalTitle{ max-width: 78%; }
 }
+
+/* =========================
+   Home slogan animation
+   ========================= */
+.slogan{
+  margin: 6px 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .02em;
+
+  opacity: 0;
+  transform: translateY(6px);
+  animation: sloganIn 520ms ease-out 120ms forwards;
+}
+
+@keyframes sloganIn{
+  to{
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .slogan{
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
