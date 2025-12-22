@@ -516,3 +516,37 @@ body{
     transition:none;
   }
 }
+
+/* Fallback: author links inside video cards (if no .performerLink class) */
+.cardBody a,
+.cardBody a:visited,
+.cardMeta a,
+.cardMeta a:visited{
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 900;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 3px 10px;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+/* Hover */
+.cardBody a:hover,
+.cardMeta a:hover{
+  border-color: rgba(255,138,0,.75);
+  background: rgba(255,138,0,.12);
+  box-shadow: 0 0 0 2px rgba(255,138,0,.12) inset, 0 0 18px rgba(255,138,0,.18);
+}
+
+/* Active press */
+.cardBody a:active,
+.cardMeta a:active{
+  transform: translateY(1px);
+}
