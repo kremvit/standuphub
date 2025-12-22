@@ -5,7 +5,7 @@ const StandupHub = (() => {
     mode: "all",
     performer: null,
     sort: "date_desc",
-    range: "all",     // all | 1m | 6m | 1y
+    range: "all",
     page: 1,
     pageSize: 10,
     search: ""
@@ -34,26 +34,17 @@ const StandupHub = (() => {
   function getTitle(v){ return (v?.title ?? v?.name ?? ""); }
 
   // ---------- robust date -> ms ----------
-  // Handles:
-  // - ISO: 2025-12-22T10:11:12Z / +00:00 / +0000
-  // - microseconds: .123456 -> .123
-  // - "YYYY-MM-DD HH:MM:SS"
-  // - numeric timestamps sec/ms
-  // - extracts YYYY-MM-DD from ANY string
-  // - supports DD.MM.YYYY (common UA)
   function parseDateMs(raw){
     if (raw == null) return null;
 
-    // numeric timestamps
     if (typeof raw === "number" && Number.isFinite(raw)){
-      if (raw > 1e12) return raw;         // ms
-      if (raw > 1e9) return raw * 1000;   // sec
+      if (raw > 1e12) return raw;
+      if (raw > 1e9) return raw * 1000;
     }
 
     let s = String(raw).trim();
     if (!s) return null;
 
-    // digits-only timestamps
     if (/^\d+$/.test(s)){
       const n = Number(s);
       if (Number.isFinite(n)){
@@ -62,16 +53,12 @@ const StandupHub = (() => {
       }
     }
 
-    // If contains YYYY-MM-DD anywhere, extract it (super tolerant fallback)
-    // e.g. "published: 2025-12-22, ..." -> "2025-12-22"
     const ymd = s.match(/(\d{4}-\d{2}-\d{2})/);
     if (ymd && !s.startsWith(ymd[1])) {
-      // Try build ISO from extracted date only (UTC midnight)
       const d = new Date(ymd[1] + "T00:00:00Z");
       if (!isNaN(d.getTime())) return d.getTime();
     }
 
-    // DD.MM.YYYY fallback
     const dmy = s.match(/(\d{2})\.(\d{2})\.(\d{4})/);
     if (dmy){
       const iso = `${dmy[3]}-${dmy[2]}-${dmy[1]}T00:00:00Z`;
@@ -79,26 +66,18 @@ const StandupHub = (() => {
       if (!isNaN(d.getTime())) return d.getTime();
     }
 
-    // "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DDT..."
     if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) {
       s = s.replace(/\s+/, "T");
     }
 
-    // "YYYY-MM-DD" -> UTC midnight
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       s = s + "T00:00:00Z";
     }
 
-    // decimal comma -> dot
     s = s.replace(/(\d),(\d)/g, "$1.$2");
-
-    // trim fractional seconds to ms: .123456 -> .123
     s = s.replace(/\.(\d{3})\d+/g, ".$1");
-
-    // normalize TZ +0200 -> +02:00
     s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
 
-    // if datetime without TZ -> assume UTC
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) {
       s = s + "Z";
     }
@@ -128,7 +107,6 @@ const StandupHub = (() => {
     return `${m}:${String(s).padStart(2,"0")}`;
   }
 
-  // ---------- range cutoffs ----------
   function normalizeRangeValue(x){
     const r = String(x || "all");
     if (r === "all") return "all";
@@ -147,7 +125,6 @@ const StandupHub = (() => {
     return null;
   }
 
-  // ---------- filters ----------
   function applyFilters(videos){
     let out = videos.slice();
 
@@ -176,8 +153,7 @@ const StandupHub = (() => {
     return out;
   }
 
-  // ---------- sort ----------
-  // “Найкраще” = в межах періоду показуємо BEST за переглядами.
+  // “Найкраще” (range != all) => sort views desc
   function applySort(videos){
     const out = videos.slice();
     const effectiveSort = (state.range !== "all") ? "views_desc" : state.sort;
@@ -249,7 +225,7 @@ const StandupHub = (() => {
     document.title = p ? `${p} • StandupHub` : "StandupHub";
   }
 
-  // ---------- theater modal ----------
+  // ---------- modal ----------
   let modalEl = null;
   let modalFrame = null;
   let modalTitleEl = null;
@@ -281,6 +257,7 @@ const StandupHub = (() => {
 
     modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(); });
     modalEl.querySelector(".ytModalClose").addEventListener("click", closeModal);
+
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && modalEl.classList.contains("open")) closeModal();
     });
@@ -289,6 +266,7 @@ const StandupHub = (() => {
   function openModal({ videoId, title }){
     ensureModal();
     if (!videoId) return;
+
     modalFrame.src = "";
     modalTitleEl.textContent = title || "";
     modalFrame.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
@@ -303,19 +281,6 @@ const StandupHub = (() => {
     if (modalFrame) modalFrame.src = "";
   }
 
-  // ---------- debug helpers for empty period ----------
-  function periodDebug(videosAll){
-    const parsed = [];
-    for (const v of videosAll){
-      const ms = parseDateMs(getPublishedRaw(v));
-      if (ms != null) parsed.push(ms);
-    }
-    parsed.sort((a,b)=>a-b);
-    const newest = parsed.length ? new Date(parsed[parsed.length-1]).toISOString() : "N/A";
-    const oldest = parsed.length ? new Date(parsed[0]).toISOString() : "N/A";
-    return { total: videosAll.length, parsedCount: parsed.length, newest, oldest };
-  }
-
   // ---------- grid ----------
   function renderGrid(videosPage, totalFiltered){
     const grid = qs("grid");
@@ -323,16 +288,11 @@ const StandupHub = (() => {
     grid.innerHTML = "";
 
     if (totalFiltered === 0){
-      const dbg = periodDebug(DATA.videos || []);
       grid.innerHTML = `
         <div class="aboutCard" style="grid-column: 1 / -1;">
           <h2 style="margin:0 0 8px;">Нічого не знайдено</h2>
-          <p style="margin:0;color:var(--muted);line-height:1.4">
-            Для цього періоду немає відео, або сайт не зміг розпізнати дату публікації у <code>data/videos.json</code>.
-          </p>
-          <p style="margin:10px 0 0;color:var(--muted);font-size:13px;line-height:1.4">
-            Debug: videos=${dbg.total}, parsed_dates=${dbg.parsedCount},
-            oldest=${escapeHtml(dbg.oldest)}, newest=${escapeHtml(dbg.newest)}
+          <p style="margin:0;color:var(--muted);">
+            Для цього періоду немає відео.
           </p>
         </div>
       `;
@@ -380,7 +340,6 @@ const StandupHub = (() => {
     }
   }
 
-  // ---------- pagination ----------
   function renderPagination(pages, total){
     const el = qs("pagination");
     if (!el) return;
@@ -416,7 +375,6 @@ const StandupHub = (() => {
     return b;
   }
 
-  // ---------- url state ----------
   function syncUrl(){
     const params = new URLSearchParams(location.search);
     params.set("sort", state.sort);
@@ -462,7 +420,7 @@ const StandupHub = (() => {
       rangeEl.addEventListener("change", () => {
         state.range = normalizeRangeValue(rangeEl.value);
 
-        // when "Найкраще" selected: force UI sort to views
+        // when range selected: force sort UI to views
         if (state.range !== "all" && sortEl){
           state.sort = "views_desc";
           sortEl.value = "views_desc";
@@ -504,6 +462,7 @@ const StandupHub = (() => {
     return await r.json();
   }
 
+  // ---------- INIT PAGES ----------
   async function init({mode, performer}){
     state.mode = mode;
     state.performer = performer;
@@ -523,16 +482,116 @@ const StandupHub = (() => {
     render();
   }
 
+  // ✅ FULL rating table renderer (fixes empty rating.html)
   async function initRating(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
+
+    const table = qs("ratingTable");
+    const search = qs("ratingSearch");
+    if (!table) return;
+
+    const columns = [
+      { key:"rank", label:"#", type:"num" },
+      { key:"performer", label:"Комік", type:"text" },
+      { key:"score", label:"Score", type:"num" },
+      { key:"total_views", label:"Total views", type:"num" },
+      { key:"peak_views", label:"Peak", type:"num" },
+      { key:"video_count", label:"Videos", type:"num" },
+      { key:"total_minutes", label:"Minutes", type:"num" },
+      { key:"like_rate_smooth_pct", label:"Like %", type:"num" },
+    ];
+
+    let sortKey = "rank";
+    let sortDir = "asc";
+    let q = "";
+
+    function cmp(a,b){
+      const col = columns.find(c=>c.key===sortKey) || columns[0];
+      const av = a?.[sortKey], bv = b?.[sortKey];
+      let res = 0;
+
+      if (col.type === "num") res = (Number(av||0) - Number(bv||0));
+      else res = String(av||"").localeCompare(String(bv||""), "uk");
+
+      return sortDir === "asc" ? res : -res;
+    }
+
+    function filteredRows(){
+      let rows = (DATA.rating || []).slice();
+      const qq = String(q||"").trim().toLowerCase();
+      if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
+      rows.sort(cmp);
+      return rows;
+    }
+
+    function renderTable(){
+      const rows = filteredRows();
+
+      const thead = `
+        <thead>
+          <tr>
+            ${columns.map(c => {
+              const active = c.key === sortKey;
+              const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "↕";
+              return `<th data-key="${escapeAttr(c.key)}">${escapeHtml(c.label)}<span class="sortHint">${arrow}</span></th>`;
+            }).join("")}
+          </tr>
+        </thead>
+      `;
+
+      const tbody = `
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              ${columns.map(c => {
+                if (c.key === "performer"){
+                  const p = r.performer || "";
+                  return `<td><a class="performerLink" href="./comedian.html?p=${encodeURIComponent(p)}">${escapeHtml(p)}</a></td>`;
+                }
+                const val = r[c.key];
+                if (c.type === "num"){
+                  const n = Number(val);
+                  const isInt = Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9;
+                  if (!Number.isFinite(n)) return `<td></td>`;
+                  return `<td>${isInt ? fmtNum(n) : n.toFixed(4)}</td>`;
+                }
+                return `<td>${escapeHtml(val)}</td>`;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+
+      table.innerHTML = thead + tbody;
+
+      table.querySelectorAll("th[data-key]").forEach(th => {
+        th.addEventListener("click", () => {
+          const k = th.getAttribute("data-key");
+          if (k === sortKey) sortDir = (sortDir === "asc" ? "desc" : "asc");
+          else { sortKey = k; sortDir = "asc"; }
+          renderTable();
+        });
+      });
+    }
+
+    if (search){
+      search.addEventListener("input", () => {
+        q = search.value || "";
+        renderTable();
+      });
+    }
+
+    renderTable();
   }
+
   async function initComedians(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
   }
+
   async function initAbout(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
