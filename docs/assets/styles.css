@@ -565,3 +565,46 @@ body{
   }
 }
 
+.comediansGrid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .comediansGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px){
+  .comediansGrid{ grid-template-columns: 1fr; }
+}
+
+.comedianCard{
+  display:block;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
+  color: inherit;
+}
+.comedianCard:hover{
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+.comedianTop{
+  display:flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.comedianName{ font-weight: 800; font-size: 16px; }
+.comedianRank{ color: var(--muted); font-weight: 700; }
+
+.comedianMeta{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sortHint{ margin-left: 8px; opacity: .65; font-size: 12px; }
+.performerLink{ color: inherit; text-decoration: underline; text-underline-offset: 3px; }
