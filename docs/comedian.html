@@ -11,17 +11,11 @@
     <main class="main">
       <header class="topbar">
         <div class="titleBlock">
-          <div id="comedianTitle" class="pageTitle">Комік</div>
-          <div id="comedianMeta" class="pageMeta"></div>
+          <div class="pageTitle" id="comedianTitle">Комік</div>
+          <div class="pageMeta" id="comedianMeta"></div>
         </div>
 
         <div class="controls">
-          <div class="navLeft">
-            <a class="navBtn" href="./index.html">Відео</a>
-            <a class="navBtn" href="./rating.html">Рейтинг</a>
-            <a class="navBtn" href="./comedians.html">Коміки</a>
-          </div>
-
           <div class="control">
             <label>Сортування</label>
             <select id="sortSelect">
@@ -31,7 +25,7 @@
           </div>
 
           <div class="control">
-            <label>Період</label>
+            <label>Найкраще</label>
             <select id="rangeSelect">
               <option value="all">Увесь час</option>
               <option value="1m">За місяць</option>
@@ -42,7 +36,7 @@
 
           <div class="control search">
             <label>Пошук</label>
-            <input id="searchInput" placeholder="пошук у відео коміка" />
+            <input id="searchInput" placeholder="назва відео / комік" />
           </div>
         </div>
       </header>
@@ -70,9 +64,8 @@
 
   <script src="assets/app.js"></script>
   <script>
-    const params = new URLSearchParams(location.search);
-    const performer = params.get("p") || "";
-    StandupHub.init({ mode: "performer", performer });
+    const p = new URLSearchParams(location.search).get("p") || "";
+    StandupHub.init({ mode: "performer", performer: p });
   </script>
 </body>
 </html>

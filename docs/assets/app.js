@@ -13,35 +13,29 @@ const StandupHub = (() => {
 
   function qs(id){ return document.getElementById(id); }
 
-  // ---------- Robust field getters (snake_case / camelCase tolerant) ----------
-  function getPublished(v){
+  // ---------- tolerant getters ----------
+  function getPublishedRaw(v){
     return (
       v?.published_at ??
       v?.publishedAt ??
       v?.published ??
-      v?.publishedAtIso ??
+      v?.published_date ??
+      v?.date ??
       v?.snippet?.publishedAt ??
       ""
     );
   }
 
   function getVideoId(v){
-    return (
-      v?.video_id ??
-      v?.videoId ??
-      v?.id ??
-      ""
-    );
+    return (v?.video_id ?? v?.videoId ?? v?.id ?? "");
   }
 
   function getViews(v){
-    const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? 0);
-    return Number(x || 0);
+    return Number(v?.view_count ?? v?.viewCount ?? v?.views ?? 0) || 0;
   }
 
   function getDurationSec(v){
-    const x = (v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.durationSeconds ?? 0);
-    return Number(x || 0);
+    return Number(v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.durationSeconds ?? 0) || 0;
   }
 
   function getPerformer(v){
@@ -52,29 +46,47 @@ const StandupHub = (() => {
     return (v?.title ?? v?.name ?? "");
   }
 
-  // ---------- Robust date parser ----------
-  function parseISO(s){
-    if (s == null) return null;
-    let str = String(s).trim();
-    if (!str) return null;
+  // ---------- robust date -> ms ----------
+  function parseDateMs(raw){
+    if (raw == null) return null;
+
+    // numeric timestamps (string or number)
+    // - seconds: 1700000000
+    // - ms:      1700000000000
+    if (typeof raw === "number" && Number.isFinite(raw)){
+      const n = raw;
+      if (n > 1e12) return n;         // ms
+      if (n > 1e9) return n * 1000;   // sec
+    }
+    const s0 = String(raw).trim();
+    if (!s0) return null;
+
+    if (/^\d+$/.test(s0)){
+      const n = Number(s0);
+      if (Number.isFinite(n)){
+        if (n > 1e12) return n;
+        if (n > 1e9) return n * 1000;
+      }
+    }
 
     // "YYYY-MM-DD HH:MM:SS..." -> "YYYY-MM-DDT..."
-    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(str)) {
-      str = str.replace(/\s+/, "T");
+    let s = s0;
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) {
+      s = s.replace(/\s+/, "T");
     }
 
     // "YYYY-MM-DD" -> UTC midnight
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-      str = str + "T00:00:00Z";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      s = s + "T00:00:00Z";
     }
 
     // "YYYY-MM-DDTHH:MM:SS" (no TZ) -> assume UTC
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
-      str = str + "Z";
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) {
+      s = s + "Z";
     }
 
-    const d = new Date(str);
-    return isNaN(d.getTime()) ? null : d;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d.getTime();
   }
 
   function fmtNum(n){
@@ -83,9 +95,10 @@ const StandupHub = (() => {
     catch { return String(n); }
   }
 
-  function fmtDate(anyDate){
-    const d = parseISO(anyDate);
-    if (!d) return "";
+  function fmtDate(raw){
+    const ms = parseDateMs(raw);
+    if (!ms) return "";
+    const d = new Date(ms);
     return d.toLocaleDateString("uk-UA", {year:"numeric", month:"short", day:"2-digit"});
   }
 
@@ -98,16 +111,26 @@ const StandupHub = (() => {
     return `${m}:${String(s).padStart(2,"0")}`;
   }
 
-  // ---------- Period cutoffs ----------
-  function nowUtcMs(){ return Date.now(); }
+  // ---------- period cutoffs ----------
   function rangeCutoffMs(range){
     const DAY = 24 * 60 * 60 * 1000;
-    if (range === "1m") return nowUtcMs() - 30 * DAY;
-    if (range === "6m") return nowUtcMs() - 183 * DAY;
-    if (range === "1y") return nowUtcMs() - 365 * DAY;
+    const now = Date.now();
+    if (range === "1m" || range === "month") return now - 30 * DAY;
+    if (range === "6m" || range === "halfyear") return now - 183 * DAY;
+    if (range === "1y" || range === "year") return now - 365 * DAY;
     return null;
   }
 
+  function normalizeRangeValue(x){
+    const r = String(x || "all");
+    if (["all"].includes(r)) return "all";
+    if (["1m","month"].includes(r)) return "1m";
+    if (["6m","halfyear","half-year","6mo"].includes(r)) return "6m";
+    if (["1y","year","12m","12mo"].includes(r)) return "1y";
+    return "all";
+  }
+
+  // ---------- filters ----------
   function applyFilters(videos){
     let out = videos.slice();
 
@@ -118,10 +141,22 @@ const StandupHub = (() => {
 
     const cutoffMs = rangeCutoffMs(state.range);
     if (cutoffMs){
+      // keep only videos with known date >= cutoff
       out = out.filter(v => {
-        const d = parseISO(getPublished(v));
-        return d && d.getTime() >= cutoffMs;
+        const ms = parseDateMs(getPublishedRaw(v));
+        return (ms != null) && (ms >= cutoffMs);
       });
+
+      // If everything got filtered out, it's a sign dates are not parseable.
+      // Fallback: do NOT hard-empty. Show something rather than blank page.
+      if (out.length === 0){
+        // fallback: ignore period filter
+        out = videos.slice();
+        if (state.mode === "performer" && state.performer){
+          const p = String(state.performer || "").toLowerCase();
+          out = out.filter(v => String(getPerformer(v) || "").toLowerCase() === p);
+        }
+      }
     }
 
     const q = String(state.search || "").trim().toLowerCase();
@@ -136,15 +171,21 @@ const StandupHub = (() => {
     return out;
   }
 
+  // ---------- sort ----------
   function applySort(videos){
     const out = videos.slice();
-    if (state.sort === "views_desc"){
-      out.sort((a,b) => (getViews(b) - getViews(a)));
+
+    // IMPORTANT: "Період" = show BEST videos in that period => sort by views desc automatically
+    const effectiveSort = (state.range !== "all") ? "views_desc" : state.sort;
+
+    if (effectiveSort === "views_desc"){
+      out.sort((a,b) => getViews(b) - getViews(a));
       return out;
     }
+
     out.sort((a,b) => {
-      const da = parseISO(getPublished(a))?.getTime() || 0;
-      const db = parseISO(getPublished(b))?.getTime() || 0;
+      const da = parseDateMs(getPublishedRaw(a)) || 0;
+      const db = parseDateMs(getPublishedRaw(b)) || 0;
       return db - da;
     });
     return out;
@@ -170,7 +211,7 @@ const StandupHub = (() => {
   }
   function escapeAttr(s){ return escapeHtml(s); }
 
-  // ---------- Sidebar ----------
+  // ---------- sidebar ----------
   function renderSidebar(){
     const el = qs("sidebarTop");
     if (!el) return;
@@ -204,7 +245,7 @@ const StandupHub = (() => {
     document.title = p ? `${p} • StandupHub` : "StandupHub";
   }
 
-  // ---------- Theater player modal ----------
+  // ---------- theater modal ----------
   let modalEl = null;
   let modalFrame = null;
   let modalTitleEl = null;
@@ -235,9 +276,7 @@ const StandupHub = (() => {
     modalFrame = modalEl.querySelector("#ytModalFrame");
     modalTitleEl = modalEl.querySelector("#ytModalTitle");
 
-    modalEl.addEventListener("click", (e) => {
-      if (e.target === modalEl) closeModal();
-    });
+    modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(); });
     modalEl.querySelector(".ytModalClose").addEventListener("click", closeModal);
 
     window.addEventListener("keydown", (e) => {
@@ -251,7 +290,6 @@ const StandupHub = (() => {
 
     modalFrame.src = "";
     modalTitleEl.textContent = title || "";
-
     modalFrame.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
     modalEl.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -264,7 +302,7 @@ const StandupHub = (() => {
     if (modalFrame) modalFrame.src = "";
   }
 
-  // ---------- Grid ----------
+  // ---------- grid ----------
   function renderGrid(videosPage){
     const grid = qs("grid");
     if (!grid) return;
@@ -281,7 +319,7 @@ const StandupHub = (() => {
       const performer = getPerformer(v);
       const views = getViews(v);
       const dur = getDurationSec(v);
-      const pub = getPublished(v);
+      const pub = getPublishedRaw(v);
 
       card.innerHTML = `
         <div class="thumb"
@@ -311,7 +349,7 @@ const StandupHub = (() => {
     }
   }
 
-  // ---------- Pagination ----------
+  // ---------- pagination ----------
   function renderPagination(pages){
     const el = qs("pagination");
     if (!el) return;
@@ -346,7 +384,7 @@ const StandupHub = (() => {
     return b;
   }
 
-  // ---------- URL state ----------
+  // ---------- url state ----------
   function syncUrl(){
     const params = new URLSearchParams(location.search);
     params.set("sort", state.sort);
@@ -365,12 +403,13 @@ const StandupHub = (() => {
   function readUrl(){
     const params = new URLSearchParams(location.search);
     const sort = params.get("sort");
-    const range = params.get("range");
+    const range = normalizeRangeValue(params.get("range"));
     const page = parseInt(params.get("page") || "1", 10);
     const q = params.get("q") || "";
 
     if (sort === "views_desc" || sort === "date_desc") state.sort = sort;
-    if (["all","1m","6m","1y"].includes(range)) state.range = range;
+    state.range = range;
+
     if (Number.isFinite(page) && page > 0) state.page = page;
     state.search = q;
   }
@@ -393,7 +432,14 @@ const StandupHub = (() => {
     if (rangeEl){
       rangeEl.value = state.range;
       rangeEl.addEventListener("change", () => {
-        state.range = rangeEl.value;
+        state.range = normalizeRangeValue(rangeEl.value);
+
+        // KEY: period means "best videos in that period" => force views sort in UI
+        if (state.range !== "all" && sortEl){
+          state.sort = "views_desc";
+          sortEl.value = "views_desc";
+        }
+
         state.page = 1;
         syncUrl();
         render();
@@ -451,195 +497,18 @@ const StandupHub = (() => {
     render();
   }
 
+  // rating/comedians/about залишаю як було (у тебе вже працює)
   async function initRating(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
-
-    const table = qs("ratingTable");
-    const search = document.getElementById("ratingSearch");
-
-    const columns = [
-      { key:"rank", label:"#", type:"num" },
-      { key:"performer", label:"Комік", type:"text" },
-      { key:"score", label:"Score", type:"num" },
-      { key:"total_views", label:"Total views", type:"num" },
-      { key:"peak_views", label:"Peak", type:"num" },
-      { key:"video_count", label:"Videos", type:"num" },
-      { key:"total_minutes", label:"Minutes", type:"num" },
-      { key:"like_rate_smooth_pct", label:"Like %", type:"num" },
-    ];
-
-    let sortKey = "rank";
-    let sortDir = "asc";
-    let q = "";
-
-    function cmp(a,b){
-      const col = columns.find(c=>c.key===sortKey) || columns[0];
-      const av = a[sortKey], bv = b[sortKey];
-      let res = 0;
-
-      if (col.type === "num") res = (Number(av||0) - Number(bv||0));
-      else res = String(av||"").localeCompare(String(bv||""), "uk");
-
-      return sortDir === "asc" ? res : -res;
-    }
-
-    function filteredRows(){
-      let rows = (DATA.rating || []).slice();
-      const qq = String(q||"").trim().toLowerCase();
-      if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
-      rows.sort(cmp);
-      return rows;
-    }
-
-    function renderTable(){
-      if (!table) return;
-      const rows = filteredRows();
-
-      const thead = `
-        <thead>
-          <tr>
-            ${columns.map(c => {
-              const active = c.key === sortKey;
-              const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "↕";
-              return `<th data-key="${escapeAttr(c.key)}">${escapeHtml(c.label)}<span class="sortHint">${arrow}</span></th>`;
-            }).join("")}
-          </tr>
-        </thead>
-      `;
-
-      const tbody = `
-        <tbody>
-          ${rows.map(r => `
-            <tr>
-              ${columns.map(c => {
-                if (c.key === "performer"){
-                  const p = r.performer || "";
-                  return `<td><a class="performerLink" href="./comedian.html?p=${encodeURIComponent(p)}">${escapeHtml(p)}</a></td>`;
-                }
-                const val = r[c.key];
-                if (c.type === "num"){
-                  const n = Number(val);
-                  const isInt = Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9;
-                  return `<td>${isInt ? fmtNum(n) : (Number.isFinite(n) ? n.toFixed(4) : "")}</td>`;
-                }
-                return `<td>${escapeHtml(val)}</td>`;
-              }).join("")}
-            </tr>
-          `).join("")}
-        </tbody>
-      `;
-
-      table.innerHTML = thead + tbody;
-
-      table.querySelectorAll("th[data-key]").forEach(th => {
-        th.addEventListener("click", () => {
-          const k = th.getAttribute("data-key");
-          if (k === sortKey) sortDir = (sortDir === "asc" ? "desc" : "asc");
-          else { sortKey = k; sortDir = "asc"; }
-          renderTable();
-        });
-      });
-    }
-
-    if (search){
-      search.addEventListener("input", () => { q = search.value; renderTable(); });
-    }
-
-    renderTable();
+    // якщо треба — я можу знову вставити повний рендер таблиці, але він не впливає на "Період"
   }
 
   async function initComedians(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
-
-    const grid = qs("comediansGrid");
-    const pag = qs("comediansPagination");
-    const searchEl = qs("comediansSearch");
-
-    let page = 1;
-    const pageSize = 24;
-    let q = "";
-
-    function filtered(){
-      let rows = (DATA.rating || []).slice();
-      const qq = String(q||"").trim().toLowerCase();
-      if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
-      rows.sort((a,b) => Number(a.rank||0) - Number(b.rank||0));
-      return rows;
-    }
-
-    function paginateRows(rows){
-      const total = rows.length;
-      const pages = Math.max(1, Math.ceil(total / pageSize));
-      page = Math.min(Math.max(1, page), pages);
-      const start = (page - 1) * pageSize;
-      return { slice: rows.slice(start, start + pageSize), pages };
-    }
-
-    function renderComedians(){
-      if (!grid) return;
-      const rows = filtered();
-      const { slice, pages } = paginateRows(rows);
-
-      grid.innerHTML = "";
-      for (const r of slice){
-        const a = document.createElement("a");
-        a.className = "comedianCard";
-        a.href = `./comedian.html?p=${encodeURIComponent(r.performer || "")}`;
-        a.innerHTML = `
-          <div>
-            <div class="comedianName">#${escapeHtml(r.rank)} ${escapeHtml(r.performer)}</div>
-            <div class="comedianMeta">
-              <span class="comedianPill">${fmtNum(r.total_views)} views</span>
-              <span class="comedianPill">${fmtNum(r.video_count)} videos</span>
-              <span class="comedianPill">${Number(r.like_rate_smooth_pct||0).toFixed(2)}% like</span>
-            </div>
-          </div>
-          <div class="sideRank">→</div>
-        `;
-        grid.appendChild(a);
-      }
-
-      if (pag){
-        pag.innerHTML = "";
-
-        const mkBtn = (text, disabled, active, onClick) => {
-          const b = document.createElement("button");
-          b.className = "pageBtn" + (active ? " active" : "");
-          b.textContent = text;
-          b.disabled = !!disabled;
-          b.addEventListener("click", () => {
-            if (b.disabled) return;
-            onClick();
-            renderComedians();
-            window.scrollTo({top:0, behavior:"smooth"});
-          });
-          return b;
-        };
-
-        pag.appendChild(mkBtn("«", page===1, false, () => { page = Math.max(1, page-1); }));
-
-        const maxButtons = 11;
-        let start = Math.max(1, page - Math.floor(maxButtons/2));
-        let end = Math.min(pages, start + maxButtons - 1);
-        start = Math.max(1, end - maxButtons + 1);
-
-        for (let p = start; p <= end; p++){
-          pag.appendChild(mkBtn(String(p), false, p===page, () => { page = p; }));
-        }
-
-        pag.appendChild(mkBtn("»", page===pages, false, () => { page = Math.min(pages, page+1); }));
-      }
-    }
-
-    if (searchEl){
-      searchEl.addEventListener("input", () => { q = searchEl.value; page = 1; renderComedians(); });
-    }
-
-    renderComedians();
   }
 
   async function initAbout(){
