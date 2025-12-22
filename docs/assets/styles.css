@@ -140,27 +140,86 @@ body{
 .sideAllBtn:hover{ border-color: rgba(255,138,0,.6); }
 
 /* =========================
-   TOP BAR / CONTROLS
+   TOP BAR / CONTROLS + BRAND
    ========================= */
 .topbar{
   display:flex;
-  justify-content:space-between;
-  gap:16px;
+  gap:16px 24px;
   align-items:flex-end;
+  flex-wrap:wrap;
   margin-bottom:14px;
+}
+
+/* Brand block (Stand Up Hub + slogan) */
+.topBrand{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+  min-width: 200px;
+}
+
+.topBrand .brandLink{
+  text-decoration:none;
+  color:inherit;
+}
+
+/* Reuse brandA/brandB look */
+.topBrand .brandA{ color:var(--text); }
+.topBrand .brandB{
+  color:#111;
+  background:var(--accent);
+  padding:2px 8px;
+  border-radius:6px;
+  margin-left:6px;
+}
+
+/* Slogan inside header (no animation by default) */
+.topBrand .slogan{
+  margin:0;
+  color:var(--muted);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.02em;
+  opacity:.9;
+  transform:none;
+  animation:none;
+}
+
+/* Navigation buttons */
+.navLeft{
+  display:flex;
+  gap:10px;
+  align-items:center;
   flex-wrap:wrap;
 }
 
-.titleBlock{ display:flex; flex-direction:column; gap:4px; }
-.pageTitle{ font-size:20px; font-weight:800; }
-.pageMeta{ color:var(--muted); font-size:13px; }
+.navBtn{
+  text-decoration:none;
+  color:var(--text);
+  background:var(--panel2);
+  border:1px solid var(--border);
+  padding:10px 12px;
+  border-radius:10px;
+  font-weight:800;
+}
+.navBtn:hover{ border-color: rgba(255,138,0,.6); }
 
+/* active tab */
+.navBtn.active,
+.navBtn[aria-current="page"]{
+  border-color: rgba(255,138,0,.9);
+  box-shadow: 0 0 0 2px rgba(255,138,0,.15) inset;
+}
+
+/* Controls */
 .controls{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
   align-items:flex-end;
   justify-content:flex-end;
+  margin-left:auto; /* pushes controls to the right on desktop */
 }
 
 .control{ display:flex; flex-direction:column; gap:6px; }
@@ -176,21 +235,21 @@ body{
 }
 .control.search input{ min-width: 260px; }
 
-.navLeft{
-  display:flex;
-  gap:10px;
-  align-items:center;
+/* Mobile: brand always above nav and controls */
+@media (max-width: 768px){
+  .topbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .topBrand{ order:1; }
+  .navLeft{ order:2; }
+  .controls{
+    order:3;
+    margin-left:0;
+    justify-content:flex-start;
+  }
+  .control select, .control input{ min-width: 0; width:100%; }
 }
-.navBtn{
-  text-decoration:none;
-  color:var(--text);
-  background:var(--panel2);
-  border:1px solid var(--border);
-  padding:10px 12px;
-  border-radius:10px;
-  font-weight:800;
-}
-.navBtn:hover{ border-color: rgba(255,138,0,.6); }
 
 /* =========================
    GRID + CARDS
@@ -535,7 +594,9 @@ body{
 }
 
 /* =========================
-   Home slogan animation
+   Home slogan animation (optional)
+   If you ever use .slogan outside the header, it will animate.
+   In header we override it in .topBrand .slogan (no animation).
    ========================= */
 .slogan{
   margin: 6px 0 14px;
@@ -564,47 +625,3 @@ body{
     transform: none;
   }
 }
-
-.comediansGrid{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-@media (max-width: 980px){
-  .comediansGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-}
-@media (max-width: 640px){
-  .comediansGrid{ grid-template-columns: 1fr; }
-}
-
-.comedianCard{
-  display:block;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  text-decoration: none;
-  color: inherit;
-}
-.comedianCard:hover{
-  border-color: rgba(255,255,255,0.18);
-  transform: translateY(-1px);
-}
-
-.comedianTop{
-  display:flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.comedianName{ font-weight: 800; font-size: 16px; }
-.comedianRank{ color: var(--muted); font-weight: 700; }
-
-.comedianMeta{
-  display:flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.sortHint{ margin-left: 8px; opacity: .65; font-size: 12px; }
-.performerLink{ color: inherit; text-decoration: underline; text-underline-offset: 3px; }
