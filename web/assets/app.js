@@ -13,25 +13,62 @@ const StandupHub = (() => {
 
   function qs(id){ return document.getElementById(id); }
 
-  // Robust date parser for many formats coming from Python/CSV/JSON
+  // ---------- Robust field getters (snake_case / camelCase tolerant) ----------
+  function getPublished(v){
+    return (
+      v?.published_at ??
+      v?.publishedAt ??
+      v?.published ??
+      v?.publishedAtIso ??
+      v?.snippet?.publishedAt ??
+      ""
+    );
+  }
+
+  function getVideoId(v){
+    return (
+      v?.video_id ??
+      v?.videoId ??
+      v?.id ??
+      ""
+    );
+  }
+
+  function getViews(v){
+    const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? 0);
+    return Number(x || 0);
+  }
+
+  function getDurationSec(v){
+    const x = (v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.durationSeconds ?? 0);
+    return Number(x || 0);
+  }
+
+  function getPerformer(v){
+    return (v?.performer ?? v?.comedian ?? v?.author ?? "");
+  }
+
+  function getTitle(v){
+    return (v?.title ?? v?.name ?? "");
+  }
+
+  // ---------- Robust date parser ----------
   function parseISO(s){
     if (s == null) return null;
     let str = String(s).trim();
     if (!str) return null;
 
-    // If it looks like "YYYY-MM-DD HH:MM:SS..." -> convert to ISO-ish "T"
-    // e.g. "2025-12-22 11:22:33+00:00" => "2025-12-22T11:22:33+00:00"
+    // "YYYY-MM-DD HH:MM:SS..." -> "YYYY-MM-DDT..."
     if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(str)) {
       str = str.replace(/\s+/, "T");
     }
 
-    // If it's date-only "YYYY-MM-DD", treat as UTC midnight
+    // "YYYY-MM-DD" -> UTC midnight
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
       str = str + "T00:00:00Z";
     }
 
-    // If it has datetime but no timezone, force UTC
-    // e.g. "2025-12-22T11:22:33" => "2025-12-22T11:22:33Z"
+    // "YYYY-MM-DDTHH:MM:SS" (no TZ) -> assume UTC
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
       str = str + "Z";
     }
@@ -46,8 +83,8 @@ const StandupHub = (() => {
     catch { return String(n); }
   }
 
-  function fmtDate(iso){
-    const d = parseISO(iso);
+  function fmtDate(anyDate){
+    const d = parseISO(anyDate);
     if (!d) return "";
     return d.toLocaleDateString("uk-UA", {year:"numeric", month:"short", day:"2-digit"});
   }
@@ -61,7 +98,7 @@ const StandupHub = (() => {
     return `${m}:${String(s).padStart(2,"0")}`;
   }
 
-  // stable period cutoffs
+  // ---------- Period cutoffs ----------
   function nowUtcMs(){ return Date.now(); }
   function rangeCutoffMs(range){
     const DAY = 24 * 60 * 60 * 1000;
@@ -76,13 +113,13 @@ const StandupHub = (() => {
 
     if (state.mode === "performer" && state.performer){
       const p = String(state.performer || "").toLowerCase();
-      out = out.filter(v => String(v.performer || "").toLowerCase() === p);
+      out = out.filter(v => String(getPerformer(v) || "").toLowerCase() === p);
     }
 
     const cutoffMs = rangeCutoffMs(state.range);
     if (cutoffMs){
       out = out.filter(v => {
-        const d = parseISO(v.published_at);
+        const d = parseISO(getPublished(v));
         return d && d.getTime() >= cutoffMs;
       });
     }
@@ -90,8 +127,8 @@ const StandupHub = (() => {
     const q = String(state.search || "").trim().toLowerCase();
     if (q){
       out = out.filter(v => {
-        const t = String(v.title || "").toLowerCase();
-        const p = String(v.performer || "").toLowerCase();
+        const t = String(getTitle(v) || "").toLowerCase();
+        const p = String(getPerformer(v) || "").toLowerCase();
         return t.includes(q) || p.includes(q);
       });
     }
@@ -102,12 +139,12 @@ const StandupHub = (() => {
   function applySort(videos){
     const out = videos.slice();
     if (state.sort === "views_desc"){
-      out.sort((a,b) => (Number(b.view_count||0) - Number(a.view_count||0)));
+      out.sort((a,b) => (getViews(b) - getViews(a)));
       return out;
     }
     out.sort((a,b) => {
-      const da = parseISO(a.published_at)?.getTime() || 0;
-      const db = parseISO(b.published_at)?.getTime() || 0;
+      const da = parseISO(getPublished(a))?.getTime() || 0;
+      const db = parseISO(getPublished(b))?.getTime() || 0;
       return db - da;
     });
     return out;
@@ -123,6 +160,17 @@ const StandupHub = (() => {
     return { slice, total, pages };
   }
 
+  function escapeHtml(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  // ---------- Sidebar ----------
   function renderSidebar(){
     const el = qs("sidebarTop");
     if (!el) return;
@@ -151,14 +199,12 @@ const StandupHub = (() => {
     const p = state.performer || "";
     titleEl.textContent = p || "Комік";
     const count = filteredAll.length;
-    const views = filteredAll.reduce((s,v)=> s + Number(v.view_count||0), 0);
+    const views = filteredAll.reduce((s,v)=> s + getViews(v), 0);
     metaEl.textContent = `${fmtNum(count)} відео • ${fmtNum(views)} переглядів`;
     document.title = p ? `${p} • StandupHub` : "StandupHub";
   }
 
-  // =========================
-  // THEATER PLAYER (LIGHTBOX)
-  // =========================
+  // ---------- Theater player modal ----------
   let modalEl = null;
   let modalFrame = null;
   let modalTitleEl = null;
@@ -192,9 +238,7 @@ const StandupHub = (() => {
     modalEl.addEventListener("click", (e) => {
       if (e.target === modalEl) closeModal();
     });
-
-    const closeBtn = modalEl.querySelector(".ytModalClose");
-    closeBtn.addEventListener("click", closeModal);
+    modalEl.querySelector(".ytModalClose").addEventListener("click", closeModal);
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && modalEl.classList.contains("open")) closeModal();
@@ -208,9 +252,7 @@ const StandupHub = (() => {
     modalFrame.src = "";
     modalTitleEl.textContent = title || "";
 
-    const src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
-    modalFrame.src = src;
-
+    modalFrame.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
     modalEl.classList.add("open");
     document.body.style.overflow = "hidden";
   }
@@ -222,6 +264,7 @@ const StandupHub = (() => {
     if (modalFrame) modalFrame.src = "";
   }
 
+  // ---------- Grid ----------
   function renderGrid(videosPage){
     const grid = qs("grid");
     if (!grid) return;
@@ -231,38 +274,44 @@ const StandupHub = (() => {
       const card = document.createElement("div");
       card.className = "card";
 
-      const vid = v.video_id || "";
+      const vid = getVideoId(v);
       const thumbUrl = vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "";
+
+      const title = getTitle(v);
+      const performer = getPerformer(v);
+      const views = getViews(v);
+      const dur = getDurationSec(v);
+      const pub = getPublished(v);
 
       card.innerHTML = `
         <div class="thumb"
              style="background-image:url('${escapeAttr(thumbUrl)}'); background-size:cover; background-position:center;">
           <button class="playBtn" type="button" aria-label="Play">▶</button>
-          <div class="duration">${fmtDuration(v.duration_sec)}</div>
+          <div class="duration">${fmtDuration(dur)}</div>
         </div>
 
         <div class="cardBody">
-          <div class="cardTitle">${escapeHtml(v.title)}</div>
+          <div class="cardTitle">${escapeHtml(title)}</div>
           <div class="cardMeta">
-            <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(v.performer || "")}">
-              ${escapeHtml(v.performer || "")}
+            <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(performer || "")}">
+              ${escapeHtml(performer || "")}
             </a>
-            <span class="badge">${fmtNum(v.view_count)} views</span>
-            <span class="badge">${fmtDate(v.published_at)}</span>
+            <span class="badge">${fmtNum(views)} views</span>
+            <span class="badge">${fmtDate(pub)}</span>
           </div>
         </div>
       `;
 
-      const btn = card.querySelector(".playBtn");
-      btn.addEventListener("click", (e) => {
+      card.querySelector(".playBtn").addEventListener("click", (e) => {
         e.preventDefault();
-        openModal({ videoId: vid, title: v.title || "YouTube video" });
+        openModal({ videoId: vid, title: title || "YouTube video" });
       });
 
       grid.appendChild(card);
     }
   }
 
+  // ---------- Pagination ----------
   function renderPagination(pages){
     const el = qs("pagination");
     if (!el) return;
@@ -277,11 +326,9 @@ const StandupHub = (() => {
     start = Math.max(1, end - maxButtons + 1);
 
     el.appendChild(pageButton("«", Math.max(1, cur-1), cur === 1));
-
     for (let p = start; p <= end; p++){
       el.appendChild(pageButton(String(p), p, false, p === cur));
     }
-
     el.appendChild(pageButton("»", Math.min(total, cur+1), cur === total));
   }
 
@@ -299,6 +346,7 @@ const StandupHub = (() => {
     return b;
   }
 
+  // ---------- URL state ----------
   function syncUrl(){
     const params = new URLSearchParams(location.search);
     params.set("sort", state.sort);
@@ -311,8 +359,7 @@ const StandupHub = (() => {
       params.set("p", state.performer || "");
     }
 
-    const newUrl = `${location.pathname}?${params.toString()}`;
-    history.replaceState({}, "", newUrl);
+    history.replaceState({}, "", `${location.pathname}?${params.toString()}`);
   }
 
   function readUrl(){
@@ -385,16 +432,6 @@ const StandupHub = (() => {
     return await r.json();
   }
 
-  function escapeHtml(s){
-    return String(s || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function escapeAttr(s){ return escapeHtml(s); }
-
   async function init({mode, performer}){
     state.mode = mode;
     state.performer = performer;
@@ -415,7 +452,7 @@ const StandupHub = (() => {
   }
 
   async function initRating(){
-    const [rating] = await Promise.all([ loadJson("data/rating.json") ]);
+    const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
 
@@ -442,20 +479,16 @@ const StandupHub = (() => {
       const av = a[sortKey], bv = b[sortKey];
       let res = 0;
 
-      if (col.type === "num"){
-        res = (Number(av||0) - Number(bv||0));
-      } else {
-        res = String(av||"").localeCompare(String(bv||""), "uk");
-      }
+      if (col.type === "num") res = (Number(av||0) - Number(bv||0));
+      else res = String(av||"").localeCompare(String(bv||""), "uk");
+
       return sortDir === "asc" ? res : -res;
     }
 
     function filteredRows(){
       let rows = (DATA.rating || []).slice();
       const qq = String(q||"").trim().toLowerCase();
-      if (qq){
-        rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
-      }
+      if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
       rows.sort(cmp);
       return rows;
     }
@@ -511,10 +544,7 @@ const StandupHub = (() => {
     }
 
     if (search){
-      search.addEventListener("input", () => {
-        q = search.value;
-        renderTable();
-      });
+      search.addEventListener("input", () => { q = search.value; renderTable(); });
     }
 
     renderTable();
@@ -536,9 +566,7 @@ const StandupHub = (() => {
     function filtered(){
       let rows = (DATA.rating || []).slice();
       const qq = String(q||"").trim().toLowerCase();
-      if (qq){
-        rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
-      }
+      if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
       rows.sort((a,b) => Number(a.rank||0) - Number(b.rank||0));
       return rows;
     }
@@ -608,11 +636,7 @@ const StandupHub = (() => {
     }
 
     if (searchEl){
-      searchEl.addEventListener("input", () => {
-        q = searchEl.value;
-        page = 1;
-        renderComedians();
-      });
+      searchEl.addEventListener("input", () => { q = searchEl.value; page = 1; renderComedians(); });
     }
 
     renderComedians();
