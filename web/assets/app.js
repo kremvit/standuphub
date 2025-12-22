@@ -550,5 +550,12 @@ const StandupHub = (() => {
     renderComedians();
   }
 
-  return { init, initRating, initComedians };
+  async function initAbout(){
+    // just load rating to paint sidebar
+    const rating = await loadJson("data/rating.json");
+    DATA.rating = rating || [];
+    renderSidebar();
+  }
+
+  return { init, initRating, initComedians, initAbout };
 })();

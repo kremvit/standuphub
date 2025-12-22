@@ -409,3 +409,51 @@ body{
   padding:4px 8px;
   border-radius:999px;
 }
+
+/* =========================
+   ABOUT PAGE
+   ========================= */
+.aboutWrap{
+  max-width: 980px;
+}
+
+.aboutTitle{
+  font-size: 28px;
+  font-weight: 950;
+  margin: 6px 0 14px;
+}
+
+.aboutCard{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 14px 14px;
+  margin: 12px 0;
+}
+
+.aboutCard h2{
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.aboutCard p{
+  margin: 10px 0;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.aboutCard ul{
+  margin: 10px 0 0 18px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.formula{
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 12px;
+  overflow:auto;
+  color: #eaeaf2;
+}
