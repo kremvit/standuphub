@@ -73,6 +73,9 @@ def yt_get(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
     params = dict(params)
     params["key"] = API_KEY
     r = requests.get(f"{BASE_URL}/{endpoint}", params=params, timeout=30)
+    if r.status_code >= 400:
+        print("YT ERROR", r.status_code, r.url)
+        print(r.text[:2000])  # <- головне: причина тут
     r.raise_for_status()
     return r.json()
 
