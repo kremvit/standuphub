@@ -9,7 +9,7 @@ OUT_DIR = Path("out")
 WEB_DATA = Path("docs/data")
 
 def read_csv(path: Path):
-    with path.open("r", encoding="utf-8", newline="") as f:
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
 
 def to_int(x, default=0):
