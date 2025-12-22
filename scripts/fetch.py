@@ -22,7 +22,7 @@ BASE_URL = "https://www.googleapis.com/youtube/v3"
 CUTOFF_DATE = datetime(2022, 2, 24, tzinfo=timezone.utc)
 
 MIN_SEC = 4 * 60          # > 4 minutes
-MAX_SEC = 100 * 60        # < 100 minutes
+MAX_SEC = 2 * 60 * 60     # < 2 hours (120 minutes)
 
 RE_TITLE_PODCAST = re.compile(r"(подкаст|підкаст|podcast)", re.IGNORECASE)
 RE_TITLE_IMPROV = re.compile(r"(імпровізаці\w*|improv\w*)", re.IGNORECASE)
