@@ -13,8 +13,30 @@ const StandupHub = (() => {
 
   function qs(id){ return document.getElementById(id); }
 
+  // Robust date parser for many formats coming from Python/CSV/JSON
   function parseISO(s){
-    const d = new Date(s);
+    if (s == null) return null;
+    let str = String(s).trim();
+    if (!str) return null;
+
+    // If it looks like "YYYY-MM-DD HH:MM:SS..." -> convert to ISO-ish "T"
+    // e.g. "2025-12-22 11:22:33+00:00" => "2025-12-22T11:22:33+00:00"
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(str)) {
+      str = str.replace(/\s+/, "T");
+    }
+
+    // If it's date-only "YYYY-MM-DD", treat as UTC midnight
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      str = str + "T00:00:00Z";
+    }
+
+    // If it has datetime but no timezone, force UTC
+    // e.g. "2025-12-22T11:22:33" => "2025-12-22T11:22:33Z"
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
+      str = str + "Z";
+    }
+
+    const d = new Date(str);
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -39,12 +61,12 @@ const StandupHub = (() => {
     return `${m}:${String(s).padStart(2,"0")}`;
   }
 
-  // stable period cutoffs (avoid month edge cases)
+  // stable period cutoffs
   function nowUtcMs(){ return Date.now(); }
   function rangeCutoffMs(range){
     const DAY = 24 * 60 * 60 * 1000;
     if (range === "1m") return nowUtcMs() - 30 * DAY;
-    if (range === "6m") return nowUtcMs() - 183 * DAY; // ~6 months
+    if (range === "6m") return nowUtcMs() - 183 * DAY;
     if (range === "1y") return nowUtcMs() - 365 * DAY;
     return null;
   }
@@ -167,9 +189,7 @@ const StandupHub = (() => {
     modalFrame = modalEl.querySelector("#ytModalFrame");
     modalTitleEl = modalEl.querySelector("#ytModalTitle");
 
-    // close handlers
     modalEl.addEventListener("click", (e) => {
-      // close when clicking backdrop (not the panel)
       if (e.target === modalEl) closeModal();
     });
 
@@ -185,11 +205,9 @@ const StandupHub = (() => {
     ensureModal();
     if (!videoId) return;
 
-    // stop any previous
     modalFrame.src = "";
     modalTitleEl.textContent = title || "";
 
-    // autoplay
     const src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
     modalFrame.src = src;
 
@@ -201,12 +219,9 @@ const StandupHub = (() => {
     if (!modalEl) return;
     modalEl.classList.remove("open");
     document.body.style.overflow = "";
-    if (modalFrame) modalFrame.src = ""; // stop playback
+    if (modalFrame) modalFrame.src = "";
   }
 
-  // =========================
-  // GRID
-  // =========================
   function renderGrid(videosPage){
     const grid = qs("grid");
     if (!grid) return;
