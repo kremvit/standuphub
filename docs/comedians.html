@@ -13,21 +13,32 @@
         <div class="navLeft">
           <a class="navBtn" href="./index.html">Відео</a>
           <a class="navBtn" href="./rating.html">Рейтинг</a>
-          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn active" href="./comedians.html">Коміки</a>
           <a class="navBtn" href="./about.html">Про сайт</a>
         </div>
 
         <div class="controls">
+          <div class="control">
+            <label>Сортування</label>
+            <select id="comediansSort">
+              <option value="rank_asc">За рейтингом</option>
+              <option value="views_desc">За total views</option>
+              <option value="peak_desc">За peak views</option>
+              <option value="videos_desc">За кількістю відео</option>
+              <option value="like_desc">За like %</option>
+              <option value="name_asc">За імʼям (A→Я)</option>
+            </select>
+          </div>
+
           <div class="control search">
             <label>Пошук</label>
-            <input id="comediansSearch" placeholder="введи ім’я коміка" />
+            <input id="comediansSearch" placeholder="введи імʼя…" />
           </div>
         </div>
       </header>
 
       <section>
         <div id="comediansGrid" class="comediansGrid"></div>
-        <div id="comediansPagination" class="pagination"></div>
       </section>
     </main>
 

@@ -66,21 +66,14 @@ const StandupHub = (() => {
       if (!isNaN(d.getTime())) return d.getTime();
     }
 
-    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) {
-      s = s.replace(/\s+/, "T");
-    }
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-      s = s + "T00:00:00Z";
-    }
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) s = s.replace(/\s+/, "T");
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s = s + "T00:00:00Z";
 
     s = s.replace(/(\d),(\d)/g, "$1.$2");
     s = s.replace(/\.(\d{3})\d+/g, ".$1");
     s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
 
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) {
-      s = s + "Z";
-    }
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) s = s + "Z";
 
     const d = new Date(s);
     return isNaN(d.getTime()) ? null : d.getTime();
@@ -153,7 +146,6 @@ const StandupHub = (() => {
     return out;
   }
 
-  // “Найкраще” (range != all) => sort views desc
   function applySort(videos){
     const out = videos.slice();
     const effectiveSort = (state.range !== "all") ? "views_desc" : state.sort;
@@ -419,13 +411,10 @@ const StandupHub = (() => {
       rangeEl.value = state.range;
       rangeEl.addEventListener("change", () => {
         state.range = normalizeRangeValue(rangeEl.value);
-
-        // when range selected: force sort UI to views
         if (state.range !== "all" && sortEl){
           state.sort = "views_desc";
           sortEl.value = "views_desc";
         }
-
         state.page = 1;
         syncUrl();
         render();
@@ -462,7 +451,7 @@ const StandupHub = (() => {
     return await r.json();
   }
 
-  // ---------- INIT PAGES ----------
+  // ---------- INIT pages ----------
   async function init({mode, performer}){
     state.mode = mode;
     state.performer = performer;
@@ -482,7 +471,6 @@ const StandupHub = (() => {
     render();
   }
 
-  // ✅ FULL rating table renderer (fixes empty rating.html)
   async function initRating(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
@@ -586,10 +574,89 @@ const StandupHub = (() => {
     renderTable();
   }
 
+  // ✅ NEW: comedians page renderer
   async function initComedians(){
     const rating = await loadJson("data/rating.json");
     DATA.rating = rating || [];
     renderSidebar();
+
+    const grid = qs("comediansGrid");
+    const search = qs("comediansSearch");
+    const sortSel = qs("comediansSort");
+    if (!grid) return;
+
+    let q = "";
+    let sort = (sortSel && sortSel.value) ? sortSel.value : "rank_asc";
+
+    function sortedRows(){
+      let rows = (DATA.rating || []).slice();
+
+      const qq = String(q||"").trim().toLowerCase();
+      if (qq){
+        rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
+      }
+
+      const byNum = (k, dir) => (a,b) => dir*(Number(a?.[k]||0) - Number(b?.[k]||0));
+      const byText = (k, dir) => (a,b) => dir*String(a?.[k]||"").localeCompare(String(b?.[k]||""), "uk");
+
+      if (sort === "rank_asc") rows.sort(byNum("rank", +1));
+      else if (sort === "views_desc") rows.sort(byNum("total_views", -1));
+      else if (sort === "peak_desc") rows.sort(byNum("peak_views", -1));
+      else if (sort === "videos_desc") rows.sort(byNum("video_count", -1));
+      else if (sort === "like_desc") rows.sort(byNum("like_rate_smooth_pct", -1));
+      else if (sort === "name_asc") rows.sort(byText("performer", +1));
+      else rows.sort(byNum("rank", +1));
+
+      return rows;
+    }
+
+    function renderGrid(){
+      const rows = sortedRows();
+
+      if (rows.length === 0){
+        grid.innerHTML = `
+          <div class="aboutCard" style="grid-column:1/-1;">
+            <h2 style="margin:0 0 8px;">Нічого не знайдено</h2>
+            <p style="margin:0;color:var(--muted);">Спробуй інший запит.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = rows.map(r => {
+        const p = r.performer || "";
+        return `
+          <a class="comedianCard" href="./comedian.html?p=${encodeURIComponent(p)}">
+            <div class="comedianTop">
+              <div class="comedianName">${escapeHtml(p)}</div>
+              <div class="comedianRank">#${escapeHtml(r.rank)}</div>
+            </div>
+            <div class="comedianMeta">
+              <span class="badge">${fmtNum(r.total_views)} views</span>
+              <span class="badge">${fmtNum(r.video_count)} відео</span>
+              <span class="badge">peak ${fmtNum(r.peak_views)}</span>
+              <span class="badge">like ${Number(r.like_rate_smooth_pct||0).toFixed(2)}%</span>
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    if (search){
+      search.addEventListener("input", () => {
+        q = search.value || "";
+        renderGrid();
+      });
+    }
+
+    if (sortSel){
+      sortSel.addEventListener("change", () => {
+        sort = sortSel.value || "rank_asc";
+        renderGrid();
+      });
+    }
+
+    renderGrid();
   }
 
   async function initAbout(){
