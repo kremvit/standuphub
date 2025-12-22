@@ -9,8 +9,12 @@
   --shadow: 0 8px 28px rgba(0,0,0,.35);
 }
 
+/* =========================
+   BASE
+   ========================= */
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
+
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
@@ -19,7 +23,7 @@ body{
 }
 
 /* =========================
-   LAYOUT: sidebar RIGHT (desktop), bottom (mobile)
+   LAYOUT
    ========================= */
 .layout{
   display:grid;
@@ -35,11 +39,8 @@ body{
 
 .sidebar{
   grid-area: sidebar;
-
   background:linear-gradient(180deg, var(--panel), #0d0d14);
   border-left:1px solid var(--border);
-  border-right:none;
-
   padding:18px 14px;
   position:sticky;
   top:0;
@@ -47,7 +48,6 @@ body{
   overflow:auto;
 }
 
-/* MOBILE: sidebar becomes bottom section */
 @media (max-width: 1100px){
   .layout{
     grid-template-columns: 1fr;
@@ -55,7 +55,6 @@ body{
       "main"
       "sidebar";
   }
-
   .sidebar{
     position:relative;
     height:auto;
@@ -68,23 +67,8 @@ body{
 /* =========================
    SIDEBAR
    ========================= */
-.brand{
-  font-weight:800;
-  letter-spacing:.3px;
-  font-size:22px;
-  margin-bottom:14px;
-}
-.brandA{ color:var(--text); }
-.brandB{
-  color:#111;
-  background:var(--accent);
-  padding:2px 8px;
-  border-radius:6px;
-  margin-left:6px;
-}
-.brandLink{ text-decoration:none; color:inherit; }
-
 .sidebarSection{ margin-top:18px; }
+
 .sidebarTitle{
   color:var(--muted);
   font-size:12px;
@@ -92,6 +76,7 @@ body{
   letter-spacing:.14em;
   margin:10px 8px;
 }
+
 .sidebarList{
   display:flex;
   flex-direction:column;
@@ -103,7 +88,7 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 10px;
+  padding:10px;
   border:1px solid var(--border);
   border-radius:10px;
   background:rgba(255,255,255,0.03);
@@ -117,7 +102,7 @@ body{
 .sideMeta{ color:var(--muted); font-size:12px; }
 
 .sideRank{
-  font-weight:800;
+  font-weight:900;
   color:#111;
   background:var(--accent);
   border-radius:999px;
@@ -128,7 +113,7 @@ body{
 .sideAllBtn{
   display:block;
   margin:10px 6px 0;
-  padding:10px 10px;
+  padding:10px;
   border-radius:10px;
   border:1px solid var(--border);
   background:rgba(255,255,255,.03);
@@ -140,7 +125,7 @@ body{
 .sideAllBtn:hover{ border-color: rgba(255,138,0,.6); }
 
 /* =========================
-   TOP BAR / CONTROLS + BRAND
+   TOP BAR + BRAND
    ========================= */
 .topbar{
   display:flex;
@@ -150,43 +135,57 @@ body{
   margin-bottom:14px;
 }
 
-/* Brand block (Stand Up Hub + slogan) */
+/* BRAND */
 .topBrand{
   display:flex;
   flex-direction:column;
   align-items:flex-start;
   gap:4px;
-  min-width: 200px;
+  min-width:200px;
 }
 
 .topBrand .brandLink{
   text-decoration:none;
   color:inherit;
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-0.3px;
+  line-height:1.05;
 }
 
-/* Reuse brandA/brandB look */
-.topBrand .brandA{ color:var(--text); }
-.topBrand .brandB{
+.brandA{ color:var(--text); }
+
+.brandB{
   color:#111;
   background:var(--accent);
   padding:2px 8px;
   border-radius:6px;
   margin-left:6px;
+  font-weight:900;
 }
 
-/* Slogan inside header (no animation by default) */
+/* Pornhub-style fading slogan */
 .topBrand .slogan{
   margin:0;
-  color:var(--muted);
   font-size:14px;
   font-weight:600;
-  letter-spacing:.02em;
-  opacity:.9;
-  transform:none;
-  animation:none;
+  letter-spacing:.04em;
+  color:var(--muted);
+
+  opacity:0;
+  filter: blur(4px);
+  animation: sloganFade 900ms ease-out 300ms forwards;
 }
 
-/* Navigation buttons */
+@keyframes sloganFade{
+  to{
+    opacity:1;
+    filter: blur(0);
+    text-shadow: 0 0 12px rgba(255,138,0,.25);
+  }
+}
+
+/* NAV */
 .navLeft{
   display:flex;
   gap:10px;
@@ -205,37 +204,44 @@ body{
 }
 .navBtn:hover{ border-color: rgba(255,138,0,.6); }
 
-/* active tab */
 .navBtn.active,
 .navBtn[aria-current="page"]{
   border-color: rgba(255,138,0,.9);
   box-shadow: 0 0 0 2px rgba(255,138,0,.15) inset;
 }
 
-/* Controls */
+/* CONTROLS */
 .controls{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
   align-items:flex-end;
   justify-content:flex-end;
-  margin-left:auto; /* pushes controls to the right on desktop */
+  margin-left:auto;
 }
 
-.control{ display:flex; flex-direction:column; gap:6px; }
-.control label{ font-size:12px; color:var(--muted); }
-.control select, .control input{
+.control{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.control label{
+  font-size:12px;
+  color:var(--muted);
+}
+.control select,
+.control input{
   background:var(--panel2);
   border:1px solid var(--border);
   color:var(--text);
   padding:10px 12px;
   border-radius:10px;
   outline:none;
-  min-width: 180px;
+  min-width:180px;
 }
-.control.search input{ min-width: 260px; }
+.control.search input{ min-width:260px; }
 
-/* Mobile: brand always above nav and controls */
+/* MOBILE */
 @media (max-width: 768px){
   .topbar{
     flex-direction:column;
@@ -248,7 +254,11 @@ body{
     margin-left:0;
     justify-content:flex-start;
   }
-  .control select, .control input{ min-width: 0; width:100%; }
+  .control select,
+  .control input{
+    min-width:0;
+    width:100%;
+  }
 }
 
 /* =========================
@@ -259,10 +269,9 @@ body{
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap:12px;
 }
-
-@media (max-width: 1400px){ .grid{ grid-template-columns: repeat(4, 1fr);} }
-@media (max-width: 1100px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 720px){ .grid{ grid-template-columns: repeat(2, 1fr);} }
+@media (max-width:1400px){ .grid{ grid-template-columns:repeat(4,1fr); } }
+@media (max-width:1100px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:720px){ .grid{ grid-template-columns:repeat(2,1fr); } }
 
 .card{
   background:var(--panel);
@@ -275,16 +284,16 @@ body{
 }
 
 .thumb{
-  background:linear-gradient(135deg, #1f1f2b, #10101a);
-  aspect-ratio: 16 / 9;
+  aspect-ratio:16/9;
+  background:linear-gradient(135deg,#1f1f2b,#10101a);
   position:relative;
 }
 
 .duration{
   position:absolute;
-  right:10px; bottom:10px;
+  right:10px;
+  bottom:10px;
   background:rgba(0,0,0,.65);
-  border:1px solid rgba(255,255,255,.08);
   padding:4px 8px;
   border-radius:999px;
   font-size:12px;
@@ -297,22 +306,15 @@ body{
   width:52px;
   height:52px;
   border-radius:999px;
+  background:rgba(0,0,0,.55);
   border:1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.55);
-  color: #fff;
+  color:#fff;
   font-size:20px;
-  cursor:pointer;
   display:grid;
   place-items:center;
-  backdrop-filter: blur(6px);
+  cursor:pointer;
 }
 .playBtn:hover{ border-color: rgba(255,138,0,.7); }
-
-.ytFrame{
-  width:100%;
-  height:100%;
-  border:0;
-}
 
 .cardBody{
   padding:10px 12px 12px;
@@ -325,30 +327,17 @@ body{
   font-weight:800;
   font-size:14px;
   line-height:1.2;
-  max-height: 2.4em;
+  max-height:2.4em;
   overflow:hidden;
 }
 
 .cardMeta{
-  color:var(--muted);
   font-size:12px;
+  color:var(--muted);
   display:flex;
   flex-wrap:wrap;
   gap:8px;
 }
-
-.badge{
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--border);
-  padding:4px 8px;
-  border-radius:999px;
-}
-
-.linkBadge{
-  text-decoration:none;
-  color:var(--text);
-}
-.linkBadge:hover{ border-color: rgba(255,138,0,.5); }
 
 /* =========================
    PAGINATION
@@ -357,8 +346,8 @@ body{
   margin-top:16px;
   display:flex;
   gap:8px;
-  flex-wrap:wrap;
   justify-content:center;
+  flex-wrap:wrap;
 }
 
 .pageBtn{
@@ -368,75 +357,44 @@ body{
   padding:10px 12px;
   border-radius:10px;
   cursor:pointer;
-  min-width:44px;
 }
-.pageBtn:hover{ border-color: rgba(255,138,0,.5); }
 .pageBtn.active{
   background:var(--accent);
   color:#111;
-  border-color: rgba(255,138,0,.9);
   font-weight:900;
 }
 
 /* =========================
    RATING TABLE
    ========================= */
-.tableWrap{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-}
-
 .ratingTable{
   width:100%;
-  border-collapse: collapse;
+  border-collapse:collapse;
 }
-
-.ratingTable th, .ratingTable td{
-  padding: 12px 12px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
+.ratingTable th,
+.ratingTable td{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
 }
-
 .ratingTable th{
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  font-size: 12px;
-  background: rgba(255,255,255,0.02);
-  cursor: pointer;
-  user-select:none;
+  font-size:12px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  background:rgba(255,255,255,.02);
 }
-
-.ratingTable tr:hover td{
-  background: rgba(255,255,255,0.03);
-}
-
-.sortHint{
-  opacity:.7;
-  margin-left:6px;
-  font-size:11px;
-}
-
-.performerLink{
-  color: var(--text);
-  text-decoration:none;
-  font-weight:900;
-}
-.performerLink:hover{ color: var(--accent); }
 
 /* =========================
-   COMEDIANS LIST PAGE
+   COMEDIANS
    ========================= */
 .comediansGrid{
   display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
-@media (max-width: 1100px){ .comediansGrid{ grid-template-columns: repeat(2, 1fr);} }
-@media (max-width: 720px){ .comediansGrid{ grid-template-columns: 1fr; } }
+@media (max-width:1100px){ .comediansGrid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:720px){ .comediansGrid{ grid-template-columns:1fr; } }
 
 .comedianCard{
   background:var(--panel);
@@ -446,8 +404,6 @@ body{
   box-shadow:var(--shadow);
   display:flex;
   justify-content:space-between;
-  gap:12px;
-  align-items:flex-start;
   text-decoration:none;
   color:var(--text);
 }
@@ -457,171 +413,47 @@ body{
 .comedianMeta{
   color:var(--muted);
   font-size:12px;
-  margin-top:6px;
   display:flex;
   gap:8px;
   flex-wrap:wrap;
 }
-.comedianPill{
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--border);
-  padding:4px 8px;
-  border-radius:999px;
-}
 
 /* =========================
-   ABOUT PAGE
+   ABOUT
    ========================= */
-.aboutWrap{
-  max-width: 980px;
-}
+.aboutWrap{ max-width:980px; }
 
 .aboutTitle{
-  font-size: 28px;
-  font-weight: 950;
-  margin: 6px 0 14px;
+  font-size:28px;
+  font-weight:950;
+  margin:6px 0 14px;
 }
 
 .aboutCard{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  padding: 14px 14px;
-  margin: 12px 0;
-}
-
-.aboutCard h2{
-  margin: 0 0 10px;
-  font-size: 18px;
-}
-
-.aboutCard p{
-  margin: 10px 0;
-  color: var(--text);
-  line-height: 1.45;
-}
-
-.aboutCard ul{
-  margin: 10px 0 0 18px;
-  color: var(--text);
-  line-height: 1.45;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:14px;
+  margin:12px 0;
 }
 
 .formula{
-  background: rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px;
-  padding: 12px;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  padding:12px;
   overflow:auto;
-  color: #eaeaf2;
 }
 
 /* =========================
-   THEATER PLAYER (LIGHTBOX)
+   ACCESSIBILITY
    ========================= */
-.ytModal{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,.78);
-  backdrop-filter: blur(6px);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index: 9999;
-  padding: 16px;
-}
-.ytModal.open{ display:flex; }
-
-.ytModalPanel{
-  width: min(1100px, 92vw);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  box-shadow: 0 20px 70px rgba(0,0,0,.6);
-  background: rgba(10,10,14,.6);
-  overflow: hidden;
-  position:relative;
-}
-
-.ytModalTop{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.ytModalTitle{
-  font-weight: 900;
-  font-size: 14px;
-  color: var(--text);
-  opacity: .95;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  max-width: 85%;
-}
-.ytModalClose{
-  cursor:pointer;
-  width:36px;
-  height:36px;
-  border-radius: 10px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  font-size: 18px;
-}
-.ytModalClose:hover{ border-color: rgba(255,138,0,.65); }
-
-.ytModalVideo{
-  aspect-ratio: 16 / 9;
-  background:#000;
-}
-
-.ytModalFrame{
-  width:100%;
-  height:100%;
-  border:0;
-}
-
-@media (max-width: 720px){
-  .ytModal{ padding: 10px; }
-  .ytModalPanel{
-    width: 98vw;
-    border-radius: 14px;
-  }
-  .ytModalTitle{ max-width: 78%; }
-}
-
-/* =========================
-   Home slogan animation (optional)
-   If you ever use .slogan outside the header, it will animate.
-   In header we override it in .topBrand .slogan (no animation).
-   ========================= */
-.slogan{
-  margin: 6px 0 14px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .02em;
-
-  opacity: 0;
-  transform: translateY(6px);
-  animation: sloganIn 520ms ease-out 120ms forwards;
-}
-
-@keyframes sloganIn{
-  to{
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Respect reduced-motion */
 @media (prefers-reduced-motion: reduce){
-  .slogan{
-    animation: none;
-    opacity: 1;
-    transform: none;
+  .topBrand .slogan{
+    animation:none;
+    opacity:1;
+    filter:none;
+    text-shadow:none;
   }
 }
