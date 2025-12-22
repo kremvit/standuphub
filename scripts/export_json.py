@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 OUT_DIR = Path("out")
-WEB_DATA = Path("web/data")
+WEB_DATA = Path("docs/data")
 
 def read_csv(path: Path):
     with path.open("r", encoding="utf-8", newline="") as f:
@@ -72,8 +72,8 @@ def main():
     (WEB_DATA / "videos.json").write_text(json.dumps(videos, ensure_ascii=False), encoding="utf-8")
     (WEB_DATA / "rating.json").write_text(json.dumps(rating, ensure_ascii=False), encoding="utf-8")
 
-    print("OK -> web/data/videos.json")
-    print("OK -> web/data/rating.json")
+    print("OK -> docs/data/videos.json")
+    print("OK -> docs/data/rating.json")
 
 if __name__ == "__main__":
     main()
