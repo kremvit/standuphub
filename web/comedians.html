@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>StandupHub</title>
+  <title>Коміки • StandupHub</title>
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
@@ -17,34 +17,16 @@
         </div>
 
         <div class="controls">
-          <div class="control">
-            <label>Сортування</label>
-            <select id="sortSelect">
-              <option value="date_desc">Останні додані</option>
-              <option value="views_desc">Найбільше переглядів</option>
-            </select>
-          </div>
-
-          <div class="control">
-            <label>Період</label>
-            <select id="rangeSelect">
-              <option value="all">Увесь час</option>
-              <option value="1m">За місяць</option>
-              <option value="6m">За пів року</option>
-              <option value="1y">За рік</option>
-            </select>
-          </div>
-
           <div class="control search">
             <label>Пошук</label>
-            <input id="searchInput" placeholder="назва відео / комік" />
+            <input id="comediansSearch" placeholder="введи ім’я коміка" />
           </div>
         </div>
       </header>
 
       <section>
-        <div id="grid" class="grid"></div>
-        <div id="pagination" class="pagination"></div>
+        <div id="comediansGrid" class="comediansGrid"></div>
+        <div id="comediansPagination" class="pagination"></div>
       </section>
     </main>
 
@@ -65,7 +47,7 @@
 
   <script src="assets/app.js"></script>
   <script>
-    StandupHub.init({ mode: "all", performer: null });
+    StandupHub.initComedians();
   </script>
 </body>
 </html>

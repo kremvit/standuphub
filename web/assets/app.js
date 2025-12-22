@@ -39,15 +39,14 @@ const StandupHub = (() => {
     return `${m}:${String(s).padStart(2,"0")}`;
   }
 
-  function nowUtc(){ return new Date(); }
-
-  function rangeCutoff(range){
-    const d = new Date(nowUtc().getTime());
-    if (range === "1m") d.setMonth(d.getMonth() - 1);
-    else if (range === "6m") d.setMonth(d.getMonth() - 6);
-    else if (range === "1y") d.setFullYear(d.getFullYear() - 1);
-    else return null;
-    return d;
+  // stable period cutoffs (avoid month edge cases)
+  function nowUtcMs(){ return Date.now(); }
+  function rangeCutoffMs(range){
+    const DAY = 24 * 60 * 60 * 1000;
+    if (range === "1m") return nowUtcMs() - 30 * DAY;
+    if (range === "6m") return nowUtcMs() - 183 * DAY; // ~6 months
+    if (range === "1y") return nowUtcMs() - 365 * DAY;
+    return null;
   }
 
   function applyFilters(videos){
@@ -58,11 +57,11 @@ const StandupHub = (() => {
       out = out.filter(v => String(v.performer || "").toLowerCase() === p);
     }
 
-    const cutoff = rangeCutoff(state.range);
-    if (cutoff){
+    const cutoffMs = rangeCutoffMs(state.range);
+    if (cutoffMs){
       out = out.filter(v => {
         const d = parseISO(v.published_at);
-        return d && d >= cutoff;
+        return d && d.getTime() >= cutoffMs;
       });
     }
 
@@ -453,5 +452,103 @@ const StandupHub = (() => {
     renderTable();
   }
 
-  return { init, initRating };
+  async function initComedians(){
+    const rating = await loadJson("data/rating.json");
+    DATA.rating = rating || [];
+    renderSidebar();
+
+    const grid = qs("comediansGrid");
+    const pag = qs("comediansPagination");
+    const searchEl = qs("comediansSearch");
+
+    let page = 1;
+    const pageSize = 24;
+    let q = "";
+
+    function filtered(){
+      let rows = (DATA.rating || []).slice();
+      const qq = String(q||"").trim().toLowerCase();
+      if (qq){
+        rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
+      }
+      rows.sort((a,b) => Number(a.rank||0) - Number(b.rank||0));
+      return rows;
+    }
+
+    function paginateRows(rows){
+      const total = rows.length;
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      page = Math.min(Math.max(1, page), pages);
+      const start = (page - 1) * pageSize;
+      return { slice: rows.slice(start, start + pageSize), pages };
+    }
+
+    function renderComedians(){
+      if (!grid) return;
+      const rows = filtered();
+      const { slice, pages } = paginateRows(rows);
+
+      grid.innerHTML = "";
+      for (const r of slice){
+        const a = document.createElement("a");
+        a.className = "comedianCard";
+        a.href = `./comedian.html?p=${encodeURIComponent(r.performer || "")}`;
+        a.innerHTML = `
+          <div>
+            <div class="comedianName">#${escapeHtml(r.rank)} ${escapeHtml(r.performer)}</div>
+            <div class="comedianMeta">
+              <span class="comedianPill">${fmtNum(r.total_views)} views</span>
+              <span class="comedianPill">${fmtNum(r.video_count)} videos</span>
+              <span class="comedianPill">${Number(r.like_rate_smooth_pct||0).toFixed(2)}% like</span>
+            </div>
+          </div>
+          <div class="sideRank">→</div>
+        `;
+        grid.appendChild(a);
+      }
+
+      if (pag){
+        pag.innerHTML = "";
+
+        const mkBtn = (text, disabled, active, onClick) => {
+          const b = document.createElement("button");
+          b.className = "pageBtn" + (active ? " active" : "");
+          b.textContent = text;
+          b.disabled = !!disabled;
+          b.addEventListener("click", () => {
+            if (b.disabled) return;
+            onClick();
+            renderComedians();
+            window.scrollTo({top:0, behavior:"smooth"});
+          });
+          return b;
+        };
+
+        pag.appendChild(mkBtn("«", page===1, false, () => { page = Math.max(1, page-1); }));
+
+        const maxButtons = 11;
+        let start = Math.max(1, page - Math.floor(maxButtons/2));
+        let end = Math.min(pages, start + maxButtons - 1);
+        start = Math.max(1, end - maxButtons + 1);
+
+        for (let p = start; p <= end; p++){
+          pag.appendChild(mkBtn(String(p), false, p===page, () => { page = p; }));
+        }
+
+        pag.appendChild(mkBtn("»", page===pages, false, () => { page = Math.min(pages, page+1); }));
+      }
+    }
+
+    if (searchEl){
+      searchEl.addEventListener("input", () => {
+        q = searchEl.value;
+        page = 1;
+        renderComedians();
+      });
+    }
+
+    renderComedians();
+  }
+
+  return { init, initRating, initComedians };
 })();
