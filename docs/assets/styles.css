@@ -164,7 +164,7 @@ body{
   font-weight:900;
 }
 
-/* Pornhub-style fading slogan */
+/* Pornhub-style fading slogan + slow breathing */
 .topBrand .slogan{
   margin:0;
   font-size:14px;
@@ -174,14 +174,32 @@ body{
 
   opacity:0;
   filter: blur(4px);
-  animation: sloganFade 900ms ease-out 300ms forwards;
+
+  animation:
+    sloganFadeIn 900ms ease-out 300ms forwards,
+    sloganBreath 7s ease-in-out 1.5s infinite;
 }
 
-@keyframes sloganFade{
+@keyframes sloganFadeIn{
   to{
     opacity:1;
     filter: blur(0);
     text-shadow: 0 0 12px rgba(255,138,0,.25);
+  }
+}
+
+@keyframes sloganBreath{
+  0%{
+    opacity:1;
+    text-shadow: 0 0 10px rgba(255,138,0,.20);
+  }
+  50%{
+    opacity:.78;
+    text-shadow: 0 0 18px rgba(255,138,0,.35);
+  }
+  100%{
+    opacity:1;
+    text-shadow: 0 0 10px rgba(255,138,0,.20);
   }
 }
 
@@ -208,6 +226,15 @@ body{
 .navBtn[aria-current="page"]{
   border-color: rgba(255,138,0,.9);
   box-shadow: 0 0 0 2px rgba(255,138,0,.15) inset;
+}
+
+/* "Мені пощастить" (optional accent) */
+.luckyBtn{
+  border-color: rgba(255,138,0,.45);
+}
+.luckyBtn:hover{
+  background: rgba(255,138,0,.15);
+  border-color: rgba(255,138,0,.9);
 }
 
 /* CONTROLS */
@@ -339,6 +366,34 @@ body{
   gap:8px;
 }
 
+/* Author link: Pornhub-style pill */
+.performerLink,
+.performerLink:visited{
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 900;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 3px 10px;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+.performerLink:hover{
+  border-color: rgba(255,138,0,.75);
+  background: rgba(255,138,0,.12);
+  box-shadow: 0 0 0 2px rgba(255,138,0,.12) inset, 0 0 18px rgba(255,138,0,.18);
+}
+
+.performerLink:active{
+  transform: translateY(1px);
+}
+
 /* =========================
    PAGINATION
    ========================= */
@@ -455,5 +510,9 @@ body{
     opacity:1;
     filter:none;
     text-shadow:none;
+  }
+  .performerLink,
+  .performerLink:visited{
+    transition:none;
   }
 }
