@@ -522,8 +522,9 @@ const StandupHub = (() => {
           <tr>
             ${columns.map(c => {
               const active = c.key === sortKey;
-              const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "↕";
-              return `<th data-key="${escapeAttr(c.key)}">${escapeHtml(c.label)}<span class="sortHint">${arrow}</span></th>`;
+              return `<th data-key="${escapeAttr(c.key)}" class="${active ? "isSorted" : ""}" data-dir="${active ? sortDir : ""}">
+                ${escapeHtml(c.label)}<span class="sortHint" aria-hidden="true"></span>
+              </th>`;
             }).join("")}
           </tr>
         </thead>

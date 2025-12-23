@@ -628,3 +628,84 @@ body{
   }
   .ytModalTitle{ max-width: 78%; }
 }
+
+/* Rating sort icons (CSS chevrons) */
+.ratingTable th{
+  position: relative;
+  white-space: nowrap;
+}
+
+.ratingTable th .sortHint{
+  display:inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  vertical-align: -2px;
+  opacity: .55;
+}
+
+/* default (unsorted): show both chevrons */
+.ratingTable th .sortHint::before,
+.ratingTable th .sortHint::after{
+  content:"";
+  display:block;
+  width: 0;
+  height: 0;
+  margin: 1px auto;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+.ratingTable th .sortHint::before{
+  border-bottom: 6px solid rgba(233,233,239,.55); /* up */
+}
+
+.ratingTable th .sortHint::after{
+  border-top: 6px solid rgba(233,233,239,.55); /* down */
+}
+
+/* sorted column: highlight one direction */
+.ratingTable th.isSorted .sortHint{
+  opacity: 1;
+}
+
+.ratingTable th.isSorted[data-dir="asc"] .sortHint::before{
+  border-bottom-color: rgba(255,138,0,.95);
+}
+.ratingTable th.isSorted[data-dir="asc"] .sortHint::after{
+  border-top-color: rgba(233,233,239,.18);
+}
+
+.ratingTable th.isSorted[data-dir="desc"] .sortHint::after{
+  border-top-color: rgba(255,138,0,.95);
+}
+.ratingTable th.isSorted[data-dir="desc"] .sortHint::before{
+  border-bottom-color: rgba(233,233,239,.18);
+}
+
+/* Card meta: cleaner layout */
+.cardMeta{
+  align-items: center;
+  gap: 8px;
+  row-gap: 8px;
+}
+
+/* Outline chips for meta (views/date) */
+.cardMeta .badge{
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(233,233,239,.88);
+  padding: 4px 10px;
+  border-radius: 999px;
+  line-height: 1.1;
+}
+
+/* Make chips slightly smaller than author pill */
+.cardMeta .badge{
+  font-size: 12px;
+}
+
+/* Hover/feel (optional) */
+.cardMeta .badge:hover{
+  border-color: rgba(255,138,0,.35);
+}
