@@ -4,21 +4,32 @@
 """
 rate.py
 
-Build a stand-up comedian rating from filtered_videos.csv using performers.txt and exceptions.txt.
+Build a stand-up comedian rating from filtered_videos.csv using performers.txt,
+with fallback attribution from channels_map.txt when a title contains no performer.
 
-Filters (before rating):
+Filtering before rating:
 - drop videos listed in exceptions.txt (by URL or video_id)
-- drop videos where title matches 0 performers from performers.txt
-- drop videos where title matches >1 performers (multi)
+- determine performer:
+    1) if title matches EXACTLY ONE performer (from performers.txt) -> use it
+    2) if title matches ZERO performers -> use channels_map.txt[channel_id] if present
+    3) if title matches >1 performers -> drop (multi)
+- (optional) you can keep or drop videos whose channel_id is missing and title has no performer (currently dropped)
 
-Adds engagement:
-- total_likes / total_views (like rate)
-- Bayesian-smoothed like rate (stabilized, avoids tiny-sample winners)
+Engagement:
+- like_rate_pct = total_likes / total_views * 100
+- like_rate_smooth_pct = Bayesian-smoothed like rate:
+      (likes + M*p0) / (views + M)
 
 Outputs:
 - out/rating.csv
 - out/videos_clean.csv
 - out/videos_dropped.csv
+
+Files:
+- filtered_videos.csv (input)
+- performers.txt      (canonical | alias1 | alias2 ...)
+- channels_map.txt    (channel_id | Canonical Name)
+- exceptions.txt      (one url or video_id per line; comments with #)
 """
 
 from __future__ import annotations
@@ -30,10 +41,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+
 # ---------- Config ----------
 
-INPUT_VIDEOS = Path("out/filtered_videos.csv")
+INPUT_VIDEOS = Path("filtered_videos.csv")
 INPUT_PERFORMERS = Path("performers.txt")
+INPUT_CHANNELS_MAP = Path("channels_map.txt")
 INPUT_EXCEPTIONS = Path("exceptions.txt")
 
 OUT_DIR = Path("out")
@@ -42,25 +55,25 @@ OUT_CLEAN = OUT_DIR / "videos_clean.csv"
 OUT_DROPPED = OUT_DIR / "videos_dropped.csv"
 
 # Composite index weights (industry-ish, creator-centric)
-# Score = 0.45*log(total_views) + 0.25*log(peak) + 0.20*log(video_count) + 0.10*log(total_minutes)
-W_TOTAL = 0.45   # catalog impact
-W_PEAK = 0.25    # hit power
-W_COUNT = 0.20   # consistency
-W_MINUTES = 0.10 # output volume
+# score = 0.45*log(total_views) + 0.25*log(peak) + 0.20*log(video_count) + 0.10*log(total_minutes)
+W_TOTAL = 0.45
+W_PEAK = 0.25
+W_COUNT = 0.20
+W_MINUTES = 0.10
 
 # Engagement smoothing:
 # like_rate_smooth = (likes + M*p0) / (views + M)
-# M is the "confidence" in prior mean p0, expressed in views.
 SMOOTH_M_VIEWS = 50_000
 
-# Optional: make engagement gently affect final score (recommended OFF by default)
+# Optional: gently apply engagement to score (OFF by default)
 ENABLE_ENGAGEMENT_MULTIPLIER = False
-ENG_MULT_CLAMP = (0.85, 1.15)  # clamp multiplier range
+ENG_MULT_CLAMP = (0.85, 1.15)
 
 
 # ---------- Helpers ----------
 
 _YT_ID_RE = re.compile(r"(?:v=|/shorts/|youtu\.be/)([A-Za-z0-9_-]{11})")
+
 
 def extract_video_id(url_or_id: str) -> Optional[str]:
     s = (url_or_id or "").strip()
@@ -73,6 +86,7 @@ def extract_video_id(url_or_id: str) -> Optional[str]:
         return m.group(1)
     return None
 
+
 def parse_int(x: object, default: int = 0) -> int:
     try:
         if x is None:
@@ -83,6 +97,7 @@ def parse_int(x: object, default: int = 0) -> int:
         return int(float(s))
     except Exception:
         return default
+
 
 def parse_duration_iso8601(d: str) -> int:
     # ISO8601: PT#H#M#S
@@ -95,11 +110,18 @@ def parse_duration_iso8601(d: str) -> int:
     s = int(m.group(3) or 0)
     return h * 3600 + mm * 60 + s
 
+
 def safe_casefold(s: object) -> str:
     return str(s or "").casefold()
 
+
 def normalize_spaces(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
+
+
+def clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
 
 def ensure_out_dir() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -145,16 +167,15 @@ def load_exceptions(path: Path) -> Tuple[Set[str], Set[str]]:
 
     return excluded_ids, excluded_urls
 
-def load_performers(path: Path) -> Tuple[Dict[str, List[str]], List[Tuple[str, re.Pattern]]]:
+
+def load_performers(path: Path) -> List[Tuple[str, re.Pattern]]:
     """
     performers.txt format:
       Canonical | alias1 | alias2 | ...
 
     Returns:
-      canonical -> aliases list (including canonical itself)
       compiled list of (canonical, regex) for alias matching
     """
-    canonical_to_aliases: Dict[str, List[str]] = {}
     compiled: List[Tuple[str, re.Pattern]] = []
 
     text = path.read_text(encoding="utf-8").splitlines()
@@ -182,19 +203,42 @@ def load_performers(path: Path) -> Tuple[Dict[str, List[str]], List[Tuple[str, r
             seen.add(key)
             aliases.append(a)
 
-        canonical_to_aliases[canonical] = aliases
-
-    # compile alias regex with "word-ish" boundaries
-    # (?<!\w)ALIAS(?!\w) works fairly well for UA + LAT.
-    for canonical, aliases in canonical_to_aliases.items():
+        # compile alias regex with word-ish boundaries
         for alias in aliases:
-            a = alias.strip()
-            if not a:
-                continue
-            pat = re.compile(rf"(?<!\w){re.escape(a)}(?!\w)", flags=re.IGNORECASE | re.UNICODE)
+            pat = re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)", flags=re.IGNORECASE | re.UNICODE)
             compiled.append((canonical, pat))
 
-    return canonical_to_aliases, compiled
+    return compiled
+
+
+def load_channels_map(path: Path) -> Dict[str, str]:
+    """
+    channels_map.txt format:
+      channel_id | Canonical Name
+
+    Example:
+      UCxxxxxx | Віталік Кремінь
+
+    Lines starting with # are comments.
+    """
+    m: Dict[str, str] = {}
+    if not path.exists():
+        return m
+
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [normalize_spaces(p) for p in line.split("|")]
+        parts = [p for p in parts if p]
+        if len(parts) < 2:
+            continue
+        channel_id = parts[0]
+        performer = parts[1]
+        if channel_id and performer:
+            m[channel_id] = performer
+    return m
+
 
 def read_videos_csv(path: Path) -> List[VideoRow]:
     """
@@ -212,7 +256,7 @@ def read_videos_csv(path: Path) -> List[VideoRow]:
       - channel_title / channelTitle
     """
     rows: List[VideoRow] = []
-    with path.open("r", encoding="utf-8-sig", newline="") as f:
+    with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         for r in reader:
             url = (r.get("url") or r.get("video_url") or "").strip()
@@ -228,7 +272,6 @@ def read_videos_csv(path: Path) -> List[VideoRow]:
             views = parse_int(r.get("view_count") or r.get("views") or r.get("viewCount") or r.get("viewcount") or 0, 0)
             likes = parse_int(r.get("like_count") or r.get("likes") or r.get("likeCount") or r.get("likecount") or 0, 0)
 
-            # duration
             dur = r.get("duration_sec") or r.get("duration_seconds") or r.get("length_seconds") or r.get("lengthSeconds")
             duration_sec = parse_int(dur, 0)
             if duration_sec == 0:
@@ -262,9 +305,6 @@ def read_videos_csv(path: Path) -> List[VideoRow]:
 # ---------- Core logic ----------
 
 def match_performers_in_title(title: str, compiled_aliases: List[Tuple[str, re.Pattern]]) -> Set[str]:
-    """
-    Returns set of canonical performer names matched in title.
-    """
     t = normalize_spaces(title)
     matched: Set[str] = set()
     for canonical, rx in compiled_aliases:
@@ -272,20 +312,35 @@ def match_performers_in_title(title: str, compiled_aliases: List[Tuple[str, re.P
             matched.add(canonical)
     return matched
 
-def compute_base_score(total_views: int, peak_views: int, video_count: int, total_minutes: float) -> float:
-    """
-    Composite Stand-up Reach Index (SRI), creator-centric.
 
-    Uses log1p normalization to prevent one metric dominating.
-    """
+def compute_base_score(total_views: int, peak_views: int, video_count: int, total_minutes: float) -> float:
+    # log1p normalization prevents one metric dominating
     T = math.log1p(max(0, total_views))
     P = math.log1p(max(0, peak_views))
     V = math.log1p(max(0, video_count))
     D = math.log1p(max(0.0, total_minutes))
     return (W_TOTAL * T) + (W_PEAK * P) + (W_COUNT * V) + (W_MINUTES * D)
 
-def clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
+
+def write_csv(path: Path, rows: List[dict]) -> None:
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return
+
+    # union of all keys (stable order)
+    fieldnames: List[str] = list(rows[0].keys())
+    seen = set(fieldnames)
+    for r in rows[1:]:
+        for k in r.keys():
+            if k not in seen:
+                seen.add(k)
+                fieldnames.append(k)
+
+    with path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rows)
+
 
 def main() -> None:
     ensure_out_dir()
@@ -296,7 +351,9 @@ def main() -> None:
         raise SystemExit(f"Input not found: {INPUT_PERFORMERS}")
 
     excluded_ids, excluded_urls = load_exceptions(INPUT_EXCEPTIONS)
-    _, compiled_aliases = load_performers(INPUT_PERFORMERS)
+    compiled_aliases = load_performers(INPUT_PERFORMERS)
+    channel_owner = load_channels_map(INPUT_CHANNELS_MAP)
+
     videos = read_videos_csv(INPUT_VIDEOS)
 
     clean_rows: List[dict] = []
@@ -307,12 +364,11 @@ def main() -> None:
     per_minutes: Dict[str, float] = {}
     per_likes: Dict[str, int] = {}
 
-    # Global totals (for engagement prior mean p0)
     global_views = 0
     global_likes = 0
 
     for v in videos:
-        # exceptions (by id or exact url line)
+        # exceptions
         if v.video_id in excluded_ids or v.url in excluded_urls:
             dropped_rows.append({
                 "video_id": v.video_id,
@@ -322,6 +378,7 @@ def main() -> None:
                 "like_count": v.like_count,
                 "duration_sec": v.duration_sec,
                 "published_at": v.published_at,
+                "channel_id": v.channel_id,
                 "channel_title": v.channel_title,
                 "drop_reason": "exception",
             })
@@ -329,21 +386,32 @@ def main() -> None:
 
         matched = match_performers_in_title(v.title, compiled_aliases)
 
-        if len(matched) == 0:
-            dropped_rows.append({
-                "video_id": v.video_id,
-                "url": v.url,
-                "title": v.title,
-                "view_count": v.view_count,
-                "like_count": v.like_count,
-                "duration_sec": v.duration_sec,
-                "published_at": v.published_at,
-                "channel_title": v.channel_title,
-                "drop_reason": "no_performer_in_title",
-            })
-            continue
+        performer: Optional[str] = None
+        attribution: str = ""
 
-        if len(matched) > 1:
+        if len(matched) == 1:
+            performer = next(iter(matched))
+            attribution = "title"
+        elif len(matched) == 0:
+            # fallback to channel->performer map
+            if v.channel_id and v.channel_id in channel_owner:
+                performer = channel_owner[v.channel_id]
+                attribution = "channel_map"
+            else:
+                dropped_rows.append({
+                    "video_id": v.video_id,
+                    "url": v.url,
+                    "title": v.title,
+                    "view_count": v.view_count,
+                    "like_count": v.like_count,
+                    "duration_sec": v.duration_sec,
+                    "published_at": v.published_at,
+                    "channel_id": v.channel_id,
+                    "channel_title": v.channel_title,
+                    "drop_reason": "no_performer_in_title_and_no_channel_map",
+                })
+                continue
+        else:
             dropped_rows.append({
                 "video_id": v.video_id,
                 "url": v.url,
@@ -352,16 +420,17 @@ def main() -> None:
                 "like_count": v.like_count,
                 "duration_sec": v.duration_sec,
                 "published_at": v.published_at,
+                "channel_id": v.channel_id,
                 "channel_title": v.channel_title,
                 "drop_reason": "multiple_performers_in_title",
                 "matched_performers": "; ".join(sorted(matched)),
             })
             continue
 
-        performer = next(iter(matched))
-
+        # keep clean
         clean_rows.append({
             "performer": performer,
+            "attribution": attribution,
             "video_id": v.video_id,
             "url": v.url,
             "title": v.title,
@@ -381,7 +450,7 @@ def main() -> None:
         global_views += v.view_count
         global_likes += v.like_count
 
-    # Global prior mean like-rate
+    # Engagement prior mean like-rate
     p0 = (global_likes / global_views) if global_views > 0 else 0.0
     M = SMOOTH_M_VIEWS
 
@@ -398,65 +467,50 @@ def main() -> None:
         like_rate = (total_likes / total_views) if total_views > 0 else 0.0
         like_rate_smooth = ((total_likes + M * p0) / (total_views + M)) if (total_views + M) > 0 else 0.0
 
-        # Optional gentle multiplier (OFF by default)
         eng_mult = 1.0
         score_with_engagement = base_score
         if ENABLE_ENGAGEMENT_MULTIPLIER and p0 > 0:
-            # Relative to dataset mean; gentle effect and clamped
             eng_mult = 1.0 + 0.5 * ((like_rate_smooth - p0) / p0)
             eng_mult = clamp(eng_mult, ENG_MULT_CLAMP[0], ENG_MULT_CLAMP[1])
             score_with_engagement = base_score * eng_mult
 
         rating_rows.append({
             "performer": performer,
-
-            # main scores
             "score": round(base_score, 8),
             "score_with_engagement": round(score_with_engagement, 8),
             "eng_mult": round(eng_mult, 6),
 
-            # core metrics
             "total_views": total_views,
             "peak_views": peak_views,
             "video_count": video_count,
             "total_minutes": round(total_minutes, 3),
 
-            # engagement metrics
             "total_likes": total_likes,
             "like_rate_pct": round(like_rate * 100.0, 4),
             "like_rate_smooth_pct": round(like_rate_smooth * 100.0, 4),
         })
 
-    # Sort: by score_with_engagement if enabled, else by score
     sort_key = "score_with_engagement" if ENABLE_ENGAGEMENT_MULTIPLIER else "score"
     rating_rows.sort(key=lambda r: r[sort_key], reverse=True)
 
     for i, r in enumerate(rating_rows, start=1):
         r["rank"] = i
 
-    # ---------- Write CSVs ----------
-
-    def write_csv(path: Path, rows: List[dict]) -> None:
-        if not rows:
-            path.write_text("", encoding="utf-8")
-            return
-        with path.open("w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-            w.writeheader()
-            w.writerows(rows)
-
+    # Write outputs
     write_csv(OUT_CLEAN, clean_rows)
     write_csv(OUT_DROPPED, dropped_rows)
     write_csv(OUT_RATING, rating_rows)
 
     print(f"OK: videos in: {len(videos)}")
-    print(f"OK: videos clean (rated): {len(clean_rows)} -> {OUT_CLEAN}")
-    print(f"OK: videos dropped: {len(dropped_rows)} -> {OUT_DROPPED}")
+    print(f"OK: clean (rated): {len(clean_rows)} -> {OUT_CLEAN}")
+    print(f"OK: dropped: {len(dropped_rows)} -> {OUT_DROPPED}")
     print(f"OK: rating rows: {len(rating_rows)} -> {OUT_RATING}")
     if global_views > 0:
-        print(f"OK: global like rate (prior p0): {p0*100:.3f}% (M={M})")
+        print(f"OK: global like rate (p0): {p0*100:.3f}% (M={M})")
     else:
-        print("WARN: global views == 0; engagement prior p0 = 0")
+        print("WARN: global views == 0; engagement prior p0 = 0.0")
+    if not INPUT_CHANNELS_MAP.exists():
+        print(f"NOTE: {INPUT_CHANNELS_MAP} not found, channel fallback disabled.")
 
 
 if __name__ == "__main__":
