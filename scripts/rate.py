@@ -44,7 +44,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 # ---------- Config ----------
 
-INPUT_VIDEOS = Path("filtered_videos.csv")
+INPUT_VIDEOS = Path("out/filtered_videos.csv")
 INPUT_PERFORMERS = Path("performers.txt")
 INPUT_CHANNELS_MAP = Path("channels_map.txt")
 INPUT_EXCEPTIONS = Path("exceptions.txt")
