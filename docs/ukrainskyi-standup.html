@@ -9,30 +9,6 @@
   <link rel="canonical" href="https://standuphub.com.ua/ukrainskyi-standap.html" />
 
   <link rel="stylesheet" href="assets/styles.css" />
-
-  <!-- (опційно) Невеличкі локальні стилі, щоб сторінка виглядала як контентна -->
-  <style>
-    .seoPage { padding: 18px 0; }
-    .seoCard {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 18px;
-      margin: 14px 0;
-    }
-    .seoCard h1, .seoCard h2 { margin: 0 0 10px; }
-    .seoCard p { margin: 0 0 10px; line-height: 1.55; }
-    .seoGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
-    .seoLinkRow { display:flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    .seoLinkRow a { text-decoration: none; }
-    .seoBullets { margin: 10px 0 0; padding-left: 18px; }
-    .seoBullets li { margin: 6px 0; }
-  </style>
 </head>
 
 <!-- Google tag (gtag.js) -->
@@ -58,37 +34,86 @@
           </div>
         </div>
 
-        <!-- NAV -->
+        <!-- NAV (без кнопки “Український стендап”, як просив) -->
         <div class="navLeft">
           <a class="navBtn" href="./index.html">Відео</a>
           <a class="navBtn" href="./rating.html">Рейтинг</a>
           <a class="navBtn" href="./comedians.html">Коміки</a>
-          <a class="navBtn" href="./ukrainskyi-standap.html">Український стендап</a>
           <a class="navBtn" href="./about.html">Про сайт</a>
         </div>
 
-        <!-- CONTROLS (на цій сторінці не потрібні — залишаємо порожньо, щоб не ламати верстку) -->
+        <!-- CONTROLS (на контентній сторінці не потрібні) -->
         <div class="controls"></div>
       </header>
 
-      <section class="seoPage">
-        <div class="seoCard">
-          <h1>Український стендап</h1>
-          <p>
-            Український стендап — це сучасна комедійна сцена України, яка активно розвивається
-            на YouTube та концертних майданчиках. На StandupHub зібрані стендап-відео, коміки та
-            рейтинг популярності на основі реальних переглядів і лайків.
-          </p>
-          <div class="seoLinkRow">
-            <a class="navBtn" href="./index.html">Дивитися останні відео →</a>
-            <a class="navBtn" href="./comedians.html">Коміки →</a>
-            <a class="navBtn" href="./rating.html">Рейтинг →</a>
-          </div>
-        </div>
+      <section>
+        <h1>Український стендап</h1>
 
-        <div class="seoCard">
-          <h2>Що таке український стендап</h2>
-          <p>
-            Стендап — це формат комедії, де комік виступає з авторським монологом перед живою аудиторією.
-            В Україні жанр став масово популярним завдяки незалежним клубам, телепроєктам та YouTube-каналам,
-            де регулярно вихо
+        <p>
+          Український стендап — це сучасна комедійна сцена України, яка активно розвивається
+          на YouTube та концертних майданчиках. На StandupHub зібрані стендап-відео, коміки та
+          рейтинг популярності на основі реальних переглядів і лайків.
+        </p>
+
+        <h2>Що таке український стендап</h2>
+        <p>
+          Стендап — це формат комедії, де комік виступає з авторським монологом перед живою аудиторією.
+          В Україні жанр став масово популярним завдяки незалежним клубам, телепроєктам та YouTube-каналам,
+          де регулярно виходять концерти, монологи та добірки.
+        </p>
+
+        <h2>Українські стендап-коміки</h2>
+        <p>
+          Український стендап об’єднує десятки коміків з різними стилями гумору — від побутових спостережень
+          до сатири та соціальних тем. На StandupHub у кожного коміка є сторінка з відео та статистикою.
+        </p>
+        <p>
+          <a class="navBtn" href="./comedians.html">Перейти до списку коміків →</a>
+        </p>
+
+        <h2>Стендап-відео та концерти</h2>
+        <p>
+          Значна частина українського стендапу сьогодні виходить у форматі відео:
+          концертні записи, сольні виступи та монологи. Ми регулярно оновлюємо базу,
+          щоб можна було швидко знайти нові виступи.
+        </p>
+        <p>
+          <a class="navBtn" href="./index.html">Дивитися останні відео →</a>
+        </p>
+
+        <h2>Рейтинг українського стендапу</h2>
+        <p>
+          Рейтинг на StandupHub формується на основі переглядів, лайків та активності відео.
+          Це допомагає бачити динаміку популярності й відкривати нових коміків через цифри.
+        </p>
+        <p>
+          <a class="navBtn" href="./rating.html">Перейти до рейтингу →</a>
+        </p>
+      </section>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
+      </div>
+
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Швидка навігація</div>
+        <div class="sidebarList">
+          <a class="sideAllBtn" href="./index.html">Останні відео →</a>
+          <a class="sideAllBtn" href="./rating.html">Рейтинг →</a>
+          <a class="sideAllBtn" href="./comedians.html">Коміки →</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    // Потрібно, щоб “Топ коміків” у сайдбарі заповнився
+    StandupHub.init({ mode: "all", performer: null });
+  </script>
+</body>
+</html>
