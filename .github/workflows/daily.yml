@@ -37,6 +37,13 @@ jobs:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
         run: |
           python scripts/run_pipeline.py
+      
+      # sitemap.xml + robots.txt
+      - name: Generate sitemap.xml and robots.txt
+        run: |
+          python scripts/gen_sitemap.py \
+            --base https://standuphub.com.ua \
+            --docs docs
 
       - name: Upload artifact (Pages)
         uses: actions/upload-pages-artifact@v3
