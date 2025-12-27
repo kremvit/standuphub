@@ -256,7 +256,7 @@ def read_videos_csv(path: Path) -> List[VideoRow]:
       - channel_title / channelTitle
     """
     rows: List[VideoRow] = []
-    with path.open("r", encoding="utf-8", newline="") as f:
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         for r in reader:
             url = (r.get("url") or r.get("video_url") or "").strip()
