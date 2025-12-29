@@ -24,3 +24,4 @@
 @korolkostandup
 @svitlo.standup
 @roxanatymkiv
+@-indiestandup
