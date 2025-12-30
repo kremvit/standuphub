@@ -709,3 +709,32 @@ body{
 .cardMeta .badge:hover{
   border-color: rgba(255,138,0,.35);
 }
+
+/* --- Contacts / Instagram --- */
+.contactLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent, #ff5a1f);
+  text-decoration: none;
+
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  transition: background .15s ease, transform .1s ease;
+}
+
+.contactLink:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+
+.igIcon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
