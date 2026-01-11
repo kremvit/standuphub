@@ -25,3 +25,4 @@
 @svitlo.standup
 @roxanatymkiv
 @-indiestandup
+@standupperekitsey
