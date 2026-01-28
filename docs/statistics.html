@@ -5,6 +5,108 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Статистика • StandupHub</title>
   <link rel="stylesheet" href="assets/styles.css" />
+
+  <style>
+    /* --- local tweaks for statistics page only --- */
+
+    /* 1) month picker look like site inputs */
+    .controls input[type="month"]{
+      /* якщо в styles.css вже є стилі для input — це лише підправить month */
+      width: 170px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.12);
+      color: inherit;
+      outline: none;
+    }
+    .controls input[type="month"]:focus{
+      border-color: rgba(255,255,255,.22);
+    }
+
+    /* 2) stats cards */
+    .statsGrid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 900px){
+      .statsGrid{ grid-template-columns: 1fr; }
+      .controls input[type="month"]{ width: 100%; }
+    }
+
+    .statCard{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.12);
+    }
+    .statLabel{ opacity:.75; font-size:13px; margin-bottom:6px; }
+    .statValue{
+      font-size:28px;
+      font-weight:700;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:baseline;
+      line-height:1.15;
+    }
+    .statDelta{ font-size:14px; font-weight:700; }
+    .statDelta.zero{ opacity:.6; }
+    .statDelta.pos{ color: var(--green, #22c55e); }
+    .statDelta.neg{ color: var(--red, #ef4444); }
+
+    /* 3) top video */
+    .topBox{
+      margin-top:12px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.12);
+    }
+    .topHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .topTitle{ font-weight:700; }
+    .topMeta{ opacity:.8; font-size:14px; }
+
+    .ytWrap{
+      margin-top:10px;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+    }
+    .ytWrap iframe{
+      width:100%;
+      aspect-ratio:16/9;
+      border:0;
+      display:block;
+    }
+
+    /* 3) laptop only: make iframe ~40% smaller (60% width), centered */
+    @media (min-width: 900px) and (max-width: 1400px){
+      .ytWrap{
+        max-width: 60%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    .hint{ margin-top:10px; opacity:.7; font-size:13px; }
+    .error{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,120,120,.35);
+      background: rgba(255,120,120,.10);
+    }
+  </style>
 </head>
 
 <!-- Google tag (gtag.js) -->
@@ -87,8 +189,9 @@
     }
     function fmtDelta(n){
       if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "zero" };
-      const sign = n > 0 ? "+" : "−";
-      return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
+      const cls = (n > 0) ? "pos" : "neg";
+      const sign = (n > 0) ? "+" : "−";
+      return { text: `${sign}${fmtNum(Math.abs(n))}`, cls };
     }
     function fmtMinutes(totalSec){
       const mins = Math.round((totalSec/60) * 10) / 10;
@@ -162,7 +265,6 @@
       s = s.replace(/(\d),(\d)/g, "$1.$2");
       s = s.replace(/\.(\d{3})\d+/g, ".$1");
       s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
-
       if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) s = s + "Z";
 
       const d = new Date(s);
@@ -243,36 +345,7 @@
     }
 
     // ---------- render ----------
-    function ensureInlineStyles(){
-      // Мінімальні стилі, щоб навіть без додавання в styles.css все виглядало ок.
-      // Якщо у вас вже є такі класи в styles.css — вони просто переважать/доповнять.
-      if (document.getElementById("statsInlineCss")) return;
-      const css = `
-        .statsGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:12px; }
-        @media (max-width:900px){ .statsGrid{ grid-template-columns:1fr; } }
-        .statCard{ padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.12); }
-        .statLabel{ opacity:.75; font-size:13px; margin-bottom:6px; }
-        .statValue{ font-size:28px; font-weight:700; display:flex; gap:10px; flex-wrap:wrap; align-items:baseline; line-height:1.15; }
-        .statDelta{ font-size:14px; font-weight:600; opacity:.85; }
-        .statDelta.zero{ opacity:.6; }
-        .topBox{ margin-top:12px; padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.12); }
-        .topHead{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
-        .topTitle{ font-weight:700; }
-        .topMeta{ opacity:.8; font-size:14px; }
-        .ytWrap{ margin-top:10px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:rgba(0,0,0,.20); }
-        .ytWrap iframe{ width:100%; aspect-ratio:16/9; border:0; display:block; }
-        .hint{ margin-top:10px; opacity:.7; font-size:13px; }
-        .error{ margin-top:12px; padding:12px; border-radius:12px; border:1px solid rgba(255,120,120,.35); background:rgba(255,120,120,.10); }
-      `;
-      const style = document.createElement("style");
-      style.id = "statsInlineCss";
-      style.textContent = css;
-      document.head.appendChild(style);
-    }
-
     function renderStats(selected, prev){
-      ensureInlineStyles();
-
       const grid = document.getElementById("statsGrid");
       grid.innerHTML = "";
 
