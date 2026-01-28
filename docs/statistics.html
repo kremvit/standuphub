@@ -1,38 +1,414 @@
-<header class="topbar">
-  <!-- BRAND BLOCK (зліва) -->
-  <div class="topBrand">
-    <a class="brandLink" href="./index.html">
-      <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
-    </a>
-    <div class="slogan">
-      Твоя щоденна доза стендапу
-    </div>
-  </div>
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Статистика — StandupHub</title>
 
-  <!-- NAV -->
-  <div class="navLeft">
-    <a class="navBtn" href="./index.html">Відео</a>
-    <a class="navBtn" href="./rating.html">Рейтинг</a>
-    <a class="navBtn" href="./comedians.html">Коміки</a>
-    <a class="navBtn" href="./about.html">Про сайт</a>
-    <a class="navBtn active" href="./statistics.html">Статистика</a>
-  </div>
+  <link rel="stylesheet" href="./assets/styles.css" />
 
-  <!-- CONTROLS (приховані на цій сторінці) -->
-  <div class="controls statsControlsHidden">
-    <div class="control">
-      <label>Сортування</label>
-      <select disabled></select>
+  <style>
+    /* локально для цієї сторінки — не ламає інші */
+    .page { max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
+
+    .statsHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .statsHead h1{ margin: 0; }
+
+    .monthPick{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .monthPick label{ opacity:.8; font-size:14px; }
+    .monthPick input[type="month"]{
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.15);
+      color: inherit;
+    }
+
+    .statsGrid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 900px){ .statsGrid{ grid-template-columns: 1fr; } }
+
+    .card{
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.12);
+    }
+    .label{ opacity:.75; font-size:13px; margin-bottom:6px; }
+    .value{
+      font-size: 28px;
+      font-weight: 700;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:baseline;
+      line-height:1.15;
+    }
+    .delta{ font-size: 14px; font-weight: 600; opacity:.85; }
+    .delta.zero{ opacity:.6; }
+
+    .topBox{
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.12);
+    }
+    .topHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .topHead h2{ margin: 0; }
+    .topMeta{ opacity:.8; font-size:14px; }
+
+    .ytWrap{
+      margin-top: 12px;
+      border-radius: 14px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+    }
+    .ytWrap iframe{
+      width:100%;
+      aspect-ratio: 16 / 9;
+      border:0;
+      display:block;
+    }
+
+    .hint{ margin-top: 10px; opacity:.7; font-size: 13px; }
+    .error{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,120,120,.35);
+      background: rgba(255,120,120,.10);
+    }
+
+    /* На статистиці controls не потрібні, але щоб верстка topbar не “стрибала” — ховаємо акуратно */
+    .controls.statsHide{
+      visibility: hidden;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Твій реальний header/nav (1:1) + додав клас statsHide -->
+  <header class="topbar">
+    <!-- BRAND BLOCK (зліва) -->
+    <div class="topBrand">
+      <a class="brandLink" href="./index.html">
+        <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+      </a>
+      <div class="slogan">
+        Твоя щоденна доза стендапу
+      </div>
     </div>
 
-    <div class="control">
-      <label>Найкраще</label>
-      <select disabled></select>
+    <!-- NAV -->
+    <div class="navLeft">
+      <a class="navBtn" href="./index.html">Відео</a>
+      <a class="navBtn" href="./rating.html">Рейтинг</a>
+      <a class="navBtn" href="./comedians.html">Коміки</a>
+      <a class="navBtn" href="./about.html">Про сайт</a>
+      <a class="navBtn active" href="./statistics.html">Статистика</a>
     </div>
 
-    <div class="control search">
-      <label>Пошук</label>
-      <input disabled />
+    <!-- CONTROLS (є, але приховані на цій сторінці) -->
+    <div class="controls statsHide">
+      <div class="control">
+        <label>Сортування</label>
+        <select id="sortSelect">
+          <option value="date_desc">Останні додані</option>
+          <option value="views_desc">Найбільше переглядів</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>Найкраще</label>
+        <select id="rangeSelect">
+          <option value="all">Увесь час</option>
+          <option value="1m">За місяць</option>
+          <option value="6m">За пів року</option>
+          <option value="1y">За рік</option>
+        </select>
+      </div>
+
+      <div class="control search">
+        <label>Пошук</label>
+        <input id="searchInput" placeholder="назва відео / комік" />
+      </div>
     </div>
-  </div>
-</header>
+  </header>
+
+  <main class="page">
+    <div class="statsHead">
+      <h1>Статистика по місяцях</h1>
+
+      <div class="monthPick">
+        <label for="monthPick">Місяць:</label>
+        <input id="monthPick" type="month" />
+      </div>
+    </div>
+
+    <div class="statsGrid" id="statsGrid" aria-live="polite"></div>
+
+    <section class="topBox" id="topBox" hidden>
+      <div class="topHead">
+        <h2>Топ відео місяця</h2>
+        <div class="topMeta" id="topMeta"></div>
+      </div>
+      <div class="ytWrap" id="ytWrap"></div>
+    </section>
+
+    <div class="hint" id="hint">Завантажую дані…</div>
+    <div class="error" id="error" hidden></div>
+  </main>
+
+  <script>
+    const DATA_URL = "./data/videos_clean.csv";
+
+    // tolerant getters
+    function getPublishedRaw(v){
+      return (v?.published_at ?? v?.publishedAt ?? v?.published ?? v?.published_date ?? v?.date ?? v?.snippet?.publishedAt ?? "");
+    }
+    function getVideoId(v){
+      return (v?.video_id ?? v?.videoId ?? v?.id ?? "");
+    }
+    function getViews(v){
+      const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? 0);
+      const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function getDurationSec(v){
+      const x = (v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.duration ?? 0);
+      const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function getTitle(v){
+      return (v?.title ?? v?.snippet?.title ?? "");
+    }
+
+    // helpers
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+    function parseDateSafe(s){
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    function fmtNum(n){
+      try { return new Intl.NumberFormat("uk-UA").format(n); }
+      catch { return String(n); }
+    }
+    function fmtDelta(n){
+      if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "zero" };
+      const sign = n > 0 ? "+" : "−";
+      return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
+    }
+    function fmtMinutes(totalSec){
+      const mins = Math.round((totalSec/60) * 10) / 10;
+      const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
+      return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
+    }
+
+    async function fetchText(url){
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status} для ${url}`);
+      return await r.text();
+    }
+
+    function parseCSV(text){
+      const rows = [];
+      let i = 0, field = "", row = [], inQuotes = false;
+      while (i < text.length){
+        const c = text[i];
+        if (inQuotes){
+          if (c === '"'){
+            if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
+            inQuotes = false; i++; continue;
+          }
+          field += c; i++; continue;
+        } else {
+          if (c === '"'){ inQuotes = true; i++; continue; }
+          if (c === ','){ row.push(field); field=""; i++; continue; }
+          if (c === '\n' || c === '\r'){
+            if (c === '\r' && text[i+1] === '\n') i++;
+            row.push(field); field="";
+            if (row.some(x => x !== "")) rows.push(row);
+            row = [];
+            i++; continue;
+          }
+          field += c; i++; continue;
+        }
+      }
+      row.push(field);
+      if (row.some(x => x !== "")) rows.push(row);
+
+      if (!rows.length) return [];
+      const header = rows[0].map(h => String(h).trim());
+      const out = [];
+      for (let r = 1; r < rows.length; r++){
+        const obj = {};
+        for (let c = 0; c < header.length; c++){
+          obj[header[c]] = rows[r][c] ?? "";
+        }
+        out.push(obj);
+      }
+      return out;
+    }
+
+    function buildMonthlyIndex(videos){
+      const byMonth = new Map();
+
+      for (const v of videos){
+        const d = parseDateSafe(getPublishedRaw(v));
+        if (!d) continue;
+        const key = monthKeyFromDate(d);
+        if (!byMonth.has(key)) byMonth.set(key, { key, videos: [], views: 0, durationSec: 0 });
+        const m = byMonth.get(key);
+        m.videos.push(v);
+        m.views += getViews(v);
+        m.durationSec += getDurationSec(v);
+      }
+
+      const START = new Date(2004, 2, 1); // 2004-03
+      const now = new Date();
+      const months = [];
+      let cur = new Date(START.getFullYear(), START.getMonth(), 1);
+      while (cur <= now){
+        const key = monthKeyFromDate(cur);
+        months.push(byMonth.get(key) || { key, videos: [], views: 0, durationSec: 0 });
+        cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+      }
+      return months;
+    }
+
+    function pickDefaultMonth(months){
+      for (let i = months.length - 1; i >= 0; i--){
+        if ((months[i].videos?.length || 0) > 0) return months[i].key;
+      }
+      return monthKeyFromDate(new Date());
+    }
+
+    function getTopVideoByViews(videos){
+      let best = null, bestViews = -1;
+      for (const v of videos){
+        const vv = getViews(v);
+        if (vv > bestViews){
+          bestViews = vv; best = v;
+        }
+      }
+      return best;
+    }
+
+    function renderStats(selected, prev){
+      const grid = document.getElementById("statsGrid");
+      grid.innerHTML = "";
+
+      const count = selected.videos.length;
+      const prevCount = prev ? prev.videos.length : 0;
+
+      const views = selected.views;
+      const prevViews = prev ? prev.views : 0;
+
+      const durSec = selected.durationSec;
+      const prevDurSec = prev ? prev.durationSec : 0;
+
+      const dCount = fmtDelta(count - prevCount);
+      const dViews = fmtDelta(views - prevViews);
+      const dMins  = fmtDelta(Math.round(durSec/60) - Math.round(prevDurSec/60));
+
+      const cards = [
+        { label: "Відео за місяць", value: fmtNum(count), delta: dCount },
+        { label: "Перегляди за місяць", value: fmtNum(views), delta: dViews },
+        { label: "Хвилини контенту", value: fmtMinutes(durSec), delta: dMins }
+      ];
+
+      for (const c of cards){
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `
+          <div class="label">${c.label}</div>
+          <div class="value">
+            <span>${c.value}</span>
+            <span class="delta ${c.delta.cls}">(${c.delta.text})</span>
+          </div>`;
+        grid.appendChild(el);
+      }
+
+      const topBox = document.getElementById("topBox");
+      const ytWrap = document.getElementById("ytWrap");
+      const topMeta = document.getElementById("topMeta");
+      ytWrap.innerHTML = "";
+      topMeta.textContent = "";
+
+      const top = getTopVideoByViews(selected.videos);
+      const vid = top ? getVideoId(top) : "";
+      if (vid){
+        topBox.hidden = false;
+        const title = getTitle(top);
+        const vws = getViews(top);
+        topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
+
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("loading", "lazy");
+        iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}`;
+        ytWrap.appendChild(iframe);
+      } else {
+        topBox.hidden = true;
+      }
+    }
+
+    (async function main(){
+      const hint = document.getElementById("hint");
+      const error = document.getElementById("error");
+      const monthPick = document.getElementById("monthPick");
+
+      try{
+        const csv = await fetchText(DATA_URL);
+        const videos = parseCSV(csv);
+        const months = buildMonthlyIndex(videos);
+
+        monthPick.min = "2004-03";
+        monthPick.max = monthKeyFromDate(new Date());
+        monthPick.value = pickDefaultMonth(months);
+
+        function update(){
+          const key = monthPick.value;
+          const idx = months.findIndex(m => m.key === key);
+          const selected = idx >= 0 ? months[idx] : { key, videos: [], views: 0, durationSec: 0 };
+          const prev = idx > 0 ? months[idx-1] : null;
+          renderStats(selected, prev);
+          hint.textContent = "";
+        }
+
+        monthPick.addEventListener("change", update);
+        update();
+
+      } catch(e){
+        error.hidden = false;
+        error.textContent = "Не вдалося завантажити статистику: " + (e?.message || e);
+        hint.textContent = "";
+      }
+    })();
+  </script>
+</body>
+</html>
