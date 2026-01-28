@@ -9,9 +9,8 @@
   <style>
     /* --- local tweaks for statistics page only --- */
 
-    /* 1) month picker look like site inputs */
+    /* Month picker: in site style */
     .controls input[type="month"]{
-      /* якщо в styles.css вже є стилі для input — це лише підправить month */
       width: 170px;
       padding: 10px 12px;
       border-radius: 12px;
@@ -24,7 +23,20 @@
       border-color: rgba(255,255,255,.22);
     }
 
-    /* 2) stats cards */
+    /* Prev/Next buttons (use existing .pageBtn base) */
+    #prevMonthBtn,
+    #nextMonthBtn{
+      padding: 10px 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    #prevMonthBtn:disabled,
+    #nextMonthBtn:disabled{
+      opacity: .4;
+      cursor: default;
+    }
+
+    /* Stats cards */
     .statsGrid{
       display:grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
@@ -34,6 +46,7 @@
     @media (max-width: 900px){
       .statsGrid{ grid-template-columns: 1fr; }
       .controls input[type="month"]{ width: 100%; }
+      /* buttons still ok on mobile */
     }
 
     .statCard{
@@ -52,12 +65,12 @@
       align-items:baseline;
       line-height:1.15;
     }
-    .statDelta{ font-size:14px; font-weight:700; }
+    .statDelta{ font-size:14px; font-weight:800; }
     .statDelta.zero{ opacity:.6; }
     .statDelta.pos{ color: var(--green, #22c55e); }
     .statDelta.neg{ color: var(--red, #ef4444); }
 
-    /* 3) top video */
+    /* Top video */
     .topBox{
       margin-top:12px;
       padding:14px;
@@ -72,7 +85,7 @@
       align-items:baseline;
       flex-wrap:wrap;
     }
-    .topTitle{ font-weight:700; }
+    .topTitle{ font-weight:800; }
     .topMeta{ opacity:.8; font-size:14px; }
 
     .ytWrap{
@@ -89,7 +102,7 @@
       display:block;
     }
 
-    /* 3) laptop only: make iframe ~40% smaller (60% width), centered */
+    /* Laptop only: ~40% smaller (60% width), centered */
     @media (min-width: 900px) and (max-width: 1400px){
       .ytWrap{
         max-width: 60%;
@@ -141,7 +154,11 @@
         <div class="controls">
           <div class="control">
             <label>Місяць</label>
-            <input id="monthPick" type="month" />
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button id="prevMonthBtn" class="pageBtn" type="button" aria-label="Попередній місяць">←</button>
+              <input id="monthPick" type="month" />
+              <button id="nextMonthBtn" class="pageBtn" type="button" aria-label="Наступний місяць">→</button>
+            </div>
           </div>
         </div>
       </header>
@@ -412,11 +429,12 @@
       const hint = document.getElementById("hint");
       const error = document.getElementById("error");
       const monthPick = document.getElementById("monthPick");
+      const prevBtn = document.getElementById("prevMonthBtn");
+      const nextBtn = document.getElementById("nextMonthBtn");
 
       try{
         const j = await fetchJson(DATA_URL);
         const videos = extractVideos(j);
-
         const months = buildMonthlyIndex(videos);
 
         monthPick.min = "2004-03";
@@ -428,14 +446,33 @@
           const idx = months.findIndex(m => m.key === key);
           const selected = idx >= 0 ? months[idx] : { key, videos: [], views: 0, durationSec: 0 };
           const prev = idx > 0 ? months[idx-1] : null;
+
           renderStats(selected, prev);
           hint.textContent = "";
           error.style.display = "none";
+
+          // sync buttons
+          prevBtn.disabled = (monthPick.value <= monthPick.min);
+          nextBtn.disabled = (monthPick.value >= monthPick.max);
         }
 
-        monthPick.addEventListener("change", update);
-        update();
+        function shiftMonth(delta){
+          const [y, m] = monthPick.value.split("-").map(Number);
+          const d = new Date(y, (m - 1) + delta, 1);
+          const key = monthKeyFromDate(d);
 
+          if (key < monthPick.min) return;
+          if (key > monthPick.max) return;
+
+          monthPick.value = key;
+          update();
+        }
+
+        prevBtn.addEventListener("click", () => shiftMonth(-1));
+        nextBtn.addEventListener("click", () => shiftMonth(+1));
+        monthPick.addEventListener("change", update);
+
+        update();
       } catch(e){
         error.style.display = "";
         error.textContent = "Не вдалося завантажити статистику: " + (e?.message || e);
