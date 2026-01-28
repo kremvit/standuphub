@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Статистика — StandupHub</title>
+  <title>РЎС‚Р°С‚РёСЃС‚РёРєР° вЂ” StandupHub</title>
 
-  <!-- Підключи ваші існуючі стилі -->
+  <!-- РџС–РґРєР»СЋС‡Рё РІР°С€С– С–СЃРЅСѓСЋС‡С– СЃС‚РёР»С– -->
   <link rel="stylesheet" href="assets/styles.css" />
 
   <style>
-    /* Локальні стилі лише для цієї сторінки (не чіпають інші) */
+    /* Р›РѕРєР°Р»СЊРЅС– СЃС‚РёР»С– Р»РёС€Рµ РґР»СЏ С†С–С”С— СЃС‚РѕСЂС–РЅРєРё (РЅРµ С‡С–РїР°СЋС‚СЊ С–РЅС€С–) */
     .stats-wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
     .stats-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
     .stats-title { margin: 0; }
@@ -41,16 +41,16 @@
 </head>
 
 <body>
-  <!-- Якщо у вас на інших сторінках є header/nav — скопіюй його сюди 1:1
-       і лише додай/перевір лінк "Статистика". -->
-  <!-- ===== HEADER START (приклад — заміни на ваш реальний хедер) ===== -->
+  <!-- РЇРєС‰Рѕ Сѓ РІР°СЃ РЅР° С–РЅС€РёС… СЃС‚РѕСЂС–РЅРєР°С… С” header/nav вЂ” СЃРєРѕРїС–СЋР№ Р№РѕРіРѕ СЃСЋРґРё 1:1
+       С– Р»РёС€Рµ РґРѕРґР°Р№/РїРµСЂРµРІС–СЂ Р»С–РЅРє "РЎС‚Р°С‚РёСЃС‚РёРєР°". -->
+  <!-- ===== HEADER START (РїСЂРёРєР»Р°Рґ вЂ” Р·Р°РјС–РЅРё РЅР° РІР°С€ СЂРµР°Р»СЊРЅРёР№ С…РµРґРµСЂ) ===== -->
   <header>
     <div class="stats-wrap">
       <nav class="stats-nav">
-        <a href="index.html">Головна</a>
-        <a href="comedians.html">Коміки</a>
-        <a href="rating.html">Рейтинг</a>
-        <a href="statistics.html">Статистика</a>
+        <a href="index.html">Р“РѕР»РѕРІРЅР°</a>
+        <a href="comedians.html">РљРѕРјС–РєРё</a>
+        <a href="rating.html">Р РµР№С‚РёРЅРі</a>
+        <a href="statistics.html">РЎС‚Р°С‚РёСЃС‚РёРєР°</a>
       </nav>
     </div>
   </header>
@@ -58,10 +58,10 @@
 
   <main class="stats-wrap">
     <div class="stats-head">
-      <h1 class="stats-title">Статистика по місяцях</h1>
+      <h1 class="stats-title">РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РјС–СЃСЏС†СЏС…</h1>
 
       <div class="stats-controls">
-        <label for="monthPick">Місяць:</label>
+        <label for="monthPick">РњС–СЃСЏС†СЊ:</label>
         <input id="monthPick" type="month" />
       </div>
     </div>
@@ -70,13 +70,13 @@
 
     <section class="top-box" id="topBox" hidden>
       <div class="top-head">
-        <h2 class="top-title">Топ відео місяця</h2>
+        <h2 class="top-title">РўРѕРї РІС–РґРµРѕ РјС–СЃСЏС†СЏ</h2>
         <div class="top-meta" id="topMeta"></div>
       </div>
       <div class="yt-wrap" id="ytWrap"></div>
     </section>
 
-    <div class="hint" id="hint">Завантажую дані…</div>
+    <div class="hint" id="hint">Р—Р°РІР°РЅС‚Р°Р¶СѓСЋ РґР°РЅС–вЂ¦</div>
     <div class="error" id="error" hidden></div>
   </main>
 
@@ -123,24 +123,24 @@
     }
     function fmtDelta(n){
       if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "delta-zero" };
-      const sign = n > 0 ? "+" : "?";
+      const sign = n > 0 ? "+" : "в€’";
       return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: n > 0 ? "delta-pos" : "delta-neg" };
     }
     function fmtMinutes(totalSec){
-      const mins = Math.round((totalSec/60) * 10) / 10; // 0.1 точність
-      // показуємо без .0 коли ціле
+      const mins = Math.round((totalSec/60) * 10) / 10; // 0.1 С‚РѕС‡РЅС–СЃС‚СЊ
+      // РїРѕРєР°Р·СѓС”РјРѕ Р±РµР· .0 РєРѕР»Рё С†С–Р»Рµ
       const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
       return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
     }
 
     async function fetchText(url){
       const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error(`HTTP ${r.status} для ${url}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status} РґР»СЏ ${url}`);
       return await r.text();
     }
 
     function parseCSV(text){
-      // Мінімальний CSV-парсер з підтримкою лапок
+      // РњС–РЅС–РјР°Р»СЊРЅРёР№ CSV-РїР°СЂСЃРµСЂ Р· РїС–РґС‚СЂРёРјРєРѕСЋ Р»Р°РїРѕРє
       const rows = [];
       let i = 0, field = "", row = [], inQuotes = false;
       while (i < text.length){
@@ -155,8 +155,8 @@
           if (c === '"'){ inQuotes = true; i++; continue; }
           if (c === ','){ row.push(field); field=""; i++; continue; }
           if (c === '\n' || c === '\r'){
-            // завершити рядок
-            // пропускаємо \r\n
+            // Р·Р°РІРµСЂС€РёС‚Рё СЂСЏРґРѕРє
+            // РїСЂРѕРїСѓСЃРєР°С”РјРѕ \r\n
             if (c === '\r' && text[i+1] === '\n') i++;
             row.push(field); field="";
             if (row.some(x => x !== "")) rows.push(row);
@@ -184,7 +184,7 @@
     }
 
     async function loadVideosAny(){
-      // Спробуємо кілька варіантів шляхів, щоб не “прив’язуватись” до одного формату.
+      // РЎРїСЂРѕР±СѓС”РјРѕ РєС–Р»СЊРєР° РІР°СЂС–Р°РЅС‚С–РІ С€Р»СЏС…С–РІ, С‰РѕР± РЅРµ вЂњРїСЂРёРІвЂ™СЏР·СѓРІР°С‚РёСЃСЊвЂќ РґРѕ РѕРґРЅРѕРіРѕ С„РѕСЂРјР°С‚Сѓ.
       const candidates = [
         "data/videos.json",
         "data/videos_clean.json",
@@ -197,25 +197,25 @@
       for (const url of candidates){
         try {
           const txt = await fetchText(url);
-          // пробуємо JSON
+          // РїСЂРѕР±СѓС”РјРѕ JSON
           if (txt.trim().startsWith("{") || txt.trim().startsWith("[")){
             const j = JSON.parse(txt);
             if (Array.isArray(j)) return j;
             if (Array.isArray(j?.videos)) return j.videos;
             if (Array.isArray(j?.items)) return j.items;
-            // fallback: спроба “витягти” будь-який масив
+            // fallback: СЃРїСЂРѕР±Р° вЂњРІРёС‚СЏРіС‚РёвЂќ Р±СѓРґСЊ-СЏРєРёР№ РјР°СЃРёРІ
             for (const k of Object.keys(j||{})){
               if (Array.isArray(j[k])) return j[k];
             }
-            throw new Error(`JSON у ${url} не містить масиву відео`);
+            throw new Error(`JSON Сѓ ${url} РЅРµ РјС–СЃС‚РёС‚СЊ РјР°СЃРёРІСѓ РІС–РґРµРѕ`);
           }
-          // інакше CSV
+          // С–РЅР°РєС€Рµ CSV
           return parseCSV(txt);
         } catch (e){
           lastErr = e;
         }
       }
-      throw lastErr || new Error("Не вдалося завантажити дані відео");
+      throw lastErr || new Error("РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё РґР°РЅС– РІС–РґРµРѕ");
     }
 
     function buildMonthlyIndex(videos){
@@ -235,8 +235,8 @@
         m.durationSec += getDurationSec(v);
       }
 
-      // Список місяців з 2004-03 і до поточного, навіть якщо 0 відео
-      const START = new Date(2004, 2, 1); // March 2004 (місяці 0-індекс)
+      // РЎРїРёСЃРѕРє РјС–СЃСЏС†С–РІ Р· 2004-03 С– РґРѕ РїРѕС‚РѕС‡РЅРѕРіРѕ, РЅР°РІС–С‚СЊ СЏРєС‰Рѕ 0 РІС–РґРµРѕ
+      const START = new Date(2004, 2, 1); // March 2004 (РјС–СЃСЏС†С– 0-С–РЅРґРµРєСЃ)
       const now = new Date();
       const months = [];
       let cur = new Date(START.getFullYear(), START.getMonth(), 1);
@@ -251,7 +251,7 @@
     }
 
     function pickDefaultMonth(months){
-      // останній місяць, де є хоч якісь відео; якщо немає — поточний
+      // РѕСЃС‚Р°РЅРЅС–Р№ РјС–СЃСЏС†СЊ, РґРµ С” С…РѕС‡ СЏРєС–СЃСЊ РІС–РґРµРѕ; СЏРєС‰Рѕ РЅРµРјР°С” вЂ” РїРѕС‚РѕС‡РЅРёР№
       for (let i = months.length - 1; i >= 0; i--){
         if ((months[i].videos?.length || 0) > 0) return months[i].key;
       }
@@ -291,17 +291,17 @@
 
       const cards = [
         {
-          label: "Відео за місяць",
+          label: "Р’С–РґРµРѕ Р·Р° РјС–СЃСЏС†СЊ",
           value: fmtNum(count),
           delta: dCount
         },
         {
-          label: "Перегляди за місяць",
+          label: "РџРµСЂРµРіР»СЏРґРё Р·Р° РјС–СЃСЏС†СЊ",
           value: fmtNum(views),
           delta: dViews
         },
         {
-          label: "Хвилини контенту",
+          label: "РҐРІРёР»РёРЅРё РєРѕРЅС‚РµРЅС‚Сѓ",
           value: fmtMinutes(durSec),
           delta: dMins
         }
@@ -334,7 +334,7 @@
         topBox.hidden = false;
         const title = getTitle(top);
         const vws = getViews(top);
-        topMeta.textContent = `${fmtNum(vws)} переглядів · ${title ? title : " "}`.trim();
+        topMeta.textContent = `${fmtNum(vws)} РїРµСЂРµРіР»СЏРґС–РІ В· ${title ? title : " "}`.trim();
 
         const iframe = document.createElement("iframe");
         iframe.setAttribute("allowfullscreen", "true");
@@ -375,7 +375,7 @@
 
       } catch (e){
         error.hidden = false;
-        error.textContent = "Не вдалося завантажити статистику. " + (e?.message || e);
+        error.textContent = "РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё СЃС‚Р°С‚РёСЃС‚РёРєСѓ. " + (e?.message || e);
         hint.textContent = "";
       }
     })();
