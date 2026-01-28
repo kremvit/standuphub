@@ -3,109 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Статистика — StandupHub</title>
-
-  <link rel="stylesheet" href="./assets/styles.css" />
-
-  <style>
-    /* Локально для statistics.html — не чіпає інші сторінки */
-    .statsHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:12px;
-      flex-wrap:wrap;
-      margin: 8px 0 0;
-      padding: 0 2px;
-    }
-    .statsHead h1{ margin: 0; }
-
-    .monthPick{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-    }
-    .monthPick label{ opacity:.8; font-size:14px; }
-    .monthPick input[type="month"]{
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.15);
-      color: inherit;
-    }
-
-    .statsGrid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap:12px;
-      margin-top: 12px;
-    }
-    @media (max-width: 900px){ .statsGrid{ grid-template-columns: 1fr; } }
-
-    .card{
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.12);
-    }
-    .label{ opacity:.75; font-size:13px; margin-bottom:6px; }
-    .value{
-      font-size: 28px;
-      font-weight: 700;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:baseline;
-      line-height:1.15;
-    }
-    .delta{ font-size: 14px; font-weight: 600; opacity:.85; }
-    .delta.zero{ opacity:.6; }
-
-    .topBox{
-      margin-top: 12px;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.12);
-    }
-    .topHead{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:baseline;
-      flex-wrap:wrap;
-    }
-    .topHead h2{ margin: 0; font-size: 18px; }
-    .topMeta{ opacity:.8; font-size:14px; }
-
-    .ytWrap{
-      margin-top: 10px;
-      border-radius: 14px;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-    }
-    .ytWrap iframe{
-      width:100%;
-      aspect-ratio: 16 / 9;
-      border:0;
-      display:block;
-    }
-
-    .hint{ margin-top: 10px; opacity:.7; font-size: 13px; }
-    .error{
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,120,120,.35);
-      background: rgba(255,120,120,.10);
-    }
-
-    /* На статистиці controls не потрібні, але щоб верстка topbar не “стрибала” — ховаємо акуратно */
-    .controls.statsHide{
-      visibility: hidden;
-      pointer-events: none;
-    }
-  </style>
+  <title>Статистика • StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
 </head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-J8G4SLH1YT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-J8G4SLH1YT');
+</script>
 
 <body>
   <div class="layout">
@@ -127,46 +36,27 @@
           <a class="navBtn active" href="./statistics.html">Статистика</a>
         </div>
 
-        <!-- controls не потрібні на цій сторінці -->
-        <div class="controls statsHide">
+        <div class="controls">
           <div class="control">
-            <label>Сортування</label>
-            <select disabled></select>
-          </div>
-
-          <div class="control">
-            <label>Найкраще</label>
-            <select disabled></select>
-          </div>
-
-          <div class="control search">
-            <label>Пошук</label>
-            <input disabled />
+            <label>Місяць</label>
+            <input id="monthPick" type="month" />
           </div>
         </div>
       </header>
 
       <section>
-        <div class="statsHead">
-          <h1>Статистика по місяцях</h1>
-          <div class="monthPick">
-            <label for="monthPick">Місяць:</label>
-            <input id="monthPick" type="month" />
-          </div>
-        </div>
+        <div id="statsGrid" class="statsGrid"></div>
 
-        <div class="statsGrid" id="statsGrid" aria-live="polite"></div>
-
-        <div class="topBox" id="topBox" hidden>
+        <div id="topBox" class="topBox" style="display:none;">
           <div class="topHead">
-            <h2>Топ відео місяця</h2>
+            <div class="topTitle">Топ відео місяця</div>
             <div class="topMeta" id="topMeta"></div>
           </div>
           <div class="ytWrap" id="ytWrap"></div>
         </div>
 
-        <div class="hint" id="hint">Завантажую дані…</div>
-        <div class="error" id="error" hidden></div>
+        <div id="hint" class="hint">Завантажую дані…</div>
+        <div id="error" class="error" style="display:none;"></div>
       </section>
     </main>
 
@@ -179,21 +69,17 @@
     </aside>
   </div>
 
-  <!-- ВАЖЛИВО: цей файл сам заповнить sidebar через initAbout() -->
-  <script src="./assets/app.js"></script>
+  <!-- app.js наповнить sidebar (через rating.json) -->
+  <script src="assets/app.js"></script>
   <script>
-    // заповнює sidebarTop з data/rating.json (як на інших сторінках)
-    if (window.StandupHub && typeof StandupHub.initAbout === "function") {
-      StandupHub.initAbout();
-    }
+    // тільки для sidebar: підтягує rating.json і викликає renderSidebar()
+    StandupHub.initAbout();
   </script>
 
   <script>
-    const DATA_URL = "./data/videos.json";
+    const DATA_URL = "data/videos.json";
 
-    function pad2(n){ return String(n).padStart(2,"0"); }
-    function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
-
+    // ---------- formatting ----------
     function fmtNum(n){
       if (n == null) return "";
       try { return new Intl.NumberFormat("uk-UA").format(n); }
@@ -205,18 +91,26 @@
       return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
     }
     function fmtMinutes(totalSec){
-      const mins = Math.round((totalSec/60) * 10) / 10; // 0.1 хв
+      const mins = Math.round((totalSec/60) * 10) / 10;
       const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
       return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
     }
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
 
-    // tolerant accessors (узгоджено з app.js, але незалежно)
+    // ---------- tolerant getters ----------
     function getPublishedRaw(v){
-      return (v?.published_at ?? v?.publishedAt ?? v?.published ?? v?.published_date ?? v?.date ?? v?.snippet?.publishedAt ?? "");
+      return (
+        v?.published_at ??
+        v?.publishedAt ??
+        v?.published ??
+        v?.published_date ??
+        v?.date ??
+        v?.snippet?.publishedAt ??
+        ""
+      );
     }
-    function getVideoId(v){
-      return (v?.video_id ?? v?.videoId ?? v?.id ?? v?.contentDetails?.videoId ?? "");
-    }
+    function getVideoId(v){ return (v?.video_id ?? v?.videoId ?? v?.id ?? v?.contentDetails?.videoId ?? ""); }
     function getViews(v){
       const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? v?.statistics?.viewCount ?? 0);
       const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
@@ -227,11 +121,9 @@
       const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
       return Number.isFinite(n) ? n : 0;
     }
-    function getTitle(v){
-      return (v?.title ?? v?.name ?? v?.snippet?.title ?? "");
-    }
+    function getTitle(v){ return (v?.title ?? v?.name ?? v?.snippet?.title ?? ""); }
 
-    // robust date parsing (аналогічно app.js, щоб не з’їхали місяці)
+    // robust date parsing (узгоджено з app.js)
     function parseDateMs(raw){
       if (raw == null) return null;
 
@@ -270,12 +162,14 @@
       s = s.replace(/(\d),(\d)/g, "$1.$2");
       s = s.replace(/\.(\d{3})\d+/g, ".$1");
       s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+
       if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) s = s + "Z";
 
       const d = new Date(s);
       return isNaN(d.getTime()) ? null : d.getTime();
     }
 
+    // ---------- IO ----------
     async function fetchJson(url){
       const r = await fetch(url, { cache: "no-store" });
       if (!r.ok) throw new Error(`HTTP ${r.status} для ${url}`);
@@ -294,6 +188,7 @@
       return [];
     }
 
+    // ---------- monthly aggregation ----------
     function buildMonthlyIndex(videos){
       const byMonth = new Map();
 
@@ -347,7 +242,37 @@
       return best;
     }
 
+    // ---------- render ----------
+    function ensureInlineStyles(){
+      // Мінімальні стилі, щоб навіть без додавання в styles.css все виглядало ок.
+      // Якщо у вас вже є такі класи в styles.css — вони просто переважать/доповнять.
+      if (document.getElementById("statsInlineCss")) return;
+      const css = `
+        .statsGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:12px; }
+        @media (max-width:900px){ .statsGrid{ grid-template-columns:1fr; } }
+        .statCard{ padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.12); }
+        .statLabel{ opacity:.75; font-size:13px; margin-bottom:6px; }
+        .statValue{ font-size:28px; font-weight:700; display:flex; gap:10px; flex-wrap:wrap; align-items:baseline; line-height:1.15; }
+        .statDelta{ font-size:14px; font-weight:600; opacity:.85; }
+        .statDelta.zero{ opacity:.6; }
+        .topBox{ margin-top:12px; padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.12); }
+        .topHead{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
+        .topTitle{ font-weight:700; }
+        .topMeta{ opacity:.8; font-size:14px; }
+        .ytWrap{ margin-top:10px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:rgba(0,0,0,.20); }
+        .ytWrap iframe{ width:100%; aspect-ratio:16/9; border:0; display:block; }
+        .hint{ margin-top:10px; opacity:.7; font-size:13px; }
+        .error{ margin-top:12px; padding:12px; border-radius:12px; border:1px solid rgba(255,120,120,.35); background:rgba(255,120,120,.10); }
+      `;
+      const style = document.createElement("style");
+      style.id = "statsInlineCss";
+      style.textContent = css;
+      document.head.appendChild(style);
+    }
+
     function renderStats(selected, prev){
+      ensureInlineStyles();
+
       const grid = document.getElementById("statsGrid");
       grid.innerHTML = "";
 
@@ -372,12 +297,12 @@
 
       for (const c of cards){
         const el = document.createElement("div");
-        el.className = "card";
+        el.className = "statCard";
         el.innerHTML = `
-          <div class="label">${c.label}</div>
-          <div class="value">
+          <div class="statLabel">${c.label}</div>
+          <div class="statValue">
             <span>${c.value}</span>
-            <span class="delta ${c.delta.cls}">(${c.delta.text})</span>
+            <span class="statDelta ${c.delta.cls}">(${c.delta.text})</span>
           </div>
         `;
         grid.appendChild(el);
@@ -393,7 +318,7 @@
       const top = getTopVideoByViews(selected.videos);
       const vid = top ? getVideoId(top) : "";
       if (vid){
-        topBox.hidden = false;
+        topBox.style.display = "";
         const title = getTitle(top);
         const vws = getViews(top);
         topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
@@ -405,10 +330,11 @@
         iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?rel=0&modestbranding=1`;
         ytWrap.appendChild(iframe);
       } else {
-        topBox.hidden = true;
+        topBox.style.display = "none";
       }
     }
 
+    // ---------- init ----------
     (async function main(){
       const hint = document.getElementById("hint");
       const error = document.getElementById("error");
@@ -431,13 +357,14 @@
           const prev = idx > 0 ? months[idx-1] : null;
           renderStats(selected, prev);
           hint.textContent = "";
+          error.style.display = "none";
         }
 
         monthPick.addEventListener("change", update);
         update();
 
       } catch(e){
-        error.hidden = false;
+        error.style.display = "";
         error.textContent = "Не вдалося завантажити статистику: " + (e?.message || e);
         hint.textContent = "";
       }
