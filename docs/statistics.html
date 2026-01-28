@@ -99,7 +99,7 @@
       background: rgba(255,120,120,.10);
     }
 
-    /* На статистиці не потрібні index/comedians controls — ховаємо, але лишаємо місце */
+    /* На статистиці controls не потрібні, але щоб верстка topbar не “стрибала” — ховаємо акуратно */
     .controls.statsHide{
       visibility: hidden;
       pointer-events: none;
@@ -127,7 +127,7 @@
           <a class="navBtn active" href="./statistics.html">Статистика</a>
         </div>
 
-        <!-- controls не потрібні — ховаємо -->
+        <!-- controls не потрібні на цій сторінці -->
         <div class="controls statsHide">
           <div class="control">
             <label>Сортування</label>
@@ -179,20 +179,40 @@
     </aside>
   </div>
 
+  <!-- ВАЖЛИВО: цей файл сам заповнить sidebar через initAbout() -->
+  <script src="./assets/app.js"></script>
+  <script>
+    // заповнює sidebarTop з data/rating.json (як на інших сторінках)
+    if (window.StandupHub && typeof StandupHub.initAbout === "function") {
+      StandupHub.initAbout();
+    }
+  </script>
+
   <script>
     const DATA_URL = "./data/videos.json";
 
-    // ---------- tolerant getters ----------
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+
+    function fmtNum(n){
+      if (n == null) return "";
+      try { return new Intl.NumberFormat("uk-UA").format(n); }
+      catch { return String(n); }
+    }
+    function fmtDelta(n){
+      if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "zero" };
+      const sign = n > 0 ? "+" : "−";
+      return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
+    }
+    function fmtMinutes(totalSec){
+      const mins = Math.round((totalSec/60) * 10) / 10; // 0.1 хв
+      const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
+      return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
+    }
+
+    // tolerant accessors (узгоджено з app.js, але незалежно)
     function getPublishedRaw(v){
-      return (
-        v?.published_at ??
-        v?.publishedAt ??
-        v?.published ??
-        v?.published_date ??
-        v?.date ??
-        v?.snippet?.publishedAt ??
-        ""
-      );
+      return (v?.published_at ?? v?.publishedAt ?? v?.published ?? v?.published_date ?? v?.date ?? v?.snippet?.publishedAt ?? "");
     }
     function getVideoId(v){
       return (v?.video_id ?? v?.videoId ?? v?.id ?? v?.contentDetails?.videoId ?? "");
@@ -203,34 +223,57 @@
       return Number.isFinite(n) ? n : 0;
     }
     function getDurationSec(v){
-      const x = (v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.duration ?? 0);
+      const x = (v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.durationSeconds ?? v?.duration ?? 0);
       const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
       return Number.isFinite(n) ? n : 0;
     }
     function getTitle(v){
-      return (v?.title ?? v?.snippet?.title ?? "");
+      return (v?.title ?? v?.name ?? v?.snippet?.title ?? "");
     }
 
-    // ---------- helpers ----------
-    function pad2(n){ return String(n).padStart(2,"0"); }
-    function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
-    function parseDateSafe(s){
+    // robust date parsing (аналогічно app.js, щоб не з’їхали місяці)
+    function parseDateMs(raw){
+      if (raw == null) return null;
+
+      if (typeof raw === "number" && Number.isFinite(raw)){
+        if (raw > 1e12) return raw;
+        if (raw > 1e9) return raw * 1000;
+      }
+
+      let s = String(raw).trim();
+      if (!s) return null;
+
+      if (/^\d+$/.test(s)){
+        const n = Number(s);
+        if (Number.isFinite(n)){
+          if (n > 1e12) return n;
+          if (n > 1e9) return n * 1000;
+        }
+      }
+
+      const ymd = s.match(/(\d{4}-\d{2}-\d{2})/);
+      if (ymd && !s.startsWith(ymd[1])) {
+        const d = new Date(ymd[1] + "T00:00:00Z");
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+
+      const dmy = s.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+      if (dmy){
+        const iso = `${dmy[3]}-${dmy[2]}-${dmy[1]}T00:00:00Z`;
+        const d = new Date(iso);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+
+      if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) s = s.replace(/\s+/, "T");
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s = s + "T00:00:00Z";
+
+      s = s.replace(/(\d),(\d)/g, "$1.$2");
+      s = s.replace(/\.(\d{3})\d+/g, ".$1");
+      s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) s = s + "Z";
+
       const d = new Date(s);
-      return Number.isNaN(d.getTime()) ? null : d;
-    }
-    function fmtNum(n){
-      try { return new Intl.NumberFormat("uk-UA").format(n); }
-      catch { return String(n); }
-    }
-    function fmtDelta(n){
-      if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "zero" };
-      const sign = n > 0 ? "+" : "−";
-      return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
-    }
-    function fmtMinutes(totalSec){
-      const mins = Math.round((totalSec/60) * 10) / 10; // до 0.1 хв
-      const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
-      return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
+      return isNaN(d.getTime()) ? null : d.getTime();
     }
 
     async function fetchJson(url){
@@ -255,10 +298,12 @@
       const byMonth = new Map();
 
       for (const v of videos){
-        const d = parseDateSafe(getPublishedRaw(v));
-        if (!d) continue;
+        const ms = parseDateMs(getPublishedRaw(v));
+        if (!ms) continue;
 
-        const key = monthKeyFromDate(d);
+        const d = new Date(ms);
+        const key = monthKeyFromDate(new Date(d.getFullYear(), d.getMonth(), 1));
+
         if (!byMonth.has(key)){
           byMonth.set(key, { key, videos: [], views: 0, durationSec: 0 });
         }
@@ -357,7 +402,7 @@
         iframe.setAttribute("allowfullscreen", "true");
         iframe.setAttribute("loading", "lazy");
         iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}`;
+        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?rel=0&modestbranding=1`;
         ytWrap.appendChild(iframe);
       } else {
         topBox.hidden = true;
@@ -398,9 +443,5 @@
       }
     })();
   </script>
-
-  <!-- Якщо sidebar наповнюється окремим JS на інших сторінках —
-       додай тут такий самий <script src="..."> як у comedians.html / rating.html -->
-  <!-- <script src="./assets/your-existing-sidebar-script.js"></script> -->
 </body>
 </html>
