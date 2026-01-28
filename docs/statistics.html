@@ -109,7 +109,7 @@
 </head>
 
 <body>
-  <!-- Твій реальний header/nav (1:1) + додав клас statsHide -->
+  <!-- Твій реальний header/nav (1:1) + active на статистиці -->
   <header class="topbar">
     <!-- BRAND BLOCK (зліва) -->
     <div class="topBrand">
@@ -184,15 +184,23 @@
   <script>
     const DATA_URL = "./data/videos.json";
 
-    // tolerant getters
+    // ---------- tolerant getters ----------
     function getPublishedRaw(v){
-      return (v?.published_at ?? v?.publishedAt ?? v?.published ?? v?.published_date ?? v?.date ?? v?.snippet?.publishedAt ?? "");
+      return (
+        v?.published_at ??
+        v?.publishedAt ??
+        v?.published ??
+        v?.published_date ??
+        v?.date ??
+        v?.snippet?.publishedAt ??
+        ""
+      );
     }
     function getVideoId(v){
-      return (v?.video_id ?? v?.videoId ?? v?.id ?? "");
+      return (v?.video_id ?? v?.videoId ?? v?.id ?? v?.contentDetails?.videoId ?? "");
     }
     function getViews(v){
-      const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? 0);
+      const x = (v?.view_count ?? v?.viewCount ?? v?.views ?? v?.statistics?.viewCount ?? 0);
       const n = Number(String(x).replace(/\s+/g,"").replace(/,/g,""));
       return Number.isFinite(n) ? n : 0;
     }
@@ -205,7 +213,7 @@
       return (v?.title ?? v?.snippet?.title ?? "");
     }
 
-    // helpers
+    // ---------- helpers ----------
     function pad2(n){ return String(n).padStart(2,"0"); }
     function monthKeyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
     function parseDateSafe(s){
@@ -222,55 +230,29 @@
       return { text: `${sign}${fmtNum(Math.abs(n))}`, cls: "" };
     }
     function fmtMinutes(totalSec){
-      const mins = Math.round((totalSec/60) * 10) / 10;
+      const mins = Math.round((totalSec/60) * 10) / 10; // до 0.1 хв
       const isInt = Math.abs(mins - Math.round(mins)) < 1e-9;
       return isInt ? fmtNum(Math.round(mins)) : String(mins).replace(".", ",");
     }
 
-    async function fetchText(url){
+    async function fetchJson(url){
       const r = await fetch(url, { cache: "no-store" });
       if (!r.ok) throw new Error(`HTTP ${r.status} для ${url}`);
-      return await r.text();
+      return await r.json();
     }
 
-    function parseCSV(text){
-      const rows = [];
-      let i = 0, field = "", row = [], inQuotes = false;
-      while (i < text.length){
-        const c = text[i];
-        if (inQuotes){
-          if (c === '"'){
-            if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
-            inQuotes = false; i++; continue;
-          }
-          field += c; i++; continue;
-        } else {
-          if (c === '"'){ inQuotes = true; i++; continue; }
-          if (c === ','){ row.push(field); field=""; i++; continue; }
-          if (c === '\n' || c === '\r'){
-            if (c === '\r' && text[i+1] === '\n') i++;
-            row.push(field); field="";
-            if (row.some(x => x !== "")) rows.push(row);
-            row = [];
-            i++; continue;
-          }
-          field += c; i++; continue;
-        }
-      }
-      row.push(field);
-      if (row.some(x => x !== "")) rows.push(row);
+    function extractVideos(j){
+      // Підтримує: [ ... ] або { videos:[...] } або { items:[...] } або інший ключ з масивом
+      if (Array.isArray(j)) return j;
+      if (Array.isArray(j?.videos)) return j.videos;
+      if (Array.isArray(j?.items)) return j.items;
 
-      if (!rows.length) return [];
-      const header = rows[0].map(h => String(h).trim());
-      const out = [];
-      for (let r = 1; r < rows.length; r++){
-        const obj = {};
-        for (let c = 0; c < header.length; c++){
-          obj[header[c]] = rows[r][c] ?? "";
+      if (j && typeof j === "object"){
+        for (const k of Object.keys(j)){
+          if (Array.isArray(j[k])) return j[k];
         }
-        out.push(obj);
       }
-      return out;
+      return [];
     }
 
     function buildMonthlyIndex(videos){
@@ -279,27 +261,36 @@
       for (const v of videos){
         const d = parseDateSafe(getPublishedRaw(v));
         if (!d) continue;
+
         const key = monthKeyFromDate(d);
-        if (!byMonth.has(key)) byMonth.set(key, { key, videos: [], views: 0, durationSec: 0 });
+        if (!byMonth.has(key)){
+          byMonth.set(key, { key, videos: [], views: 0, durationSec: 0 });
+        }
         const m = byMonth.get(key);
         m.videos.push(v);
         m.views += getViews(v);
         m.durationSec += getDurationSec(v);
       }
 
+      // Від березня 2004 до поточного місяця, навіть якщо 0
       const START = new Date(2004, 2, 1); // 2004-03
       const now = new Date();
       const months = [];
+
       let cur = new Date(START.getFullYear(), START.getMonth(), 1);
-      while (cur <= now){
+      const end = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      while (cur <= end){
         const key = monthKeyFromDate(cur);
         months.push(byMonth.get(key) || { key, videos: [], views: 0, durationSec: 0 });
         cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
       }
+
       return months;
     }
 
     function pickDefaultMonth(months){
+      // останній місяць де є відео
       for (let i = months.length - 1; i >= 0; i--){
         if ((months[i].videos?.length || 0) > 0) return months[i].key;
       }
@@ -311,7 +302,8 @@
       for (const v of videos){
         const vv = getViews(v);
         if (vv > bestViews){
-          bestViews = vv; best = v;
+          bestViews = vv;
+          best = v;
         }
       }
       return best;
@@ -348,13 +340,16 @@
           <div class="value">
             <span>${c.value}</span>
             <span class="delta ${c.delta.cls}">(${c.delta.text})</span>
-          </div>`;
+          </div>
+        `;
         grid.appendChild(el);
       }
 
+      // Top video
       const topBox = document.getElementById("topBox");
       const ytWrap = document.getElementById("ytWrap");
       const topMeta = document.getElementById("topMeta");
+
       ytWrap.innerHTML = "";
       topMeta.textContent = "";
 
@@ -362,6 +357,7 @@
       const vid = top ? getVideoId(top) : "";
       if (vid){
         topBox.hidden = false;
+
         const title = getTitle(top);
         const vws = getViews(top);
         topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
@@ -383,8 +379,9 @@
       const monthPick = document.getElementById("monthPick");
 
       try{
-        const csv = await fetchText(DATA_URL);
-        const videos = parseCSV(csv);
+        const j = await fetchJson(DATA_URL);
+        const videos = extractVideos(j);
+
         const months = buildMonthlyIndex(videos);
 
         monthPick.min = "2004-03";
