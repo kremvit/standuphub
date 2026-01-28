@@ -8,16 +8,15 @@
   <link rel="stylesheet" href="./assets/styles.css" />
 
   <style>
-    /* локально для цієї сторінки — не ламає інші */
-    .page { max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
-
+    /* Локально для statistics.html — не чіпає інші сторінки */
     .statsHead{
       display:flex;
       justify-content:space-between;
       align-items:flex-end;
       gap:12px;
       flex-wrap:wrap;
-      margin-top: 10px;
+      margin: 8px 0 0;
+      padding: 0 2px;
     }
     .statsHead h1{ margin: 0; }
 
@@ -37,7 +36,7 @@
       display:grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap:12px;
-      margin-top: 14px;
+      margin-top: 12px;
     }
     @media (max-width: 900px){ .statsGrid{ grid-template-columns: 1fr; } }
 
@@ -61,7 +60,7 @@
     .delta.zero{ opacity:.6; }
 
     .topBox{
-      margin-top: 14px;
+      margin-top: 12px;
       padding: 14px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
@@ -74,11 +73,11 @@
       align-items:baseline;
       flex-wrap:wrap;
     }
-    .topHead h2{ margin: 0; }
+    .topHead h2{ margin: 0; font-size: 18px; }
     .topMeta{ opacity:.8; font-size:14px; }
 
     .ytWrap{
-      margin-top: 12px;
+      margin-top: 10px;
       border-radius: 14px;
       overflow:hidden;
       border: 1px solid rgba(255,255,255,.10);
@@ -100,7 +99,7 @@
       background: rgba(255,120,120,.10);
     }
 
-    /* На статистиці controls не потрібні, але щоб верстка topbar не “стрибала” — ховаємо акуратно */
+    /* На статистиці не потрібні index/comedians controls — ховаємо, але лишаємо місце */
     .controls.statsHide{
       visibility: hidden;
       pointer-events: none;
@@ -109,77 +108,76 @@
 </head>
 
 <body>
-  <!-- Твій реальний header/nav (1:1) + active на статистиці -->
-  <header class="topbar">
-    <!-- BRAND BLOCK (зліва) -->
-    <div class="topBrand">
-      <a class="brandLink" href="./index.html">
-        <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
-      </a>
-      <div class="slogan">
-        Твоя щоденна доза стендапу
+  <div class="layout">
+    <main class="main">
+      <header class="topbar">
+        <!-- BRAND BLOCK (зліва) -->
+        <div class="topBrand">
+          <a class="brandLink" href="./index.html">
+            <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+          </a>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
+        </div>
+
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn active" href="./statistics.html">Статистика</a>
+        </div>
+
+        <!-- controls не потрібні — ховаємо -->
+        <div class="controls statsHide">
+          <div class="control">
+            <label>Сортування</label>
+            <select disabled></select>
+          </div>
+
+          <div class="control">
+            <label>Найкраще</label>
+            <select disabled></select>
+          </div>
+
+          <div class="control search">
+            <label>Пошук</label>
+            <input disabled />
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <div class="statsHead">
+          <h1>Статистика по місяцях</h1>
+          <div class="monthPick">
+            <label for="monthPick">Місяць:</label>
+            <input id="monthPick" type="month" />
+          </div>
+        </div>
+
+        <div class="statsGrid" id="statsGrid" aria-live="polite"></div>
+
+        <div class="topBox" id="topBox" hidden>
+          <div class="topHead">
+            <h2>Топ відео місяця</h2>
+            <div class="topMeta" id="topMeta"></div>
+          </div>
+          <div class="ytWrap" id="ytWrap"></div>
+        </div>
+
+        <div class="hint" id="hint">Завантажую дані…</div>
+        <div class="error" id="error" hidden></div>
+      </section>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
       </div>
-    </div>
-
-    <!-- NAV -->
-    <div class="navLeft">
-      <a class="navBtn" href="./index.html">Відео</a>
-      <a class="navBtn" href="./rating.html">Рейтинг</a>
-      <a class="navBtn" href="./comedians.html">Коміки</a>
-      <a class="navBtn" href="./about.html">Про сайт</a>
-      <a class="navBtn active" href="./statistics.html">Статистика</a>
-    </div>
-
-    <!-- CONTROLS (є, але приховані на цій сторінці) -->
-    <div class="controls statsHide">
-      <div class="control">
-        <label>Сортування</label>
-        <select id="sortSelect">
-          <option value="date_desc">Останні додані</option>
-          <option value="views_desc">Найбільше переглядів</option>
-        </select>
-      </div>
-
-      <div class="control">
-        <label>Найкраще</label>
-        <select id="rangeSelect">
-          <option value="all">Увесь час</option>
-          <option value="1m">За місяць</option>
-          <option value="6m">За пів року</option>
-          <option value="1y">За рік</option>
-        </select>
-      </div>
-
-      <div class="control search">
-        <label>Пошук</label>
-        <input id="searchInput" placeholder="назва відео / комік" />
-      </div>
-    </div>
-  </header>
-
-  <main class="page">
-    <div class="statsHead">
-      <h1>Статистика по місяцях</h1>
-
-      <div class="monthPick">
-        <label for="monthPick">Місяць:</label>
-        <input id="monthPick" type="month" />
-      </div>
-    </div>
-
-    <div class="statsGrid" id="statsGrid" aria-live="polite"></div>
-
-    <section class="topBox" id="topBox" hidden>
-      <div class="topHead">
-        <h2>Топ відео місяця</h2>
-        <div class="topMeta" id="topMeta"></div>
-      </div>
-      <div class="ytWrap" id="ytWrap"></div>
-    </section>
-
-    <div class="hint" id="hint">Завантажую дані…</div>
-    <div class="error" id="error" hidden></div>
-  </main>
+    </aside>
+  </div>
 
   <script>
     const DATA_URL = "./data/videos.json";
@@ -242,11 +240,9 @@
     }
 
     function extractVideos(j){
-      // Підтримує: [ ... ] або { videos:[...] } або { items:[...] } або інший ключ з масивом
       if (Array.isArray(j)) return j;
       if (Array.isArray(j?.videos)) return j.videos;
       if (Array.isArray(j?.items)) return j.items;
-
       if (j && typeof j === "object"){
         for (const k of Object.keys(j)){
           if (Array.isArray(j[k])) return j[k];
@@ -272,7 +268,6 @@
         m.durationSec += getDurationSec(v);
       }
 
-      // Від березня 2004 до поточного місяця, навіть якщо 0
       const START = new Date(2004, 2, 1); // 2004-03
       const now = new Date();
       const months = [];
@@ -285,12 +280,10 @@
         months.push(byMonth.get(key) || { key, videos: [], views: 0, durationSec: 0 });
         cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
       }
-
       return months;
     }
 
     function pickDefaultMonth(months){
-      // останній місяць де є відео
       for (let i = months.length - 1; i >= 0; i--){
         if ((months[i].videos?.length || 0) > 0) return months[i].key;
       }
@@ -345,7 +338,6 @@
         grid.appendChild(el);
       }
 
-      // Top video
       const topBox = document.getElementById("topBox");
       const ytWrap = document.getElementById("ytWrap");
       const topMeta = document.getElementById("topMeta");
@@ -357,7 +349,6 @@
       const vid = top ? getVideoId(top) : "";
       if (vid){
         topBox.hidden = false;
-
         const title = getTitle(top);
         const vws = getViews(top);
         topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
@@ -407,5 +398,9 @@
       }
     })();
   </script>
+
+  <!-- Якщо sidebar наповнюється окремим JS на інших сторінках —
+       додай тут такий самий <script src="..."> як у comedians.html / rating.html -->
+  <!-- <script src="./assets/your-existing-sidebar-script.js"></script> -->
 </body>
 </html>
