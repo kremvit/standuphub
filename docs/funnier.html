@@ -165,6 +165,13 @@
       line-height: 1.2;
     }
 
+    .winnerStats {
+      color: var(--muted);
+      font-size: 15px;
+      min-height: 22px;
+    }
+    .winnerStats b { color: var(--text); font-weight: 900; }
+
     .winnerActions {
       display: flex;
       gap: 12px;
@@ -264,6 +271,7 @@
         <div class="trophyIcon">🏆</div>
         <div class="winnerLabel">Переможець</div>
         <div class="winnerName" id="winnerName"></div>
+        <div class="winnerStats" id="winnerStats"></div>
         <div class="winnerActions">
           <button class="actionBtn primary" id="shareBtn">Поділитись з друзями</button>
           <button class="actionBtn" id="playAgainBtn">Зіграти ще раз</button>
@@ -287,6 +295,38 @@
     StandupHub.initAbout();
 
     const TOTAL_ROUNDS = 10;
+
+    // ---- Firebase win counter ----
+    // Replace with your Firebase Realtime Database URL
+    const FIREBASE_DB = "https://standuphubwinner-default-rtdb.europe-west1.firebasedatabase.app/";
+    const FB_PATH = "/funnier_wins";
+
+    function fbKey(name) {
+      return encodeURIComponent(name.replace(/[.#$[\]/]/g, "_"));
+    }
+
+    async function recordWin(name) {
+      if (!FIREBASE_DB || FIREBASE_DB === "YOUR_FIREBASE_URL") return;
+      try {
+        await fetch(`${FIREBASE_DB}${FB_PATH}/${fbKey(name)}.json`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wins: { ".sv": { "increment": 1 } } })
+        });
+      } catch {}
+    }
+
+    async function displayWins(name) {
+      const el = document.getElementById("winnerStats");
+      if (!el) return;
+      if (!FIREBASE_DB || FIREBASE_DB === "YOUR_FIREBASE_URL") return;
+      try {
+        const r = await fetch(`${FIREBASE_DB}${FB_PATH}/${fbKey(name)}.json`);
+        const data = r.ok ? await r.json() : null;
+        const wins = data?.wins ?? 0;
+        el.innerHTML = `Перемагав <b>${wins}</b> ${wins === 1 ? "раз" : "разів"} серед усіх гравців`;
+      } catch {}
+    }
 
     let deck = [];
     let champion = "";
@@ -376,12 +416,14 @@
       }, 380);
     }
 
-    function showWinner(name) {
-      winnerName.textContent = name;
+    function showWinner(name, fromLink) {
+      winnerName.innerHTML = `<a href="./comedian.html?p=${encodeURIComponent(name)}" style="color:inherit;text-decoration:none;border-bottom:3px solid var(--accent);padding-bottom:2px;">${name}</a>`;
       gameSection.classList.add("hidden");
       winnerScreen.classList.add("visible");
-      // Update URL so the result is shareable
       history.replaceState({}, "", `?winner=${encodeURIComponent(name)}`);
+      document.getElementById("winnerStats").textContent = "";
+      if (!fromLink) recordWin(name);
+      displayWins(name);
     }
 
     function showToast(msg) {
@@ -426,7 +468,7 @@
         const names = (data || []).map(r => r.performer).filter(Boolean);
         window._gameNames = names;
         if (sharedWinner) {
-          showWinner(sharedWinner);
+          showWinner(sharedWinner, true);
         } else {
           startGame(names);
         }
@@ -439,7 +481,7 @@
             .filter(Boolean);
           window._gameNames = names;
           if (sharedWinner) {
-            showWinner(sharedWinner);
+            showWinner(sharedWinner, true);
           } else if (names.length >= 2) {
             startGame(names);
           }
