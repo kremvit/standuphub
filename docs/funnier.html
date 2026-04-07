@@ -438,18 +438,104 @@
     cardA.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(champion, cardB); } });
     cardB.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(challenger, cardA); } });
 
-    shareBtn.addEventListener("click", () => {
+    function buildShareImage(name) {
+      const W = 1080, H = 1080;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      // Background
+      ctx.fillStyle = "#0b0b0f";
+      ctx.fillRect(0, 0, W, H);
+
+      // Accent border strip at top
+      ctx.fillStyle = "#ff8a00";
+      ctx.fillRect(0, 0, W, 10);
+
+      // Subtle grid lines
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      // Trophy
+      ctx.font = "160px serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🏆", W / 2, 340);
+
+      // Label
+      ctx.fillStyle = "#a6a6b3";
+      ctx.font = "bold 36px system-ui, sans-serif";
+      ctx.letterSpacing = "6px";
+      ctx.fillText("ХТО СМІШНІШИЙ?", W / 2, 430);
+      ctx.letterSpacing = "0px";
+
+      // Winner name — scale to fit
+      ctx.fillStyle = "#ff8a00";
+      let fontSize = 100;
+      ctx.font = `900 ${fontSize}px system-ui, sans-serif`;
+      while (ctx.measureText(name).width > W - 120 && fontSize > 40) {
+        fontSize -= 4;
+        ctx.font = `900 ${fontSize}px system-ui, sans-serif`;
+      }
+      ctx.fillText(name, W / 2, 570);
+
+      // Sub-line
+      ctx.fillStyle = "#e9e9ef";
+      ctx.font = "bold 38px system-ui, sans-serif";
+      ctx.fillText("переміг у дуелі коміків", W / 2, 650);
+
+      // Domain
+      ctx.fillStyle = "#a6a6b3";
+      ctx.font = "32px system-ui, sans-serif";
+      ctx.fillText("standuphub.com.ua", W / 2, 760);
+
+      // Accent bottom strip
+      ctx.fillStyle = "#ff8a00";
+      ctx.fillRect(0, H - 10, W, 10);
+
+      return canvas;
+    }
+
+    shareBtn.addEventListener("click", async () => {
       const winner = winnerName.textContent;
       const url  = `https://standuphub.com.ua/funnier.html?winner=${encodeURIComponent(winner)}`;
       const text = `За моєю версією, найсмішніший комік — ${winner}! Перевір сам на StandupHub 👇`;
+      const title = "Хто смішніший? • StandupHub";
 
-      if (navigator.share) {
-        navigator.share({ title: "Хто смішніший? • StandupHub", text, url }).catch(() => {});
-      } else {
-        navigator.clipboard.writeText(`${text}\n${url}`)
-          .then(() => showToast("Посилання скопійовано!"))
-          .catch(() => showToast("Не вдалось скопіювати"));
+      const canvas = buildShareImage(winner);
+
+      // Try sharing with image file (mobile)
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+          const file = new File([blob], "winner.png", { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ title, text, url, files: [file] });
+            return;
+          }
+        } catch {}
       }
+
+      // Fallback: share without image
+      if (navigator.share) {
+        navigator.share({ title, text, url }).catch(() => {});
+        return;
+      }
+
+      // Desktop: copy link + offer image download
+      navigator.clipboard.writeText(`${text}\n${url}`)
+        .then(() => showToast("Посилання скопійовано!"))
+        .catch(() => showToast("Не вдалось скопіювати"));
+
+      // Also trigger image download on desktop
+      canvas.toBlob(blob => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `winner-${winner}.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }, "image/png");
     });
 
     playAgainBtn.addEventListener("click", () => {
