@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Хто смішніший? • StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8G4SLH1YT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J8G4SLH1YT');
+  </script>
+
+  <style>
+    .gameSection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      padding: 40px 0;
+    }
+
+    .gameHeader {
+      text-align: center;
+    }
+
+    .gameTitle {
+      font-size: 28px;
+      font-weight: 900;
+      margin: 0 0 8px;
+    }
+
+    .gameSubtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .roundBar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .roundDot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+
+    .roundDot.done {
+      background: var(--accent);
+    }
+
+    .roundDot.active {
+      background: rgba(255, 138, 0, 0.4);
+      box-shadow: 0 0 0 2px rgba(255, 138, 0, 0.3);
+    }
+
+    .arena {
+      display: flex;
+      align-items: stretch;
+      gap: 20px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .fighterCard {
+      flex: 1;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 20px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1.3;
+      transition: border-color 0.2s, transform 0.12s, box-shadow 0.2s, opacity 0.25s;
+      user-select: none;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+    }
+
+    .fighterCard:hover {
+      border-color: rgba(255, 138, 0, 0.75);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(255, 138, 0, 0.15);
+    }
+
+    .fighterCard:active {
+      transform: scale(0.96);
+    }
+
+    .fighterCard.losing {
+      animation: fadeOut 0.35s ease forwards;
+    }
+
+    .fighterCard.winning {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 138, 0, 0.2);
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: scale(0.85); }
+    }
+
+    .vsLabel {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--muted);
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* Winner screen */
+    .winnerScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .winnerScreen.visible {
+      display: flex;
+    }
+
+    .gameSection.hidden {
+      display: none;
+    }
+
+    .trophyIcon {
+      font-size: 64px;
+      line-height: 1;
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .winnerLabel {
+      color: var(--muted);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .winnerName {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+
+    .winnerActions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .actionBtn {
+      padding: 12px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .actionBtn:hover {
+      border-color: rgba(255, 138, 0, 0.75);
+    }
+
+    .actionBtn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+    }
+
+    .actionBtn.primary:hover {
+      opacity: 0.88;
+    }
+
+    .copyToast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #222;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .copyToast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    <main class="main">
+      <header class="topbar">
+        <div class="topBrand">
+          <a class="brandLink" href="./index.html">
+            <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+          </a>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
+        </div>
+
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn" href="./statistics.html">Статистика</a>
+          <a class="navBtn active" href="./funnier.html">Хто смішніший?</a>
+        </div>
+      </header>
+
+      <!-- Game -->
+      <section class="gameSection" id="gameSection">
+        <div class="gameHeader">
+          <div class="gameTitle">Хто смішніший?</div>
+          <p class="gameSubtitle">Обирай коміка, який смішніший. Той, хто пройде 10 раундів — переможець.</p>
+        </div>
+
+        <div class="roundBar" id="roundBar"></div>
+
+        <div class="arena" id="arena">
+          <div class="fighterCard" id="cardA" role="button" tabindex="0"></div>
+          <div class="vsLabel">VS</div>
+          <div class="fighterCard" id="cardB" role="button" tabindex="0"></div>
+        </div>
+      </section>
+
+      <!-- Winner -->
+      <section class="winnerScreen" id="winnerScreen">
+        <div class="trophyIcon">🏆</div>
+        <div class="winnerLabel">Переможець</div>
+        <div class="winnerName" id="winnerName"></div>
+        <div class="winnerActions">
+          <button class="actionBtn primary" id="shareBtn">Поділитись з друзями</button>
+          <button class="actionBtn" id="playAgainBtn">Зіграти ще раз</button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="copyToast" id="copyToast">Посилання скопійовано!</div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    StandupHub.initAbout();
+
+    const TOTAL_ROUNDS = 10;
+
+    let deck = [];
+    let champion = "";
+    let challenger = "";
+    let turn = 0;        // rounds completed
+    let busy = false;
+
+    const gameSection  = document.getElementById("gameSection");
+    const winnerScreen = document.getElementById("winnerScreen");
+    const roundBar     = document.getElementById("roundBar");
+    const cardA        = document.getElementById("cardA");
+    const cardB        = document.getElementById("cardB");
+    const winnerName   = document.getElementById("winnerName");
+    const shareBtn     = document.getElementById("shareBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const copyToast    = document.getElementById("copyToast");
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildRoundBar() {
+      roundBar.innerHTML = "";
+      for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const dot = document.createElement("div");
+        dot.className = "roundDot" + (i < turn ? " done" : i === turn ? " active" : "");
+        roundBar.appendChild(dot);
+      }
+    }
+
+    function startGame(names) {
+      deck = shuffle(names);
+      turn = 0;
+
+      // Need at least 2 comedians
+      if (deck.length < 2) return;
+
+      champion  = deck.shift();
+      challenger = deck.shift();
+
+      gameSection.classList.remove("hidden");
+      winnerScreen.classList.remove("visible");
+
+      renderRound();
+    }
+
+    function renderRound() {
+      buildRoundBar();
+      cardA.textContent = champion;
+      cardB.textContent = challenger;
+      cardA.className = "fighterCard";
+      cardB.className = "fighterCard";
+      busy = false;
+    }
+
+    function pick(winner, loserCard) {
+      if (busy) return;
+      busy = true;
+
+      loserCard.classList.add("losing");
+
+      setTimeout(() => {
+        turn++;
+
+        if (turn >= TOTAL_ROUNDS) {
+          showWinner(winner);
+          return;
+        }
+
+        // Refill deck if empty (cycle)
+        if (deck.length === 0) {
+          const allNames = [...document.querySelectorAll(".sideItem .sideName")]
+            .map(el => el.textContent.trim())
+            .filter(n => n && n !== winner);
+          deck = shuffle(allNames.length > 0 ? allNames : [winner + " (bis)"]);
+        }
+
+        champion  = winner;
+        challenger = deck.shift();
+
+        renderRound();
+      }, 380);
+    }
+
+    function showWinner(name) {
+      winnerName.textContent = name;
+      gameSection.classList.add("hidden");
+      winnerScreen.classList.add("visible");
+    }
+
+    function showToast(msg) {
+      copyToast.textContent = msg;
+      copyToast.classList.add("show");
+      setTimeout(() => copyToast.classList.remove("show"), 2200);
+    }
+
+    cardA.addEventListener("click", () => pick(champion,   cardB));
+    cardB.addEventListener("click", () => pick(challenger, cardA));
+
+    cardA.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(champion, cardB); } });
+    cardB.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(challenger, cardA); } });
+
+    shareBtn.addEventListener("click", () => {
+      const winner = winnerName.textContent;
+      const text = `За моєю версією, найсмішніший комік — ${winner}! Перевір сам на StandupHub 👇`;
+      const url  = "https://standuphub.com.ua/funnier.html";
+
+      if (navigator.share) {
+        navigator.share({ title: "Хто смішніший? • StandupHub", text, url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(`${text}\n${url}`)
+          .then(() => showToast("Посилання скопійовано!"))
+          .catch(() => showToast("Не вдалось скопіювати"));
+      }
+    });
+
+    playAgainBtn.addEventListener("click", () => {
+      const names = window._gameNames;
+      if (names) startGame(names);
+    });
+
+    // Load comedian names from rating.json
+    fetch("data/rating.json", { cache: "no-cache" })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        const names = (data || []).map(r => r.performer).filter(Boolean);
+        window._gameNames = names;
+        startGame(names);
+      })
+      .catch(() => {
+        // Fallback: read names from already-rendered sidebar
+        setTimeout(() => {
+          const names = [...document.querySelectorAll(".sideName")]
+            .map(el => el.textContent.trim())
+            .filter(Boolean);
+          window._gameNames = names;
+          if (names.length >= 2) startGame(names);
+        }, 500);
+      });
+  </script>
+</body>
+</html>
