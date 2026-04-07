@@ -380,6 +380,8 @@
       winnerName.textContent = name;
       gameSection.classList.add("hidden");
       winnerScreen.classList.add("visible");
+      // Update URL so the result is shareable
+      history.replaceState({}, "", `?winner=${encodeURIComponent(name)}`);
     }
 
     function showToast(msg) {
@@ -396,8 +398,8 @@
 
     shareBtn.addEventListener("click", () => {
       const winner = winnerName.textContent;
+      const url  = `https://standuphub.com.ua/funnier.html?winner=${encodeURIComponent(winner)}`;
       const text = `За моєю версією, найсмішніший комік — ${winner}! Перевір сам на StandupHub 👇`;
-      const url  = "https://standuphub.com.ua/funnier.html";
 
       if (navigator.share) {
         navigator.share({ title: "Хто смішніший? • StandupHub", text, url }).catch(() => {});
@@ -409,9 +411,13 @@
     });
 
     playAgainBtn.addEventListener("click", () => {
+      history.replaceState({}, "", location.pathname);
       const names = window._gameNames;
       if (names) startGame(names);
     });
+
+    // If opened via a shared link, show the winner directly
+    const sharedWinner = new URLSearchParams(location.search).get("winner");
 
     // Load comedian names from rating.json
     fetch("data/rating.json", { cache: "no-cache" })
@@ -419,7 +425,11 @@
       .then(data => {
         const names = (data || []).map(r => r.performer).filter(Boolean);
         window._gameNames = names;
-        startGame(names);
+        if (sharedWinner) {
+          showWinner(sharedWinner);
+        } else {
+          startGame(names);
+        }
       })
       .catch(() => {
         // Fallback: read names from already-rendered sidebar
@@ -428,7 +438,11 @@
             .map(el => el.textContent.trim())
             .filter(Boolean);
           window._gameNames = names;
-          if (names.length >= 2) startGame(names);
+          if (sharedWinner) {
+            showWinner(sharedWinner);
+          } else if (names.length >= 2) {
+            startGame(names);
+          }
         }, 500);
       });
   </script>
