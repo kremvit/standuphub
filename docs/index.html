@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
@@ -23,49 +23,49 @@
   <div class="layout">
     <main class="main">
       <header class="topbar">
-        <!-- BRAND BLOCK (Р·Р»С–РІР°) -->
+        <!-- BRAND BLOCK (зліва) -->
         <div class="topBrand">
           <a class="brandLink" href="./index.html">
             <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
           </a>
           <div class="slogan">
-            РўРІРѕСЏ С‰РѕРґРµРЅРЅР° РґРѕР·Р° СЃС‚РµРЅРґР°РїСѓ
+            Твоя щоденна доза стендапу
           </div>
         </div>
 
         <!-- NAV -->
         <div class="navLeft">
-          <a class="navBtn" href="./index.html">Р’С–РґРµРѕ</a>
-          <a class="navBtn" href="./rating.html">Р РµР№С‚РёРЅРі</a>
-          <a class="navBtn" href="./comedians.html">РљРѕРјС–РєРё</a>
-          <a class="navBtn" href="./about.html">РџСЂРѕ СЃР°Р№С‚</a>
-          <a class="navBtn" href="./statistics.html">РЎС‚Р°С‚РёСЃС‚РёРєР°</a>
-          <a class="navBtn" href="./funnier.html">РҐС‚Рѕ СЃРјС–С€РЅС–С€РёР№?</a>
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn" href="./statistics.html">Статистика</a>
+          <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
         </div>
 
         <!-- CONTROLS -->
         <div class="controls">
           <div class="control">
-            <label>РЎРѕСЂС‚СѓРІР°РЅРЅСЏ</label>
+            <label>Сортування</label>
             <select id="sortSelect">
-              <option value="date_desc">РћСЃС‚Р°РЅРЅС– РґРѕРґР°РЅС–</option>
-              <option value="views_desc">РќР°Р№Р±С–Р»СЊС€Рµ РїРµСЂРµРіР»СЏРґС–РІ</option>
+              <option value="date_desc">Останні додані</option>
+              <option value="views_desc">Найбільше переглядів</option>
             </select>
           </div>
 
           <div class="control">
-            <label>РќР°Р№РєСЂР°С‰Рµ</label>
+            <label>Найкраще</label>
             <select id="rangeSelect">
-              <option value="all">РЈРІРµСЃСЊ С‡Р°СЃ</option>
-              <option value="1m">Р—Р° РјС–СЃСЏС†СЊ</option>
-              <option value="6m">Р—Р° РїС–РІ СЂРѕРєСѓ</option>
-              <option value="1y">Р—Р° СЂС–Рє</option>
+              <option value="all">Увесь час</option>
+              <option value="1m">За місяць</option>
+              <option value="6m">За пів року</option>
+              <option value="1y">За рік</option>
             </select>
           </div>
 
           <div class="control search">
-            <label>РџРѕС€СѓРє</label>
-            <input id="searchInput" placeholder="РЅР°Р·РІР° РІС–РґРµРѕ / РєРѕРјС–Рє" />
+            <label>Пошук</label>
+            <input id="searchInput" placeholder="назва відео / комік" />
           </div>
         </div>
       </header>
@@ -78,20 +78,20 @@
 
     <aside class="sidebar">
       <div class="sidebarSection">
-        <div class="sidebarTitle">РўРѕРї РєРѕРјС–РєС–РІ</div>
+        <div class="sidebarTitle">Топ коміків</div>
         <div id="sidebarTop" class="sidebarList"></div>
-        <a class="sideAllBtn" href="./comedians.html">РЈСЃС– РєРѕРјС–РєРё в†’</a>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
       </div>
 
-      <!-- вњ… SEO-Р±Р»РѕРє РїРµСЂРµРЅРµСЃРµРЅРѕ РІ РЅРёР· СЃР°Р№РґР±Р°СЂСѓ (РЅР° РјРѕР±С–Р»СЊРЅРѕРјСѓ Р±СѓРґРµ РїС–Рґ вЂњРўРѕРї РєРѕРјС–РєС–РІвЂќ) -->
+      <!-- ✅ SEO-блок перенесено в низ сайдбару (на мобільному буде під “Топ коміків”) -->
       <div class="sidebarSection">
-        <div class="sidebarTitle">РЈРєСЂР°С—РЅСЃСЊРєРёР№ СЃС‚РµРЅРґР°Рї</div>
+        <div class="sidebarTitle">Український стендап</div>
         <div class="sidebarList">
           <div class="sidebarItem">
-            Р©Рѕ С‚Р°РєРµ СѓРєСЂР°С—РЅСЃСЊРєРёР№ СЃС‚РµРЅРґР°Рї, СЏРє РјРё Р·Р±РёСЂР°С”РјРѕ РІС–РґРµРѕ, РєРѕРјС–РєС–РІ С‚Р° С„РѕСЂРјСѓС”РјРѕ СЂРµР№С‚РёРЅРі вЂ” РєРѕСЂРѕС‚РєРѕ С– РїРѕ СЃСѓС‚С– РЅР° РѕРєСЂРµРјС–Р№ СЃС‚РѕСЂС–РЅС†С–.
+            Що таке український стендап, як ми збираємо відео, коміків та формуємо рейтинг — коротко і по суті на окремій сторінці.
           </div>
         </div>
-        <a class="sideAllBtn" href="./ukrainskyi-standup.html">Р”РѕРєР»Р°РґРЅС–С€Рµ в†’</a>
+        <a class="sideAllBtn" href="./ukrainskyi-standup.html">Докладніше →</a>
       </div>
     </aside>
   </div>

@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
@@ -6,7 +6,7 @@
   <link rel="icon" type="image/x-icon" href="./favicon.ico" />
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./favicon-180.png" />
-  <title>РЎС‚Р°С‚РёСЃС‚РёРєР° вЂў StandupHub</title>
+  <title>Статистика • StandupHub</title>
   <link rel="stylesheet" href="assets/styles.css" />
 
   <style>
@@ -138,30 +138,30 @@
   <div class="layout">
     <main class="main">
       <header class="topbar">
-        <!-- BRAND BLOCK (Р·Р»С–РІР°) -->
+        <!-- BRAND BLOCK (зліва) -->
         <div class="topBrand">
           <a class="brandLink" href="./index.html">
             <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
           </a>
-          <div class="slogan">РўРІРѕСЏ С‰РѕРґРµРЅРЅР° РґРѕР·Р° СЃС‚РµРЅРґР°РїСѓ</div>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
         </div>
 
         <div class="navLeft">
-          <a class="navBtn" href="./index.html">Р’С–РґРµРѕ</a>
-          <a class="navBtn" href="./rating.html">Р РµР№С‚РёРЅРі</a>
-          <a class="navBtn" href="./comedians.html">РљРѕРјС–РєРё</a>
-          <a class="navBtn" href="./about.html">РџСЂРѕ СЃР°Р№С‚</a>
-          <a class="navBtn active" href="./statistics.html">РЎС‚Р°С‚РёСЃС‚РёРєР°</a>
-          <a class="navBtn" href="./funnier.html">РҐС‚Рѕ СЃРјС–С€РЅС–С€РёР№?</a>
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn active" href="./statistics.html">Статистика</a>
+          <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
         </div>
 
         <div class="controls">
           <div class="control">
-            <label>РњС–СЃСЏС†СЊ</label>
+            <label>Місяць</label>
             <div style="display:flex; gap:6px; align-items:center;">
-              <button id="prevMonthBtn" class="pageBtn" type="button" aria-label="РџРѕРїРµСЂРµРґРЅС–Р№ РјС–СЃСЏС†СЊ">в†ђ</button>
+              <button id="prevMonthBtn" class="pageBtn" type="button" aria-label="Попередній місяць">←</button>
               <input id="monthPick" type="month" />
-              <button id="nextMonthBtn" class="pageBtn" type="button" aria-label="РќР°СЃС‚СѓРїРЅРёР№ РјС–СЃСЏС†СЊ">в†’</button>
+              <button id="nextMonthBtn" class="pageBtn" type="button" aria-label="Наступний місяць">→</button>
             </div>
           </div>
         </div>
@@ -172,30 +172,30 @@
 
         <div id="topBox" class="topBox" style="display:none;">
           <div class="topHead">
-            <div class="topTitle">РўРѕРї РІС–РґРµРѕ РјС–СЃСЏС†СЏ</div>
+            <div class="topTitle">Топ відео місяця</div>
             <div class="topMeta" id="topMeta"></div>
           </div>
           <div class="ytWrap" id="ytWrap"></div>
         </div>
 
-        <div id="hint" class="hint">Р—Р°РІР°РЅС‚Р°Р¶СѓСЋ РґР°РЅС–вЂ¦</div>
+        <div id="hint" class="hint">Завантажую дані…</div>
         <div id="error" class="error" style="display:none;"></div>
       </section>
     </main>
 
     <aside class="sidebar">
       <div class="sidebarSection">
-        <div class="sidebarTitle">РўРѕРї РєРѕРјС–РєС–РІ</div>
+        <div class="sidebarTitle">Топ коміків</div>
         <div id="sidebarTop" class="sidebarList"></div>
-        <a class="sideAllBtn" href="./comedians.html">РЈСЃС– РєРѕРјС–РєРё в†’</a>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
       </div>
     </aside>
   </div>
 
-  <!-- app.js РЅР°РїРѕРІРЅРёС‚СЊ sidebar (С‡РµСЂРµР· rating.json) -->
+  <!-- app.js наповнить sidebar (через rating.json) -->
   <script src="assets/app.js"></script>
   <script>
-    // С‚С–Р»СЊРєРё РґР»СЏ sidebar: РїС–РґС‚СЏРіСѓС” rating.json С– РІРёРєР»РёРєР°С” renderSidebar()
+    // тільки для sidebar: підтягує rating.json і викликає renderSidebar()
     StandupHub.initAbout();
   </script>
 
@@ -211,7 +211,7 @@
     function fmtDelta(n){
       if (!Number.isFinite(n) || n === 0) return { text: "0", cls: "zero" };
       const cls = (n > 0) ? "pos" : "neg";
-      const sign = (n > 0) ? "+" : "в€’";
+      const sign = (n > 0) ? "+" : "−";
       return { text: `${sign}${fmtNum(Math.abs(n))}`, cls };
     }
     function fmtMinutes(totalSec){
@@ -247,7 +247,7 @@
     }
     function getTitle(v){ return (v?.title ?? v?.name ?? v?.snippet?.title ?? ""); }
 
-    // robust date parsing (СѓР·РіРѕРґР¶РµРЅРѕ Р· app.js)
+    // robust date parsing (узгоджено з app.js)
     function parseDateMs(raw){
       if (raw == null) return null;
 
@@ -295,7 +295,7 @@
     // ---------- IO ----------
     async function fetchJson(url){
       const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error(`HTTP ${r.status} РґР»СЏ ${url}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status} для ${url}`);
       return await r.json();
     }
 
@@ -384,9 +384,9 @@
       const dMins  = fmtDelta(Math.round(durSec/60) - Math.round(prevDurSec/60));
 
       const cards = [
-        { label: "Р’С–РґРµРѕ Р·Р° РјС–СЃСЏС†СЊ", value: fmtNum(count), delta: dCount },
-        { label: "РџРµСЂРµРіР»СЏРґРё Р·Р° РјС–СЃСЏС†СЊ", value: fmtNum(views), delta: dViews },
-        { label: "РҐРІРёР»РёРЅРё РєРѕРЅС‚РµРЅС‚Сѓ", value: fmtMinutes(durSec), delta: dMins }
+        { label: "Відео за місяць", value: fmtNum(count), delta: dCount },
+        { label: "Перегляди за місяць", value: fmtNum(views), delta: dViews },
+        { label: "Хвилини контенту", value: fmtMinutes(durSec), delta: dMins }
       ];
 
       for (const c of cards){
@@ -415,7 +415,7 @@
         topBox.style.display = "";
         const title = getTitle(top);
         const vws = getViews(top);
-        topMeta.textContent = `${fmtNum(vws)} РїРµСЂРµРіР»СЏРґС–РІ${title ? " В· " + title : ""}`;
+        topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
 
         const iframe = document.createElement("iframe");
         iframe.setAttribute("allowfullscreen", "true");
@@ -479,7 +479,7 @@
         update();
       } catch(e){
         error.style.display = "";
-        error.textContent = "РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё СЃС‚Р°С‚РёСЃС‚РёРєСѓ: " + (e?.message || e);
+        error.textContent = "Не вдалося завантажити статистику: " + (e?.message || e);
         hint.textContent = "";
       }
     })();
