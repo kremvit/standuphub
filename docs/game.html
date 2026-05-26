@@ -43,6 +43,7 @@
 
     .topbar {
       display: grid;
+      padding-bottom: 8px;
       grid-template-columns: 1fr auto 1fr;
       gap: 16px;
       align-items: start;
@@ -102,8 +103,8 @@
 
     .question-wrap {
       width: min(1120px, calc(100% - 36px));
-      margin: 0 auto 18px;
-      padding: clamp(18px, 2.4vw, 30px);
+      margin: 0 auto 8px;
+      padding: clamp(10px, 1.4vw, 16px);
       border-radius: 28px;
       background: var(--panel);
       border: 1px solid var(--border);
@@ -114,15 +115,15 @@
     .label {
       color: var(--accent);
       text-transform: uppercase;
-      font-size: 15px;
+      font-size: 11px;
       letter-spacing: .08em;
       margin-bottom: 10px;
       font-weight: 700;
     }
 
     .setup {
-      margin: 0 0 20px;
-      font-size: clamp(24px, 3.2vw, 38px);
+      margin: 0 0 10px;
+      font-size: clamp(16px, 1.8vw, 22px);
       line-height: 1.12;
       font-weight: 650;
       letter-spacing: -0.04em;
@@ -130,24 +131,24 @@
 
     .answers {
       display: grid;
-      gap: 14px;
+      gap: 8px;
     }
 
     .answer {
       width: 100%;
-      min-height: 64px;
+      min-height: 42px;
       display: grid;
       grid-template-columns: 58px 1fr;
       align-items: center;
       gap: 16px;
-      padding: 12px 18px;
-      border-radius: 18px;
+      padding: 8px 12px;
+      border-radius: 14px;
       border: 1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.055);
       color: var(--text);
       text-align: left;
       cursor: pointer;
-      font-size: clamp(16px, 1.8vw, 22px);
+      font-size: clamp(12px, 1.1vw, 15px);
       transition: .18s ease;
     }
 
@@ -163,8 +164,8 @@
     }
 
     .letter {
-      width: 46px;
-      height: 46px;
+      width: 28px;
+      height: 28px;
       display: grid;
       place-items: center;
       border-radius: 50%;
@@ -187,6 +188,7 @@
 
     .bottom-row {
       display: flex;
+      margin-top: 12px;
       justify-content: space-between;
       align-items: center;
       gap: 14px;
@@ -201,20 +203,20 @@
       background: rgba(255,255,255,.07);
       color: var(--text);
       border-radius: 14px;
-      padding: 13px 18px;
-      font-size: 16px;
+      padding: 8px 12px;
+      font-size: 12px;
       cursor: pointer;
     }
 
     .next {
-      min-width: 170px;
+      min-width: 120px;
       background: rgba(232, 75, 50, .25);
     }
 
     .reaction {
       flex: 1;
       text-align: center;
-      font-size: 16px;
+      font-size: 12px;
     }
 
     .start-screen,
@@ -361,7 +363,16 @@
       <div class="label">Результат</div>
       <h2 id="resultTitle">Виступ завершено</h2>
       <p id="resultText"></p>
-      <button class="main-btn" id="playAgainBtn">Зіграти ще раз</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;">
+        <button class="main-btn" id="shareBtn">Поділитись результатом</button>
+        <button class="main-btn" id="playAgainBtn" style="background:#2a2a2a;">Зіграти ще раз</button>
+      </div>
+
+      <div id="comedianResult" style="margin-top:24px;padding:22px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:left;">
+        <div class="label">Твій рівень StandUpHub</div>
+        <div id="comedianName" style="font-size:34px;font-weight:800;line-height:1;letter-spacing:-0.04em;margin-bottom:8px;">TOP-100 комік</div>
+        <div id="comedianText" style="color:var(--muted);font-size:18px;line-height:1.5;"></div>
+      </div>
     </div>
   </section>
 
@@ -633,6 +644,35 @@
 
     const $ = id => document.getElementById(id);
 
+    let ratingData = [];
+
+    async function loadRating() {
+      try {
+        const res = await fetch('/data/rating.json');
+        const data = await res.json();
+
+        ratingData = (Array.isArray(data) ? data : (data.items || data.rating || []))
+          .map((item, index) => ({
+            name: item.performer || item.name || item.comedian || `Комік #${index + 1}`,
+            rank: Number(item.rank || index + 1)
+          }))
+          .filter(x => x.name);
+      } catch (e) {
+        ratingData = [
+          { name: 'Комік з TOP-10', rank: 8 },
+          { name: 'Комік з TOP-30', rank: 24 },
+          { name: 'Комік з TOP-50', rank: 41 },
+          { name: 'Комік з TOP-100', rank: 83 }
+        ];
+      }
+    }
+
+    function pickComedian(rankLimitMin, rankLimitMax) {
+      let pool = ratingData.filter(x => x.rank >= rankLimitMin && x.rank <= rankLimitMax);
+      if (!pool.length) pool = ratingData;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     let player = "Комік";
     let index = 0;
     let streak = 0;
@@ -724,13 +764,39 @@
       $("gameScreen").classList.add("hidden");
       $("resultScreen").classList.remove("hidden");
 
+      let comedian;
+      let resultText;
+      let shareText;
+
       if (won) {
-        $("resultTitle").textContent = "Ти витягнув перевірку";
-        $("resultText").textContent = `${player}, ти вгадав усі 5 панчлайнів. Навіть люди з кальянами почали слухати.`;
+        comedian = pickComedian(1, 10);
+        $("resultTitle").textContent = "Ти розніс зал";
+        $("resultText").textContent = `${player}, ти пройшов перевірку матеріалу і дійшов до рівня TOP-10 StandUpHub.`;
+
+        resultText = `Ти — рівень TOP-10 українського стендапу.`;
+        shareText = `${player} пройшов гру “Вгадай панчлайн” на StandUpHub і став рівнем TOP-10 🎙️`;
       } else {
+        if (index <= 1) {
+          comedian = pickComedian(50, 100);
+          resultText = `Ти — рівень TOP-100 StandUpHub.`;
+        } else if (index <= 3) {
+          comedian = pickComedian(30, 50);
+          resultText = `Ти — рівень TOP-50 StandUpHub.`;
+        } else {
+          comedian = pickComedian(10, 30);
+          resultText = `Ти — рівень TOP-30 StandUpHub.`;
+        }
+
         $("resultTitle").textContent = "Панч не зайшов";
-        $("resultText").textContent = `${player}, ти вилетів на перевірці матеріалу. Публіка повернулась до телефонів.`;
+        $("resultText").textContent = `${player}, публіка повернулась до телефонів і кальянів.`;
+
+        shareText = `${player} зіграв у “Вгадай панчлайн” на StandUpHub 🎙️`;
       }
+
+      $("comedianName").textContent = comedian?.name || 'Комік StandUpHub';
+      $("comedianText").textContent = `${resultText} Приблизне місце в рейтингу: #${comedian?.rank || '?'}.'`;
+
+      window.shareResultText = shareText;
     }
 
     function getGoodReaction() {
@@ -755,9 +821,34 @@
       return list[Math.floor(Math.random() * list.length)];
     }
 
+    async function shareGameResult() {
+      const text = window.shareResultText || 'Я зіграв у Вгадай панчлайн на StandUpHub 🎙️';
+      const url = window.location.href;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Вгадай панчлайн | StandUpHub',
+            text,
+            url
+          });
+          return;
+        } catch (e) {}
+      }
+
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      $("shareBtn").textContent = 'Скопійовано!';
+      setTimeout(() => {
+        $("shareBtn").textContent = 'Поділитись результатом';
+      }, 1500);
+    }
+
+    loadRating();
+
     $("startBtn").onclick = startGame;
     $("restartBtn").onclick = startGame;
     $("playAgainBtn").onclick = startGame;
+    $("shareBtn").onclick = shareGameResult;
     $("playerName").addEventListener("keydown", e => {
       if (e.key === "Enter") startGame();
     });
