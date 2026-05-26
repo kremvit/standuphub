@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Гра: Вгадай панчлайн | StandUpHub</title>
+  <meta name="description" content="Спробуй пройти шлях від перевірки матеріалу до сольного концерту. Вгадай правильний панчлайн і дізнайся свій рівень у StandUpHub." />
+
+  <style>
+    :root {
+      --bg: #070707;
+      --card: rgba(18, 18, 18, 0.86);
+      --card-2: rgba(30, 22, 15, 0.9);
+      --text: #f5f0e8;
+      --muted: #b9a997;
+      --accent: #ffb000;
+      --accent-2: #ff4b2b;
+      --good: #32d583;
+      --bad: #ff5c5c;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #050505;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      isolation: isolate;
+    }
+
+    .stage-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 190, 80, 0.34), transparent 24%),
+        radial-gradient(circle at 20% 45%, rgba(255, 70, 30, 0.13), transparent 28%),
+        radial-gradient(circle at 80% 45%, rgba(255, 70, 30, 0.11), transparent 28%),
+        linear-gradient(180deg, #120b06 0%, #070707 45%, #020202 100%);
+    }
+
+    .stage-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.78), transparent 35%, transparent 65%, rgba(0,0,0,.78)),
+        radial-gradient(ellipse at center bottom, transparent 0 34%, rgba(0,0,0,.78) 67%);
+    }
+
+    .spotlight {
+      position: fixed;
+      top: -25vh;
+      left: 50%;
+      width: min(78vw, 900px);
+      height: 125vh;
+      transform: translateX(-50%);
+      z-index: -2;
+      background: radial-gradient(ellipse at center top, rgba(255, 210, 120, 0.34), transparent 62%);
+      clip-path: polygon(42% 0, 58% 0, 88% 100%, 12% 100%);
+      filter: blur(2px);
+      animation: breathe 5s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { opacity: .75; }
+      50% { opacity: 1; }
+    }
+
+    .audience {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 34vh;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 10% 60%, #1b1410 0 14px, transparent 15px),
+        radial-gradient(circle at 20% 52%, #21150f 0 18px, transparent 19px),
+        radial-gradient(circle at 31% 65%, #160f0c 0 15px, transparent 16px),
+        radial-gradient(circle at 44% 54%, #23160f 0 19px, transparent 20px),
+        radial-gradient(circle at 56% 61%, #18110d 0 16px, transparent 17px),
+        radial-gradient(circle at 68% 50%, #26170f 0 20px, transparent 21px),
+        radial-gradient(circle at 81% 64%, #17100d 0 15px, transparent 16px),
+        radial-gradient(circle at 91% 55%, #22150f 0 18px, transparent 19px),
+        linear-gradient(180deg, transparent, rgba(0,0,0,.85));
+      opacity: .82;
+      filter: blur(.2px);
+    }
+
+    .microphone {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      width: 110px;
+      height: 260px;
+      transform: translateX(-50%);
+      z-index: 0;
+      pointer-events: none;
+      opacity: .9;
+    }
+
+    .mic-head {
+      width: 76px;
+      height: 94px;
+      margin: 0 auto;
+      border-radius: 38px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.18) 0 2px, transparent 2px 7px),
+        linear-gradient(135deg, #383838, #151515);
+      border: 2px solid rgba(255,255,255,.24);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.1), 0 10px 35px rgba(0,0,0,.6);
+    }
+
+    .mic-neck {
+      width: 18px;
+      height: 32px;
+      margin: -2px auto 0;
+      background: #111;
+      border-left: 2px solid rgba(255,255,255,.15);
+      border-right: 2px solid rgba(255,255,255,.05);
+    }
+
+    .mic-stand {
+      width: 8px;
+      height: 138px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, #090909, #3b3b3b, #080808);
+      box-shadow: 0 0 25px rgba(0,0,0,.9);
+    }
+
+    header {
+      width: min(1180px, calc(100% - 32px));
+      margin: 20px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.05;
+    }
+
+    .brand strong {
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a,
+    .small-btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      transition: .2s ease;
+    }
+
+    .nav a:hover,
+    .small-btn:hover {
+      background: rgba(255,255,255,.12);
+      transform: translateY(-1px);
+    }
+
+    main {
+      width: min(1040px, calc(100% - 32px));
+      margin: 34px auto 70px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .screen {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      padding: clamp(22px, 4vw, 42px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: .14em;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 7vw, 78px);
+      letter-spacing: -0.07em;
+      line-height: .92;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.55;
+      max-width: 660px;
+      margin: 22px 0 0;
+    }
+
+    .start-card {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.34);
+      color: var(--text);
+      padding: 15px 16px;
+      border-radius: 16px;
+      font-size: 17px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: rgba(255,176,0,.75);
+      box-shadow: 0 0 0 4px rgba(255,176,0,.12);
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 16px;
+      color: #1b1000;
+      background: linear-gradient(135deg, var(--accent), #ffd36a);
+      box-shadow: 0 12px 30px rgba(255,176,0,.2);
+      transition: .2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 40px rgba(255,176,0,.26);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+
+    .levels {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .level-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 10px;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 13px;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill strong {
+      color: var(--text);
+    }
+
+    .setup-box {
+      border-radius: 22px;
+      padding: clamp(20px, 4vw, 36px);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+        rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+      margin-bottom: 18px;
+    }
+
+    .setup-label {
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .setup-text {
+      font-size: clamp(24px, 4vw, 44px);
+      line-height: 1.12;
+      letter-spacing: -0.04em;
+      font-weight: 900;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .option {
+      min-height: 86px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      text-align: left;
+      padding: 16px 18px;
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1.35;
+      transition: .18s ease;
+    }
+
+    .option:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,176,0,.46);
+    }
+
+    .option:disabled {
+      cursor: not-allowed;
+      opacity: .82;
+    }
+
+    .option.correct {
+      background: rgba(50,213,131,.18);
+      border-color: rgba(50,213,131,.8);
+    }
+
+    .option.wrong {
+      background: rgba(255,92,92,.16);
+      border-color: rgba(255,92,92,.8);
+    }
+
+    .reaction {
+      margin-top: 16px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .reaction strong {
+      color: var(--text);
+    }
+
+    .meter {
+      height: 10px;
+      width: min(360px, 100%);
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.1);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--good));
+      transition: width .35s ease;
+    }
+
+    .result {
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .result h2 {
+      font-size: clamp(34px, 6vw, 72px);
+      line-height: .95;
+      letter-spacing: -0.07em;
+      margin: 0 0 18px;
+    }
+
+    .result p {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .comedian-card {
+      margin: 24px auto 0;
+      max-width: 520px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      padding: 20px;
+      background: rgba(255,255,255,.07);
+      text-align: left;
+    }
+
+    .comedian-card small {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      font-weight: 900;
+    }
+
+    .comedian-card h3 {
+      margin: 8px 0 4px;
+      font-size: 30px;
+      letter-spacing: -0.04em;
+    }
+
+    .share-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .shake {
+      animation: shake .38s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    .ovation {
+      animation: ovation .8s ease;
+    }
+
+    @keyframes ovation {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.015); }
+      100% { transform: scale(1); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 780px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .options {
+        grid-template-columns: 1fr;
+      }
+
+      .microphone {
+        opacity: .42;
+        transform: translateX(-50%) scale(.78);
+        transform-origin: bottom center;
+      }
+
+      .share-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="stage-bg"></div>
+    <div class="spotlight"></div>
+    <div class="audience" id="audience"></div>
+    <div class="microphone" aria-hidden="true">
+      <div class="mic-head"></div>
+      <div class="mic-neck"></div>
+      <div class="mic-stand"></div>
+    </div>
+
+    <header>
+      <a class="brand" href="/">
+        <strong>StandUpHub</strong>
+        <span>Твоя щоденна доза стендапу</span>
+      </a>
+      <nav class="nav">
+        <a href="./index.html">Головна</a>
+        <a href="./rating.html">Рейтинг</a>
+        <a href="./statistics.html">Статистика</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="screen" id="startScreen">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">Гра StandUpHub</div>
+            <h1>Вгадай панчлайн</h1>
+            <p class="lead">
+              Ти стоїш на сцені з мікрофоном. Зал чекає. Обери правильний панчлайн до сетапу і пройди шлях від перевірки матеріалу до сольного концерту.
+            </p>
+          </div>
+
+          <div class="start-card">
+            <label for="playerName">Твоє сценічне імʼя</label>
+            <input id="playerName" type="text" placeholder="Наприклад: Віталій" maxlength="32" />
+            <button class="btn" id="startBtn">Вийти на сцену</button>
+
+            <div class="levels">
+              <div class="level-line"><span>1. Перевірка матеріалу</span><strong>5 жартів</strong></div>
+              <div class="level-line"><span>2. Платна вечірка</span><strong>10 жартів</strong></div>
+              <div class="level-line"><span>3. Сольний концерт</span><strong>20 жартів</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen hidden" id="gameScreen">
+        <div class="hud">
+          <div class="pill">🎙️ <strong id="hudName">Комік</strong></div>
+          <div class="pill">Рівень: <strong id="hudLevel">Перевірка матеріалу</strong></div>
+          <div class="pill">Жарт: <strong id="hudProgress">1 / 5</strong></div>
+          <div class="pill">Серія: <strong id="hudStreak">0</strong></div>
+        </div>
+
+        <div class="setup-box">
+          <div class="setup-label">Сетап</div>
+          <div class="setup-text" id="setupText"></div>
+        </div>
+
+        <div class="options" id="options"></div>
+
+        <div class="reaction">
+          <div id="reactionText">Публіка дивиться на тебе...</div>
+          <div class="meter" title="Рівень уваги залу">
+            <div class="meter-fill" id="meterFill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen hidden" id="resultScreen">
+        <div class="result">
+          <div class="eyebrow" id="resultEyebrow">Результат</div>
+          <h2 id="resultTitle"></h2>
+          <p id="resultText"></p>
+
+          <div class="comedian-card" id="comedianCard">
+            <small>Твій рівень за рейтингом StandUpHub</small>
+            <h3 id="comedianName">Комік</h3>
+            <p id="comedianMeta"></p>
+          </div>
+
+          <div class="share-row">
+            <button class="btn" id="shareBtn">Поділитись результатом</button>
+            <button class="btn secondary" id="restartBtn">Зіграти ще раз</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const LEVELS = [
+      { id: 1, name: "Перевірка матеріалу", jokes: 5, resultBand: 100, crowd: "small" },
+      { id: 2, name: "Платна вечірка", jokes: 10, resultBand: 50, crowd: "medium" },
+      { id: 3, name: "Сольний концерт", jokes: 20, resultBand: 30, crowd: "large" }
+    ];
+
+    // MVP-база жартів. Потім краще винести в /data/punchline_game.json
+    // correct — індекс правильної відповіді в масиві options.
+    const JOKES = [
+      {
+        setup: "Я зрозумів, що став дорослим, коли почав радіти не тусовкам, а...",
+        options: ["знижці на гречку", "скасованим планам", "новому килимку у ванну", "коли сусіди свердлять в ритм"],
+        correct: 1
+      },
+      {
+        setup: "Мій банк так турбується про мою безпеку, що кожну підозрілу покупку...",
+        options: ["спочатку обговорює з мамою", "називає фінансовим самогубством", "відхиляє ще до моєї зарплати", "питає: точно тобі це треба?"],
+        correct: 3
+      },
+      {
+        setup: "На першому побаченні вона сказала: будь собою. І це була пастка, бо...",
+        options: ["я прийшов у домашніх штанах", "вона ще не знала, ким я є", "я одразу почав оновлювати Windows", "я замовив найдешевшу воду"],
+        correct: 1
+      },
+      {
+        setup: "У дитинстві я думав, що дорослі знають, що роблять. Тепер я дорослий і бачу, що...",
+        options: ["ми просто вище дотягуємось до полиць", "це був найбільший фейк мого життя", "усі імпровізують з серйозним обличчям", "податкова теж не знає"],
+        correct: 2
+      },
+      {
+        setup: "Мені сказали: треба вийти із зони комфорту. Я вийшов. Там була...",
+        options: ["черга в банку", "ще одна зона дискомфорту", "погана кава і люди", "моя колишня"],
+        correct: 1
+      },
+      {
+        setup: "Фітнес-тренер сказав мені слухати своє тіло. Я послухав. Воно сказало...",
+        options: ["лягай", "де шаурма?", "скасуй абонемент", "ми не знайомі з цими вправами"],
+        correct: 0
+      },
+      {
+        setup: "Я люблю мінімалізм. Особливо в тих речах, де він сам зʼявився, наприклад...",
+        options: ["на моєму рахунку", "у моїй шафі", "в моїй мотивації", "у холодильнику перед зарплатою"],
+        correct: 3
+      },
+      {
+        setup: "Коли мені кажуть: ти просто не вмієш відпочивати, я розумію — це правда, бо...",
+        options: ["навіть у відпустці складаю список провини", "я гуглю симптоми спокою", "мені треба дедлайн для релаксу", "я ставлю будильник на нічого"],
+        correct: 2
+      },
+      {
+        setup: "Українські батьки не питають, чи ти голодний. Вони питають так, ніби...",
+        options: ["вже викликали свідків", "це допит про державну зраду", "ти приховуєш борщ", "у холодильника є адвокат"],
+        correct: 1
+      },
+      {
+        setup: "Я купив розумну лампочку. Тепер у квартирі є річ, яка розумніша за мене, але...",
+        options: ["теж не хоче вставати зранку", "хоча б світиться без кави", "її теж треба оновлювати", "вона не платить комуналку"],
+        correct: 3
+      },
+      {
+        setup: "Психолог сказав: прийміть себе. Я спробував, але служба доставки...",
+        options: ["не знайшла адресу", "попросила передоплату", "не працює з таким вантажем", "сказала: самовивіз"],
+        correct: 3
+      },
+      {
+        setup: "Мені подобаються люди, які кажуть: гроші — не головне. Особливо коли вони...",
+        options: ["просять скинутись", "вже мають гроші", "живуть не за мої", "продають курс про гроші"],
+        correct: 1
+      },
+      {
+        setup: "Коли я бачу напис “натуральний продукт”, я довіряю йому рівно до моменту, поки...",
+        options: ["не читаю склад", "не бачу термін придатності до 2047", "не бачу ціну", "не згадую, що отруйні гриби теж натуральні"],
+        correct: 3
+      },
+      {
+        setup: "Я не прокрастиную. Я просто даю задачам...",
+        options: ["постояти в черзі", "дозріти", "шанс вирішитись без мене", "відчути самотність"],
+        correct: 2
+      },
+      {
+        setup: "У мене настільки погана памʼять на імена, що я на весіллі друга...",
+        options: ["чекав титри", "називав усіх брат", "аплодував нареченій за підказку", "питав у ведучого пароль"],
+        correct: 0
+      },
+      {
+        setup: "Я люблю тишу. Але тиша в квартирі підозріла, бо завжди здається, що...",
+        options: ["сусіди заряджають перфоратор", "холодильник задумався", "Wi‑Fi образився", "десь росте рахунок"],
+        correct: 0
+      },
+      {
+        setup: "Коли людина каже “я швиденько”, я вже знаю: це одиниця часу, яка...",
+        options: ["не вимірюється годинником", "має власний календар", "закінчується завтра", "починається після кави"],
+        correct: 1
+      },
+      {
+        setup: "У дорослому житті найбільша інтрига — не любов, не карʼєра, а...",
+        options: ["чи висохне одяг до ранку", "де лежить зарядка", "чому болить спина", "що це за платіж у банку"],
+        correct: 3
+      },
+      {
+        setup: "Я так довго не прибирав, що пил у кімнаті вже...",
+        options: ["попросив прописку", "став історичним шаром", "утворив профспілку", "запропонував співжиття"],
+        correct: 1
+      },
+      {
+        setup: "Мій телефон знає про мене все. І все одно кожного ранку питає...",
+        options: ["будильник відкласти?", "ти точно хочеш жити так само?", "чи не бажаєте оновлення?", "де твоя гідність?"],
+        correct: 0
+      },
+      {
+        setup: "Мені здається, що кавомашина в офісі — це головний психолог колективу, бо...",
+        options: ["вона чує більше правди, ніж керівник", "до неї всі приходять з надією", "біля неї люди стають чесними", "вона теж ламається від стресу"],
+        correct: 0
+      },
+      {
+        setup: "Я хотів вести здоровий спосіб життя, але мій холодильник...",
+        options: ["не підтримав реформу", "подав апеляцію", "заблокував ініціативу", "створив опозицію з майонезом"],
+        correct: 3
+      },
+      {
+        setup: "Найстрашніше в IKEA — це не ціни і не лабіринт. Найстрашніше, що ти виходиш звідти з думкою...",
+        options: ["я можу зібрати життя сам", "мені потрібна ще одна полиця", "шведи знають про мене більше", "я тепер дизайнер"],
+        correct: 0
+      },
+      {
+        setup: "У мене є план на життя. Просто він як інструкція до китайського пилососа — ...",
+        options: ["щось перекладено, але страшно", "починається оптимістично", "є деталі, які зайві", "ніхто не знає, куди вставляти мрію"],
+        correct: 0
+      },
+      {
+        setup: "Коли хтось пише “можна питання?”, я вже напружуюсь, бо це ніколи не питання, це...",
+        options: ["квест", "борг", "тривожний трейлер", "початок переговорів без бюджету"],
+        correct: 2
+      },
+      {
+        setup: "Я зрозумів, що в мене доросла депресія, коли замість плакати я почав...",
+        options: ["порівнювати тарифи", "купувати контейнери для їжі", "мовчки мити посуд", "читати відгуки на швабри"],
+        correct: 3
+      },
+      {
+        setup: "Найбільший тест на довіру у стосунках — це не пароль від телефону, а...",
+        options: ["спільний ремонт", "одна ковдра взимку", "разом обирати серіал", "дати людині різати хліб на бутерброди"],
+        correct: 2
+      },
+      {
+        setup: "Я не боюся майбутнього. Я просто бачив, як оновлюється Windows, і розумію, що...",
+        options: ["прогрес може тривати 3 години", "не все нове треба приймати", "після перезапуску буде гірше", "ніхто не питає, чи ти готовий"],
+        correct: 3
+      },
+      {
+        setup: "У кожній компанії є людина, яка каже “давайте без політики”. І одразу після цього...",
+        options: ["починає політику", "згадує податки", "розказує найгіршу думку вечора", "просить не записувати"],
+        correct: 2
+      },
+      {
+        setup: "Коли я бачу мотиваційний напис “ти можеш усе”, я думаю: класно, але...",
+        options: ["чи можна не сьогодні?", "хто оплатить наслідки?", "я вже можу лежати", "мені б спочатку пароль згадати"],
+        correct: 0
+      },
+      {
+        setup: "Мені подобається слово “саморозвиток”, бо воно звучить так, ніби...",
+        options: ["ти ростеш без участі зарплати", "достатньо купити блокнот", "проблеми самі себе виправлять", "страждання можна красиво назвати"],
+        correct: 3
+      },
+      {
+        setup: "Я зрозумів, що мій організм дорослий, коли він почав реагувати на погоду швидше, ніж...",
+        options: ["синоптики", "Telegram-канали", "мої плани", "державні служби"],
+        correct: 0
+      },
+      {
+        setup: "Мама завжди казала: візьми пакет, пригодиться. І знаєте що? У якийсь момент життя...",
+        options: ["ти стаєш людиною з пакетами", "пакет стає характером", "пакет перемагає диплом", "мама виявляється головним стратегом"],
+        correct: 3
+      },
+      {
+        setup: "Мені здається, що ліфт — це єдине місце, де люди досі вірять у колективну мовчанку, бо...",
+        options: ["усі дивляться на цифри, як на Netflix", "там не прийнято бути особистістю", "один кашель — і всі знайомі", "натиснув кнопку і молишся"],
+        correct: 0
+      },
+      {
+        setup: "Коли люди кажуть “я на хвилинку”, вони забувають уточнити, що це хвилинка...",
+        options: ["за церковним календарем", "емоційна", "з розширеним пакетом", "у форматі режисерської версії"],
+        correct: 3
+      }
+    ];
+
+    const fallbackRating = [
+      { name: "комік з TOP-10", rank: 7 },
+      { name: "комік з TOP-30", rank: 23 },
+      { name: "комік з TOP-50", rank: 42 },
+      { name: "комік з TOP-100", rank: 88 }
+    ];
+
+    let rating = [];
+    let playerName = "Комік";
+    let currentLevelIndex = 0;
+    let questionIndexInLevel = 0;
+    let totalCorrect = 0;
+    let streak = 0;
+    let usedJokes = [];
+    let currentJoke = null;
+    let locked = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    const startScreen = $("startScreen");
+    const gameScreen = $("gameScreen");
+    const resultScreen = $("resultScreen");
+    const audience = $("audience");
+
+    async function loadRating() {
+      try {
+        const response = await fetch("/data/rating.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("rating.json not found");
+        const data = await response.json();
+        const list = Array.isArray(data) ? data : (data.items || data.rating || []);
+        rating = list
+          .map((item, index) => ({
+            name: item.performer || item.name || item.comedian || item.title || `Комік #${index + 1}`,
+            rank: Number(item.rank || index + 1),
+            score: item.score || item.rating_score || item.total_score || null,
+            url: item.url || item.page || null
+          }))
+          .filter(item => item.name);
+      } catch (error) {
+        rating = fallbackRating;
+      }
+    }
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function pickJoke() {
+      if (usedJokes.length >= JOKES.length) usedJokes = [];
+      const available = JOKES.map((_, i) => i).filter(i => !usedJokes.includes(i));
+      const index = available[Math.floor(Math.random() * available.length)];
+      usedJokes.push(index);
+      return JOKES[index];
+    }
+
+    function setCrowd(level) {
+      audience.style.opacity = level.crowd === "small" ? ".48" : level.crowd === "medium" ? ".68" : ".9";
+    }
+
+    function startGame() {
+      playerName = $("playerName").value.trim() || "Невідомий комік";
+      currentLevelIndex = 0;
+      questionIndexInLevel = 0;
+      totalCorrect = 0;
+      streak = 0;
+      usedJokes = [];
+      locked = false;
+
+      startScreen.classList.add("hidden");
+      resultScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+
+      $("hudName").textContent = playerName;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      locked = false;
+      const level = LEVELS[currentLevelIndex];
+      setCrowd(level);
+      currentJoke = pickJoke();
+
+      $("hudLevel").textContent = level.name;
+      $("hudProgress").textContent = `${questionIndexInLevel + 1} / ${level.jokes}`;
+      $("hudStreak").textContent = streak;
+      $("setupText").textContent = currentJoke.setup;
+      $("reactionText").innerHTML = "Публіка дивиться на тебе...";
+      $("meterFill").style.width = `${Math.min(100, 18 + streak * 8 + currentLevelIndex * 12)}%`;
+
+      const prepared = currentJoke.options.map((text, index) => ({
+        text,
+        originalIndex: index,
+        isCorrect: index === currentJoke.correct
+      }));
+
+      const options = shuffle(prepared);
+      $("options").innerHTML = "";
+
+      options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.className = "option";
+        button.innerHTML = `<strong>${["А", "Б", "В", "Г"][index]}.</strong> ${option.text}`;
+        button.addEventListener("click", () => answer(option, button));
+        $("options").appendChild(button);
+      });
+    }
+
+    function answer(option, button) {
+      if (locked) return;
+      locked = true;
+
+      const allButtons = [...document.querySelectorAll(".option")];
+      allButtons.forEach(btn => btn.disabled = true);
+
+      if (option.isCorrect) {
+        button.classList.add("correct");
+        totalCorrect += 1;
+        streak += 1;
+        gameScreen.classList.add("ovation");
+        $("reactionText").innerHTML = `<strong>${getGoodReaction()}</strong>`;
+        $("meterFill").style.width = `${Math.min(100, 35 + streak * 10 + currentLevelIndex * 15)}%`;
+
+        setTimeout(() => gameScreen.classList.remove("ovation"), 800);
+        setTimeout(nextQuestion, 850);
+      } else {
+        button.classList.add("wrong");
+        const correctButton = allButtons.find(btn => btn.textContent.includes(currentJoke.options[currentJoke.correct]));
+        if (correctButton) correctButton.classList.add("correct");
+        streak = 0;
+        gameScreen.classList.add("shake");
+        $("reactionText").innerHTML = `<strong>${getBadReaction()}</strong>`;
+        $("meterFill").style.width = "8%";
+
+        setTimeout(() => gameScreen.classList.remove("shake"), 450);
+        setTimeout(() => finishGame(false), 1300);
+      }
+    }
+
+    function nextQuestion() {
+      const level = LEVELS[currentLevelIndex];
+      questionIndexInLevel += 1;
+
+      if (questionIndexInLevel < level.jokes) {
+        renderQuestion();
+        return;
+      }
+
+      currentLevelIndex += 1;
+      questionIndexInLevel = 0;
+
+      if (currentLevelIndex >= LEVELS.length) {
+        finishGame(true);
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function getGoodReaction() {
+      const reactions = [
+        "Зал сміється. Ти відчув ритм.",
+        "Є контакт! Хтось навіть відставив пиво.",
+        "Сміх пішов хвилею. Можна їхати далі.",
+        "Панч зайшов. У першому ряду кивають.",
+        "Аплодисменти. Ти явно не випадково на сцені."
+      ];
+      return reactions[Math.floor(Math.random() * reactions.length)];
+    }
+
+    function getBadReaction() {
+      const reactions = [
+        "Тиша. Десь впала виделка.",
+        "Хтось у залі дуже уважно подивився в телефон.",
+        "Пауза затягнулась. Бармен зробив вигляд, що зайнятий.",
+        "Цей панч не долетів до останнього столика.",
+        "Зал не повірив. Сьогодні матеріал ще сирий."
+      ];
+      return reactions[Math.floor(Math.random() * reactions.length)];
+    }
+
+    function getResultBand(won) {
+      if (won) return 10;
+      if (currentLevelIndex === 0) return 100;
+      if (currentLevelIndex === 1) return 50;
+      return 30;
+    }
+
+    function pickComedianByBand(band) {
+      let pool = rating.length ? rating : fallbackRating;
+
+      if (band === 10) {
+        pool = pool.filter(item => item.rank <= 10);
+      } else if (band === 30) {
+        pool = pool.filter(item => item.rank > 10 && item.rank <= 30);
+      } else if (band === 50) {
+        pool = pool.filter(item => item.rank > 30 && item.rank <= 50);
+      } else {
+        pool = pool.filter(item => item.rank > 50 && item.rank <= 100);
+      }
+
+      if (!pool.length) pool = rating.length ? rating.slice(0, Math.min(band, rating.length)) : fallbackRating;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function finishGame(won) {
+      gameScreen.classList.add("hidden");
+      resultScreen.classList.remove("hidden");
+
+      const band = getResultBand(won);
+      const comedian = pickComedianByBand(band);
+      const completedLevelName = won ? "Сольний концерт" : LEVELS[Math.max(0, currentLevelIndex)]?.name || "Перевірка матеріалу";
+
+      if (won) {
+        $("resultEyebrow").textContent = "Standing ovation";
+        $("resultTitle").textContent = "Ти розніс зал";
+        $("resultText").textContent = `${playerName}, ти пройшов усі 35 жартів і дійшов до рівня TOP-10 StandUpHub.`;
+      } else {
+        $("resultEyebrow").textContent = "Виступ завершено";
+        $("resultTitle").textContent = "Панчлайн не зайшов";
+        $("resultText").textContent = `${playerName}, ти правильно вгадав ${totalCorrect} жартів. Твій рівень після виступу: TOP-${band} StandUpHub.`;
+      }
+
+      $("comedianName").textContent = comedian?.name || `Комік з TOP-${band}`;
+      $("comedianMeta").textContent = comedian?.rank
+        ? `Приблизний рівень: місце #${comedian.rank} у рейтингу. Етап: ${completedLevelName}.`
+        : `Приблизний рівень: TOP-${band}. Етап: ${completedLevelName}.`;
+
+      window.lastShareText = won
+        ? `${playerName} пройшов гру “Вгадай панчлайн” на StandUpHub і став рівнем TOP-10 🎙️ Спробуй теж:`
+        : `${playerName} вгадав ${totalCorrect} жартів у грі “Вгадай панчлайн” і став рівнем TOP-${band} StandUpHub 🎙️ Спробуй теж:`;
+    }
+
+    async function shareResult() {
+      const text = window.lastShareText || "Я зіграв у Вгадай панчлайн на StandUpHub 🎙️";
+      const url = location.href;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Вгадай панчлайн | StandUpHub", text, url });
+          return;
+        } catch (error) {}
+      }
+
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      $("shareBtn").textContent = "Скопійовано!";
+      setTimeout(() => $("shareBtn").textContent = "Поділитись результатом", 1400);
+    }
+
+    $("startBtn").addEventListener("click", startGame);
+    $("restartBtn").addEventListener("click", () => {
+      resultScreen.classList.add("hidden");
+      startScreen.classList.remove("hidden");
+    });
+    $("shareBtn").addEventListener("click", shareResult);
+    $("playerName").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") startGame();
+    });
+
+    loadRating();
+  </script>
+</body>
+</html>
