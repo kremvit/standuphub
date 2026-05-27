@@ -52,6 +52,72 @@
       text-shadow: 0 2px 12px rgba(0,0,0,.8);
     }
 
+    .topBarNav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .topBrand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brandLink {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .brandA {
+      font-weight: 800;
+    }
+
+    .brandB {
+      color: var(--accent);
+    }
+
+    .slogan {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .navLeft {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .navBtn {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.08);
+      color: inherit;
+      text-decoration: none;
+      font-size: 13px;
+      transition: .2s ease;
+    }
+
+    .navBtn:hover {
+      background: rgba(255,255,255,.14);
+    }
+
+    .navBtn.active {
+      background: rgba(232,75,50,.92);
+      border-color: rgba(232,75,50,.92);
+      color: white;
+    }
+
     .topbar small {
       display: block;
       color: var(--muted);
@@ -316,6 +382,25 @@
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <div class="topBrand">
+      <a class="brandLink" href="./index.html">
+        <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+      </a>
+      <div class="slogan">Твоя щоденна доза стендапу</div>
+    </div>
+
+    <div class="navLeft">
+      <a class="navBtn" href="./index.html">Відео</a>
+      <a class="navBtn" href="./rating.html">Рейтинг</a>
+      <a class="navBtn" href="./comedians.html">Коміки</a>
+      <a class="navBtn" href="./about.html">Про сайт</a>
+      <a class="navBtn" href="./statistics.html">Статистика</a>
+      <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
+      <a class="navBtn active" href="./game.html">Кар'єра</a>
+    </div>
+  </header>
+
   <section class="start-screen" id="startScreen">
     <div class="modal">
       <div class="label">StandUpHub game</div>
@@ -679,8 +764,12 @@
       new Audio("./assets/sounds/laughing.mp3")
     ];
     const wrongSound = new Audio("./assets/sounds/booo.mp3");
-    correctSounds.forEach(sound => sound.preload = 'auto');
+    correctSounds.forEach(sound => {
+      sound.preload = 'auto';
+      sound.volume = 0.5;
+    });
     wrongSound.preload = 'auto';
+    wrongSound.volume = 0.5;
 
     let soundEnabled = true;
     function updateSoundButton() {
