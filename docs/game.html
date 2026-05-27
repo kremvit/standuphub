@@ -852,6 +852,35 @@
       playAgainBtn.textContent = state === 'round' ? 'До наступного раунду' : 'Зіграти ще раз';
     }
 
+    function getQueryParams() {
+      return Object.fromEntries(new URLSearchParams(window.location.search));
+    }
+
+    function renderSharedResult(params) {
+      const title = params.title || 'Результат';
+      const text = params.resultText || '';
+      const comedianName = params.comedianName || 'Комік StandUpHub';
+      const comedianText = params.comedianText || '';
+
+      $("startScreen").classList.add("hidden");
+      $("gameScreen").classList.add("hidden");
+      $("resultScreen").classList.remove("hidden");
+
+      $("resultTitle").textContent = title;
+      $("resultText").textContent = text;
+      $("comedianName").textContent = comedianName;
+      $("comedianText").textContent = comedianText;
+      window.shareResultText = params.shareText || `${title} ${text}`;
+      setResultState('final');
+    }
+
+    function handleSharedPage() {
+      const params = getQueryParams();
+      if (params.share === '1') {
+        renderSharedResult(params);
+      }
+    }
+
     function prepareRandomJokes() {
       gameJokes = shuffle(JOKES).slice(0, TOTAL_QUESTIONS);
     }
@@ -1035,8 +1064,22 @@
     }
 
     async function shareGameResult() {
+      const resultTitle = $("resultTitle").textContent;
+      const resultText = $("resultText").textContent;
+      const comedianName = $("comedianName").textContent;
+      const comedianText = $("comedianText").textContent;
+      const shareUrl = new URL(window.location.href);
+
+      shareUrl.searchParams.set('share', '1');
+      shareUrl.searchParams.set('title', resultTitle);
+      shareUrl.searchParams.set('resultText', resultText);
+      shareUrl.searchParams.set('comedianName', comedianName);
+      shareUrl.searchParams.set('comedianText', comedianText);
+      shareUrl.searchParams.set('player', player);
+      shareUrl.searchParams.set('level', $("levelName").textContent || '');
+
       const text = window.shareResultText || 'Я зіграв у Вгадай панчлайн на StandUpHub 🎙️';
-      const url = window.location.href;
+      const url = shareUrl.toString();
 
       if (navigator.share) {
         try {
@@ -1072,6 +1115,7 @@
     $("shareBtn").onclick = shareGameResult;
     $("soundBtn").onclick = toggleSound;
     updateSoundButton();
+    handleSharedPage();
     $("playerName").addEventListener("keydown", e => {
       if (e.key === "Enter") startGame();
     });
