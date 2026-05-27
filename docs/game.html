@@ -351,7 +351,7 @@
       <div class="answers" id="answers"></div>
 
       <div class="bottom-row">
-        <button class="sound" type="button">🔊 Звук: увімк.</button>
+        <button id="soundBtn" class="sound" type="button">🔊 Звук: увімк.</button>
         <div class="reaction" id="reactionText">Публіка поки що дивиться в телефони...</div>
         <button class="next" type="button" id="restartBtn">Спочатку</button>
       </div>
@@ -673,6 +673,53 @@
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
+    const correctSounds = [
+      new Audio("./assets/sounds/cheer1.mp3"),
+      new Audio("./assets/sounds/applause.mp3"),
+      new Audio("./assets/sounds/laughing.mp3")
+    ];
+    const wrongSound = new Audio("./assets/sounds/booo.mp3");
+    correctSounds.forEach(sound => sound.preload = 'auto');
+    wrongSound.preload = 'auto';
+
+    let soundEnabled = true;
+    function updateSoundButton() {
+      const button = $("soundBtn");
+      if (!button) return;
+      button.textContent = soundEnabled ? '🔊 Звук: увімк.' : '🔇 Звук: вимк.';
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      updateSoundButton();
+      if (!soundEnabled) {
+        correctSounds.forEach(sound => {
+          sound.pause();
+          sound.currentTime = 0;
+        });
+        wrongSound.pause();
+        wrongSound.currentTime = 0;
+      }
+    }
+
+    function playEffect(audio) {
+      if (!soundEnabled) return;
+      try {
+        audio.currentTime = 0;
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.catch(() => {});
+        }
+        const stopTimeout = setTimeout(() => {
+          audio.pause();
+          audio.currentTime = 0;
+        }, 2000);
+        audio.addEventListener('ended', () => {
+          clearTimeout(stopTimeout);
+        }, { once: true });
+      } catch (e) {}
+    }
+
     let player = "Комік";
     let index = 0;
     let streak = 0;
@@ -738,12 +785,14 @@
 
       if (answer.correct) {
         btn.classList.add("correct");
+        playEffect(correctSounds[Math.floor(Math.random() * correctSounds.length)]);
         streak++;
         $("streak").textContent = `x${streak}`;
         $("reactionText").textContent = getGoodReaction();
         setTimeout(nextQuestion, 900);
       } else {
         btn.classList.add("wrong");
+        playEffect(wrongSound);
         streak = 0;
         $("streak").textContent = "x0";
         $("reactionText").textContent = getBadReaction();
@@ -849,6 +898,8 @@
     $("restartBtn").onclick = startGame;
     $("playAgainBtn").onclick = startGame;
     $("shareBtn").onclick = shareGameResult;
+    $("soundBtn").onclick = toggleSound;
+    updateSoundButton();
     $("playerName").addEventListener("keydown", e => {
       if (e.key === "Enter") startGame();
     });
