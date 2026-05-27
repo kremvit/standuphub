@@ -766,7 +766,7 @@
     const wrongSound = new Audio("./assets/sounds/booo.mp3");
     correctSounds.forEach(sound => {
       sound.preload = 'auto';
-      sound.volume = 0.5;
+      sound.volume = 1.0;
     });
     wrongSound.preload = 'auto';
     wrongSound.volume = 0.5;
@@ -802,7 +802,7 @@
         const stopTimeout = setTimeout(() => {
           audio.pause();
           audio.currentTime = 0;
-        }, 2000);
+        }, 3000);
         audio.addEventListener('ended', () => {
           clearTimeout(stopTimeout);
         }, { once: true });
