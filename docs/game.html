@@ -982,10 +982,10 @@
 
     function showRoundCompletion(level) {
       const comedian = level.name === 'Відкритий мікрофон'
-        ? pickComedian(50, 100)
+        ? pickComedian(70, 140)
         : level.name === 'Перевірка матеріалу'
-          ? pickComedian(30, 50)
-          : pickComedian(1, 30);
+          ? pickComedian(10, 70)
+          : pickComedian(1, 10);
 
       $("gameScreen").classList.add("hidden");
       $("resultScreen").classList.remove("hidden");
@@ -1018,14 +1018,14 @@
         const { roundIndex, level } = getRoundInfo(questionIndex);
 
         if (roundIndex === 0) {
-          comedian = pickComedian(50, 100);
-          resultText = `Ти — рівень TOP-100.`;
+          comedian = pickComedian(70, 140);
+          resultText = `Ти — рівень TOP-140.`;
         } else if (roundIndex === 1) {
-          comedian = pickComedian(30, 50);
-          resultText = `Ти — рівень TOP-50.`;
+          comedian = pickComedian(10, 70);
+          resultText = `Ти — рівень TOP-70.`;
         } else {
-          comedian = pickComedian(10, 30);
-          resultText = `Ти — рівень TOP-30.`;
+          comedian = pickComedian(0, 10);
+          resultText = `Ти — рівень TOP-10.`;
         }
 
         $("resultTitle").textContent = "Панч не зайшов";
