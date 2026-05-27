@@ -15,6 +15,7 @@
       --bad: #ff4d4d;
       --panel: rgba(10, 10, 10, 0.82);
       --border: rgba(255, 255, 255, 0.14);
+      --page-bg: url("assets/openmic-bg.png");
     }
 
     * { box-sizing: border-box; }
@@ -33,7 +34,7 @@
       position: relative;
       background-image:
         linear-gradient(180deg, rgba(0,0,0,.48) 0%, rgba(0,0,0,.04) 28%, rgba(0,0,0,.18) 62%, rgba(0,0,0,.74) 100%),
-        url("assets/openmic-bg.png");
+        var(--page-bg);
       background-size: cover;
       background-position: center 18%;
       display: flex;
@@ -293,7 +294,7 @@
       padding: 24px;
       background-image:
         linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,.88)),
-        url("assets/openmic-bg.png");
+        var(--page-bg);
       background-size: cover;
       background-position: center;
     }
@@ -456,10 +457,28 @@
   </section>
 
   <script>
-    const LEVEL = {
-      name: "Перевірка матеріалу",
-      total: 5
-    };
+    const LEVELS = [
+      {
+        name: "Відкритий мікрофон",
+        total: 3,
+        bg: "assets/open-bg.png",
+        winText: "Відкритий мікрофон пройдено — зал почув тебе і тепер чекає на більше."
+      },
+      {
+        name: "Перевірка матеріалу",
+        total: 5,
+        bg: "assets/check-bg.png",
+        winText: "Перевірка матеріалу здолана — твій гумор живий і готовий до великої сцени."
+      },
+      {
+        name: "Сольний концерт",
+        total: 10,
+        bg: "assets/solo-bg.png",
+        winText: "Сольний концерт відбувся — ти завершив гучний сет і заслужив овації."
+      }
+    ];
+
+    const TOTAL_QUESTIONS = LEVELS.reduce((sum, level) => sum + level.total, 0);
 
     const JOKES = [
       {
@@ -720,6 +739,8 @@
     ];
 
     let gameJokes = [];
+    let resultState = 'final';
+    let questionIndex = 0;
 
     const $ = id => document.getElementById(id);
 
@@ -804,12 +825,35 @@
     }
 
     let player = "Комік";
-    let index = 0;
     let streak = 0;
     let locked = false;
 
+    function getRoundInfo(index) {
+      let offset = 0;
+      for (let i = 0; i < LEVELS.length; i++) {
+        const level = LEVELS[i];
+        if (index < offset + level.total) {
+          return { roundIndex: i, roundOffset: index - offset, level };
+        }
+        offset += level.total;
+      }
+      const lastLevel = LEVELS[LEVELS.length - 1];
+      return { roundIndex: LEVELS.length - 1, roundOffset: lastLevel.total - 1, level: lastLevel };
+    }
+
+    function updateBackground(level) {
+      document.documentElement.style.setProperty('--page-bg', `url("${level.bg}")`);
+    }
+
+    function setResultState(state) {
+      resultState = state;
+      const playAgainBtn = $("playAgainBtn");
+      if (!playAgainBtn) return;
+      playAgainBtn.textContent = state === 'round' ? 'До наступного раунду' : 'Зіграти ще раз';
+    }
+
     function prepareRandomJokes() {
-      gameJokes = shuffle(JOKES).slice(0, LEVEL.total);
+      gameJokes = shuffle(JOKES).slice(0, TOTAL_QUESTIONS);
     }
 
     function shuffle(arr) {
@@ -818,34 +862,39 @@
 
     function startGame() {
       player = $("playerName").value.trim() || "Комік";
-      index = 0;
+      questionIndex = 0;
       streak = 0;
       prepareRandomJokes();
       $("startScreen").classList.add("hidden");
       $("resultScreen").classList.add("hidden");
       $("gameScreen").classList.remove("hidden");
+      setResultState('final');
       renderQuestion();
     }
 
-    function renderDots() {
+    function renderDots(total) {
       $("dots").innerHTML = "";
-      for (let i = 0; i < LEVEL.total; i++) {
+      const { roundOffset } = getRoundInfo(questionIndex);
+      for (let i = 0; i < total; i++) {
         const dot = document.createElement("span");
-        dot.className = "dot" + (i === index ? " active" : "");
+        dot.className = "dot" + (i === roundOffset ? " active" : "");
         $("dots").appendChild(dot);
       }
     }
 
     function renderQuestion() {
       locked = false;
-      const joke = gameJokes[index];
-      $("levelCounter").textContent = "Рівень 1/3";
-      $("levelName").textContent = LEVEL.name;
-      $("jokeCounter").textContent = `Жарт ${index + 1}/${LEVEL.total}`;
+      const joke = gameJokes[questionIndex];
+      const { level, roundIndex, roundOffset } = getRoundInfo(questionIndex);
+
+      updateBackground(level);
+      $("levelCounter").textContent = `Раунд ${roundIndex + 1}/${LEVELS.length}`;
+      $("levelName").textContent = level.name;
+      $("jokeCounter").textContent = `Жарт ${roundOffset + 1}/${level.total}`;
       $("streak").textContent = `x${streak}`;
       $("setupText").textContent = joke.setup;
       $("reactionText").textContent = "Публіка поки що дивиться в телефони...";
-      renderDots();
+      renderDots(level.total);
 
       const answers = joke.options.map((text, i) => ({ text, correct: i === joke.correct }));
       const mixed = shuffle(answers);
@@ -879,20 +928,43 @@
         streak = 0;
         $("streak").textContent = "x0";
         $("reactionText").textContent = getBadReaction();
-        setTimeout(() => finish(false), 1100);
+        setTimeout(() => finishGame(false), 1100);
       }
     }
 
     function nextQuestion() {
-      index++;
-      if (index >= LEVEL.total) {
-        finish(true);
+      const currentRound = getRoundInfo(questionIndex);
+      const nextIndex = questionIndex + 1;
+
+      if (nextIndex >= TOTAL_QUESTIONS) {
+        finishGame(true);
+        return;
+      }
+
+      questionIndex = nextIndex;
+      const nextRound = getRoundInfo(questionIndex);
+
+      if (nextRound.roundIndex > currentRound.roundIndex) {
+        showRoundCompletion(currentRound.level);
       } else {
         renderQuestion();
       }
     }
 
-    function finish(won) {
+    function showRoundCompletion(level) {
+      $("gameScreen").classList.add("hidden");
+      $("resultScreen").classList.remove("hidden");
+
+      $("resultTitle").textContent = `Ти пройшов ${level.name}!`;
+      $("resultText").textContent = level.winText;
+      $("comedianName").textContent = level.name;
+      $("comedianText").textContent = "Тепер готуйся до наступного раунду.";
+      window.shareResultText = `Я пройшов раунд «${level.name}» у грі “Вгадай панчлайн” на StandUpHub. ${level.winText}`;
+
+      setResultState('round');
+    }
+
+    function finishGame(won) {
       $("gameScreen").classList.add("hidden");
       $("resultScreen").classList.remove("hidden");
 
@@ -903,15 +975,17 @@
       if (won) {
         comedian = pickComedian(1, 10);
         $("resultTitle").textContent = "Ти розніс зал";
-        $("resultText").textContent = `${player}, ти пройшов перевірку матеріалу і дійшов до рівня TOP-10 StandUpHub.`;
+        $("resultText").textContent = `${player}, ти пройшов усі раунди і дійшов до рівня TOP-10 StandUpHub.`;
 
         resultText = `Ти — рівень TOP-10 українського стендапу.`;
         shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
       } else {
-        if (index <= 1) {
+        const { roundIndex, level } = getRoundInfo(questionIndex);
+
+        if (roundIndex === 0) {
           comedian = pickComedian(50, 100);
           resultText = `Ти — рівень TOP-100.`;
-        } else if (index <= 3) {
+        } else if (roundIndex === 1) {
           comedian = pickComedian(30, 50);
           resultText = `Ти — рівень TOP-50.`;
         } else {
@@ -920,15 +994,16 @@
         }
 
         $("resultTitle").textContent = "Панч не зайшов";
-        $("resultText").textContent = `${player}, публіка повернулась до телефонів і кальянів.`;
+        $("resultText").textContent = `${player}, під час раунду «${level.name}» публіка повернулась до телефонів і кальянів.`;
 
-        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
+        shareText = `Я зіграв у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
       }
 
       $("comedianName").textContent = comedian?.name || 'Комік StandUpHub';
       $("comedianText").textContent = `${resultText} Приблизне місце в рейтингу: ${comedian?.rank || '?'}.`;
 
       window.shareResultText = shareText;
+      setResultState('final');
     }
 
     function getGoodReaction() {
@@ -979,7 +1054,15 @@
 
     $("startBtn").onclick = startGame;
     $("restartBtn").onclick = startGame;
-    $("playAgainBtn").onclick = startGame;
+    $("playAgainBtn").onclick = () => {
+      if (resultState === 'round') {
+        $("resultScreen").classList.add("hidden");
+        $("gameScreen").classList.remove("hidden");
+        renderQuestion();
+      } else {
+        startGame();
+      }
+    };
     $("shareBtn").onclick = shareGameResult;
     $("soundBtn").onclick = toggleSound;
     updateSoundButton();
