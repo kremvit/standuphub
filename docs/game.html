@@ -952,14 +952,20 @@
     }
 
     function showRoundCompletion(level) {
+      const comedian = level.name === 'Відкритий мікрофон'
+        ? pickComedian(50, 100)
+        : level.name === 'Перевірка матеріалу'
+          ? pickComedian(30, 50)
+          : pickComedian(1, 30);
+
       $("gameScreen").classList.add("hidden");
       $("resultScreen").classList.remove("hidden");
 
       $("resultTitle").textContent = `Ти пройшов ${level.name}!`;
       $("resultText").textContent = level.winText;
-      $("comedianName").textContent = level.name;
-      $("comedianText").textContent = "Тепер готуйся до наступного раунду.";
-      window.shareResultText = `Я пройшов раунд «${level.name}» у грі “Вгадай панчлайн” на StandUpHub. ${level.winText}`;
+      $("comedianName").textContent = comedian.name;
+      $("comedianText").textContent = `${level.winText} Рейтинг: ${comedian.rank}.`;
+      window.shareResultText = `Я пройшов раунд «${level.name}» у грі “Вгадай панчлайн” на StandUpHub. Рівень: ${level.name}. Комік: ${comedian.name} (${comedian.rank}).`;
 
       setResultState('round');
     }
@@ -978,7 +984,7 @@
         $("resultText").textContent = `${player}, ти пройшов усі раунди і дійшов до рівня TOP-10 StandUpHub.`;
 
         resultText = `Ти — рівень TOP-10 українського стендапу.`;
-        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
+        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Комік: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}).`;
       } else {
         const { roundIndex, level } = getRoundInfo(questionIndex);
 
@@ -996,7 +1002,7 @@
         $("resultTitle").textContent = "Панч не зайшов";
         $("resultText").textContent = `${player}, під час раунду «${level.name}» публіка повернулась до телефонів і кальянів.`;
 
-        shareText = `Я зіграв у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
+        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, рівень ${level.name}, ${resultText} Комік: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}).`;
       }
 
       $("comedianName").textContent = comedian?.name || 'Комік StandUpHub';
