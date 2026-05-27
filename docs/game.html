@@ -369,7 +369,7 @@
       </div>
 
       <div id="comedianResult" style="margin-top:24px;padding:22px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:left;">
-        <div class="label">Твій рівень StandUpHub</div>
+        <div class="label">Твій рівень</div>
         <div id="comedianName" style="font-size:34px;font-weight:800;line-height:1;letter-spacing:-0.04em;margin-bottom:8px;">TOP-100 комік</div>
         <div id="comedianText" style="color:var(--muted);font-size:18px;line-height:1.5;"></div>
       </div>
@@ -673,175 +673,6 @@
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
-    // Sound Effects
-    let audioContext;
-    function initAudioContext() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      return audioContext;
-    }
-
-    function playCorrectSound() {
-      try {
-        const ctx = initAudioContext();
-        const now = ctx.currentTime;
-        
-        // Create several quick bursts for applause effect
-        for (let burst = 0; burst < 3; burst++) {
-          const burstTime = now + burst * 0.15;
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          const filter = ctx.createBiquadFilter();
-          
-          osc.connect(filter);
-          filter.connect(gain);
-          gain.connect(ctx.destination);
-          
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(200 + burst * 50, burstTime);
-          osc.frequency.exponentialRampToValueAtTime(400 + burst * 100, burstTime + 0.15);
-          
-          gain.gain.setValueAtTime(0.08, burstTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, burstTime + 0.15);
-          
-          filter.type = 'highpass';
-          filter.frequency.setValueAtTime(800, burstTime);
-          
-          osc.start(burstTime);
-          osc.stop(burstTime + 0.15);
-        }
-        
-        // Add white noise bursts
-        const bufferSize = ctx.sampleRate * 0.5;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const noiseData = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          noiseData[i] = Math.random() * 2 - 1;
-        }
-        
-        const noiseSource = ctx.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-        const noiseGain = ctx.createGain();
-        const noiseFilter = ctx.createBiquadFilter();
-        
-        noiseSource.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        
-        noiseFilter.type = 'highpass';
-        noiseFilter.frequency.setValueAtTime(2000, now);
-        
-        noiseGain.gain.setValueAtTime(0.1, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 0.4);
-        
-        noiseSource.start(now);
-        noiseSource.stop(now + 0.4);
-      } catch (e) {}
-    }
-
-    function playIncorrectSound() {
-      try {
-        const ctx = initAudioContext();
-        const now = ctx.currentTime;
-        
-        // Create buzzing boo effect
-        for (let i = 0; i < 2; i++) {
-          const time = now + i * 0.2;
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(150 - i * 30, time);
-          osc.frequency.exponentialRampToValueAtTime(80 - i * 20, time + 0.2);
-          
-          gain.gain.setValueAtTime(0.12, time);
-          gain.gain.exponentialRampToValueAtTime(0.02, time + 0.2);
-          
-          osc.start(time);
-          osc.stop(time + 0.2);
-        }
-        
-        // Add noise for boo sound
-        const bufferSize = ctx.sampleRate * 0.4;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const noiseData = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          noiseData[i] = Math.random() * 2 - 1;
-        }
-        
-        const noiseSource = ctx.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-        const noiseGain = ctx.createGain();
-        const noiseFilter = ctx.createBiquadFilter();
-        
-        noiseSource.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        
-        noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.setValueAtTime(1000, now);
-        
-        noiseGain.gain.setValueAtTime(0.15, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.03, now + 0.4);
-        
-        noiseSource.start(now);
-        noiseSource.stop(now + 0.4);
-      } catch (e) {}
-    }
-
-    function playCrowdGoingCrazy() {
-      try {
-        const ctx = initAudioContext();
-        const now = ctx.currentTime;
-        
-        // Chaotic crowd roar with multiple frequencies
-        const frequencies = [100, 150, 220, 330, 500];
-        frequencies.forEach((freq, idx) => {
-          const time = now + idx * 0.08;
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          
-          osc.type = idx % 2 === 0 ? 'triangle' : 'sawtooth';
-          osc.frequency.setValueAtTime(freq, time);
-          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, time + 0.6);
-          
-          gain.gain.setValueAtTime(0.1, time);
-          gain.gain.exponentialRampToValueAtTime(0.02, time + 0.6);
-          
-          osc.start(time);
-          osc.stop(time + 0.6);
-        });
-        
-        // Heavy white noise for crowd intensity
-        const bufferSize = ctx.sampleRate * 0.6;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const noiseData = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          noiseData[i] = Math.random() * 2 - 1;
-        }
-        
-        const noiseSource = ctx.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-        const noiseGain = ctx.createGain();
-        
-        noiseSource.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        
-        noiseGain.gain.setValueAtTime(0.2, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 0.6);
-        
-        noiseSource.start(now);
-        noiseSource.stop(now + 0.6);
-      } catch (e) {}
-    }
-
     let player = "Комік";
     let index = 0;
     let streak = 0;
@@ -907,20 +738,12 @@
 
       if (answer.correct) {
         btn.classList.add("correct");
-        playCorrectSound();
         streak++;
         $("streak").textContent = `x${streak}`;
         $("reactionText").textContent = getGoodReaction();
-        
-        // Play crowd going crazy for certain milestones
-        if (streak === 3 || streak === 5 || streak === 10) {
-          setTimeout(playCrowdGoingCrazy, 200);
-        }
-        
         setTimeout(nextQuestion, 900);
       } else {
         btn.classList.add("wrong");
-        playIncorrectSound();
         streak = 0;
         $("streak").textContent = "x0";
         $("reactionText").textContent = getBadReaction();
@@ -946,7 +769,6 @@
       let shareText;
 
       if (won) {
-        playCrowdGoingCrazy();
         comedian = pickComedian(1, 10);
         $("resultTitle").textContent = "Ти розніс зал";
         $("resultText").textContent = `${player}, ти пройшов перевірку матеріалу і дійшов до рівня TOP-10 StandUpHub.`;
@@ -956,13 +778,13 @@
       } else {
         if (index <= 1) {
           comedian = pickComedian(50, 100);
-          resultText = `Ти — рівень TOP-100 StandUpHub.`;
+          resultText = `Ти — рівень TOP-100.`;
         } else if (index <= 3) {
           comedian = pickComedian(30, 50);
-          resultText = `Ти — рівень TOP-50 StandUpHub.`;
+          resultText = `Ти — рівень TOP-50.`;
         } else {
           comedian = pickComedian(10, 30);
-          resultText = `Ти — рівень TOP-30 StandUpHub.`;
+          resultText = `Ти — рівень TOP-30.`;
         }
 
         $("resultTitle").textContent = "Панч не зайшов";
@@ -972,7 +794,7 @@
       }
 
       $("comedianName").textContent = comedian?.name || 'Комік StandUpHub';
-      $("comedianText").textContent = `${resultText} Приблизне місце в рейтингу: #${comedian?.rank || '?'}.'`;
+      $("comedianText").textContent = `${resultText} Приблизне місце в рейтингу: ${comedian?.rank || '?'}.`;
 
       window.shareResultText = shareText;
     }
