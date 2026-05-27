@@ -266,7 +266,7 @@ body{
   outline:none;
   min-width:180px;
 }
-.control.search input{ min-width:260px; }
+.control.search input{ min-width:182px; }
 
 /* MOBILE */
 @media (max-width: 768px){
