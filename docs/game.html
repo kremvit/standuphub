@@ -906,7 +906,7 @@
         $("resultText").textContent = `${player}, ти пройшов перевірку матеріалу і дійшов до рівня TOP-10 StandUpHub.`;
 
         resultText = `Ти — рівень TOP-10 українського стендапу.`;
-        shareText = `${player} пройшов гру “Вгадай панчлайн” на StandUpHub і став рівнем TOP-10 🎙️`;
+        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
       } else {
         if (index <= 1) {
           comedian = pickComedian(50, 100);
@@ -922,7 +922,7 @@
         $("resultTitle").textContent = "Панч не зайшов";
         $("resultText").textContent = `${player}, публіка повернулась до телефонів і кальянів.`;
 
-        shareText = `${player} зіграв у “Вгадай панчлайн” на StandUpHub 🎙️`;
+        shareText = `Мій результат у “Вгадай панчлайн” на StandUpHub: ${player}, ${resultText} Рейтинг: ${comedian?.name || 'Комік StandUpHub'} (${comedian?.rank || '?'}) 🎙️`;
       }
 
       $("comedianName").textContent = comedian?.name || 'Комік StandUpHub';
