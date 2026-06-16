@@ -223,7 +223,7 @@ def load_channel_exceptions(path="channel_exceptions.txt"):
 
 Rule = Callable[[Video], Tuple[bool, str]]  # (passed, reason_if_failed)
 
-STANDUP_KEYWORDS = ["стендап", "stand up", "standup"]
+STANDUP_KEYWORDS = ["стендап", "stand up", "standup", "сольний концерт"]
 
 CHANNEL_EXCEPTIONS = load_channel_exceptions()
 
@@ -373,7 +373,7 @@ def main() -> None:
                 "published_at >= 2022-02-24",
                 "duration > 4 min",
                 "duration < 100 min",
-                "title contains standup/стендап",
+                "title contains standup/стендап or 'сольний концерт'",
                 "title does NOT contain podcast/подкаст",
                 "title does NOT contain improv/імпровізація",
                 "title does NOT contain rozgony/zaгони",
