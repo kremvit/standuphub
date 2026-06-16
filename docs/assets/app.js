@@ -6,6 +6,7 @@ const StandupHub = (() => {
     performer: null,
     sort: "date_desc",
     range: "all",
+    year: "all",
     page: 1,
     pageSize: 10,
     search: ""
@@ -473,11 +474,19 @@ const StandupHub = (() => {
 
   async function initRating(){
     const rating = await loadJson("data/rating.json");
+    let ratingByYear = null;
+    try {
+      ratingByYear = await loadJson("data/rating_by_year.json");
+    } catch (err) {
+      ratingByYear = null;
+    }
     DATA.rating = rating || [];
+    DATA.ratingByYear = ratingByYear || { all: DATA.rating };
     renderSidebar();
 
     const table = qs("ratingTable");
     const search = qs("ratingSearch");
+    const yearSel = qs("ratingYear");
     if (!table) return;
 
     const columns = [
@@ -495,6 +504,12 @@ const StandupHub = (() => {
     let sortDir = "asc";
     let q = "";
 
+    function getCurrentRows(){
+      const key = String(state.year || "all");
+      const rows = Array.isArray(DATA.ratingByYear?.[key]) ? DATA.ratingByYear[key].slice() : [];
+      return rows;
+    }
+
     function cmp(a,b){
       const col = columns.find(c=>c.key===sortKey) || columns[0];
       const av = a?.[sortKey], bv = b?.[sortKey];
@@ -507,7 +522,7 @@ const StandupHub = (() => {
     }
 
     function filteredRows(){
-      let rows = (DATA.rating || []).slice();
+      let rows = getCurrentRows();
       const qq = String(q||"").trim().toLowerCase();
       if (qq) rows = rows.filter(r => String(r.performer||"").toLowerCase().includes(qq));
       rows.sort(cmp);
@@ -568,6 +583,13 @@ const StandupHub = (() => {
     if (search){
       search.addEventListener("input", () => {
         q = search.value || "";
+        renderTable();
+      });
+    }
+
+    if (yearSel){
+      yearSel.addEventListener("change", () => {
+        state.year = yearSel.value || "all";
         renderTable();
       });
     }

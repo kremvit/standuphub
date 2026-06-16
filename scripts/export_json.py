@@ -69,11 +69,22 @@ def main():
         r["like_rate_smooth_pct"] = to_float(r.get("like_rate_smooth_pct"))
         r["performer"] = (r.get("performer") or "").strip()
 
+    # Read optional year-specific rating CSVs
+    rating_by_year = {"all": rating}
+    for year in range(2022, 2027):
+        path = OUT_DIR / f"rating_{year}.csv"
+        if path.exists():
+            rating_by_year[str(year)] = read_csv(path)
+        else:
+            rating_by_year[str(year)] = []
+
     (WEB_DATA / "videos.json").write_text(json.dumps(videos, ensure_ascii=False), encoding="utf-8")
     (WEB_DATA / "rating.json").write_text(json.dumps(rating, ensure_ascii=False), encoding="utf-8")
+    (WEB_DATA / "rating_by_year.json").write_text(json.dumps(rating_by_year, ensure_ascii=False), encoding="utf-8")
 
     print("OK -> docs/data/videos.json")
     print("OK -> docs/data/rating.json")
+    print("OK -> docs/data/rating_by_year.json")
 
 if __name__ == "__main__":
     main()

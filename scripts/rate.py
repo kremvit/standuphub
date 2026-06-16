@@ -41,6 +41,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+YEARS = list(range(2022, 2027))
+
 
 # ---------- Config ----------
 
@@ -109,6 +111,18 @@ def parse_duration_iso8601(d: str) -> int:
     mm = int(m.group(2) or 0)
     s = int(m.group(3) or 0)
     return h * 3600 + mm * 60 + s
+
+
+def parse_year(raw: str) -> Optional[int]:
+    s = (raw or "").strip()
+    m = re.search(r"(\d{4})", s)
+    if not m:
+        return None
+    try:
+        year = int(m.group(1))
+        return year
+    except ValueError:
+        return None
 
 
 def safe_casefold(s: object) -> str:
@@ -364,8 +378,62 @@ def main() -> None:
     per_minutes: Dict[str, float] = {}
     per_likes: Dict[str, int] = {}
 
+    year_stats: Dict[str, Dict[str, dict]] = {"all": {}}
+    for y in YEARS:
+        year_stats[str(y)] = {}
+
     global_views = 0
     global_likes = 0
+
+    def aggregate_into(stats: Dict[str, dict], performer: str, views: int, minutes: float, likes: int) -> None:
+        if performer not in stats:
+            stats[performer] = {"views": [], "minutes": 0.0, "likes": 0}
+        stats[performer]["views"].append(views)
+        stats[performer]["minutes"] += minutes
+        stats[performer]["likes"] += likes
+
+    def build_rating_rows(stats: Dict[str, dict]) -> List[dict]:
+        rows: List[dict] = []
+        period_views = sum(sum(values["views"]) for values in stats.values())
+        period_likes = sum(values["likes"] for values in stats.values())
+        p0 = (period_likes / period_views) if period_views > 0 else 0.0
+        for performer, values in stats.items():
+            total_views = sum(values["views"])
+            peak_views = max(values["views"]) if values["views"] else 0
+            video_count = len(values["views"])
+            total_minutes = values["minutes"]
+            total_likes = values["likes"]
+
+            base_score = compute_base_score(total_views, peak_views, video_count, total_minutes)
+            like_rate = (total_likes / total_views) if total_views > 0 else 0.0
+            like_rate_smooth = ((total_likes + SMOOTH_M_VIEWS * p0) / (total_views + SMOOTH_M_VIEWS)) if (total_views + SMOOTH_M_VIEWS) > 0 else 0.0
+
+            eng_mult = 1.0
+            score_with_engagement = base_score
+            if ENABLE_ENGAGEMENT_MULTIPLIER and p0 > 0:
+                eng_mult = 1.0 + 0.5 * ((like_rate_smooth - p0) / p0)
+                eng_mult = clamp(eng_mult, ENG_MULT_CLAMP[0], ENG_MULT_CLAMP[1])
+                score_with_engagement = base_score * eng_mult
+
+            rows.append({
+                "performer": performer,
+                "score": round(base_score, 8),
+                "score_with_engagement": round(score_with_engagement, 8),
+                "eng_mult": round(eng_mult, 6),
+                "total_views": total_views,
+                "peak_views": peak_views,
+                "video_count": video_count,
+                "total_minutes": round(total_minutes, 3),
+                "total_likes": total_likes,
+                "like_rate_pct": round(like_rate * 100.0, 4),
+                "like_rate_smooth_pct": round(like_rate_smooth * 100.0, 4),
+            })
+
+        sort_key = "score_with_engagement" if ENABLE_ENGAGEMENT_MULTIPLIER else "score"
+        rows.sort(key=lambda r: r[sort_key], reverse=True)
+        for i, r in enumerate(rows, start=1):
+            r["rank"] = i
+        return rows
 
     for v in videos:
         # exceptions
@@ -447,66 +515,33 @@ def main() -> None:
         per_minutes[performer] = per_minutes.get(performer, 0.0) + (v.duration_sec / 60.0 if v.duration_sec else 0.0)
         per_likes[performer] = per_likes.get(performer, 0) + v.like_count
 
+        year = parse_year(v.published_at)
+        year_minutes = (v.duration_sec / 60.0 if v.duration_sec else 0.0)
+        aggregate_into(year_stats["all"], performer, v.view_count, year_minutes, v.like_count)
+        if year is not None and year in YEARS:
+            aggregate_into(year_stats[str(year)], performer, v.view_count, year_minutes, v.like_count)
+
         global_views += v.view_count
         global_likes += v.like_count
 
-    # Engagement prior mean like-rate
-    p0 = (global_likes / global_views) if global_views > 0 else 0.0
-    M = SMOOTH_M_VIEWS
-
-    rating_rows: List[dict] = []
-    for performer, views_list in per_views.items():
-        total_views = sum(views_list)
-        peak_views = max(views_list) if views_list else 0
-        video_count = len(views_list)
-        total_minutes = per_minutes.get(performer, 0.0)
-        total_likes = per_likes.get(performer, 0)
-
-        base_score = compute_base_score(total_views, peak_views, video_count, total_minutes)
-
-        like_rate = (total_likes / total_views) if total_views > 0 else 0.0
-        like_rate_smooth = ((total_likes + M * p0) / (total_views + M)) if (total_views + M) > 0 else 0.0
-
-        eng_mult = 1.0
-        score_with_engagement = base_score
-        if ENABLE_ENGAGEMENT_MULTIPLIER and p0 > 0:
-            eng_mult = 1.0 + 0.5 * ((like_rate_smooth - p0) / p0)
-            eng_mult = clamp(eng_mult, ENG_MULT_CLAMP[0], ENG_MULT_CLAMP[1])
-            score_with_engagement = base_score * eng_mult
-
-        rating_rows.append({
-            "performer": performer,
-            "score": round(base_score, 8),
-            "score_with_engagement": round(score_with_engagement, 8),
-            "eng_mult": round(eng_mult, 6),
-
-            "total_views": total_views,
-            "peak_views": peak_views,
-            "video_count": video_count,
-            "total_minutes": round(total_minutes, 3),
-
-            "total_likes": total_likes,
-            "like_rate_pct": round(like_rate * 100.0, 4),
-            "like_rate_smooth_pct": round(like_rate_smooth * 100.0, 4),
-        })
-
-    sort_key = "score_with_engagement" if ENABLE_ENGAGEMENT_MULTIPLIER else "score"
-    rating_rows.sort(key=lambda r: r[sort_key], reverse=True)
-
-    for i, r in enumerate(rating_rows, start=1):
-        r["rank"] = i
+    rating_rows_all = build_rating_rows(year_stats["all"])
+    rating_rows_by_year: Dict[str, List[dict]] = {}
+    for y in YEARS:
+        rating_rows_by_year[str(y)] = build_rating_rows(year_stats[str(y)])
 
     # Write outputs
     write_csv(OUT_CLEAN, clean_rows)
     write_csv(OUT_DROPPED, dropped_rows)
-    write_csv(OUT_RATING, rating_rows)
+    write_csv(OUT_RATING, rating_rows_all)
+    for y in YEARS:
+        write_csv(OUT_DIR / f"rating_{y}.csv", rating_rows_by_year[str(y)])
 
     print(f"OK: videos in: {len(videos)}")
     print(f"OK: clean (rated): {len(clean_rows)} -> {OUT_CLEAN}")
     print(f"OK: dropped: {len(dropped_rows)} -> {OUT_DROPPED}")
-    print(f"OK: rating rows: {len(rating_rows)} -> {OUT_RATING}")
+    print(f"OK: rating rows: {len(rating_rows_all)} -> {OUT_RATING}")
     if global_views > 0:
-        print(f"OK: global like rate (p0): {p0*100:.3f}% (M={M})")
+        print(f"OK: global like rate (p0): {(global_likes / global_views) * 100:.3f}% (M={SMOOTH_M_VIEWS})")
     else:
         print("WARN: global views == 0; engagement prior p0 = 0.0")
     if not INPUT_CHANNELS_MAP.exists():
