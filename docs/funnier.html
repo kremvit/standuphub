@@ -402,7 +402,13 @@
       if (!FIREBASE_DB || FIREBASE_DB === "YOUR_FIREBASE_URL") return;
       try {
         const r = await fetch(`${FB_ROOT}/${fbKey(name)}.json`);
-        const data = r.ok ? await r.json() : null;
+        if (!r.ok) {
+          if (r.status === 401) {
+            el.textContent = "Статистика перемог недоступна";
+          }
+          return;
+        }
+        const data = await r.json();
         const wins = data?.wins ?? 0;
         el.innerHTML = `Перемагав <b>${wins}</b> ${wins === 1 ? "раз" : "разів"} серед усіх гравців`;
       } catch {}
@@ -426,7 +432,14 @@
 
       try {
         const r = await fetch(`${FB_ROOT}.json`);
-        if (!r.ok) throw new Error("Failed to load leaderboard");
+        if (!r.ok) {
+          if (r.status === 401) {
+            el.innerHTML = '<li class="winnerTopEmpty">Топ-10 недоступний (Firebase rules)</li>';
+          } else {
+            el.innerHTML = '<li class="winnerTopEmpty">Не вдалося завантажити топ-10</li>';
+          }
+          return;
+        }
         const data = await r.json();
         const entries = Object.entries(data || {})
           .map(([key, value]) => ({
