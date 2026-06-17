@@ -184,6 +184,66 @@
     }
     .winnerStats b { color: var(--text); font-weight: 900; }
 
+    .winnerTopWrap {
+      width: min(420px, 100%);
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: left;
+    }
+
+    .winnerTopTitle {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .winnerTopList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .winnerTopItem {
+      display: grid;
+      grid-template-columns: 26px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .winnerTopRank {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255, 138, 0, 0.1);
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .winnerTopWins {
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .winnerTopEmpty {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 8px 0;
+    }
+
     .winnerActions {
       display: flex;
       gap: 12px;
@@ -285,6 +345,12 @@
         <div class="winnerLabel">Переможець</div>
         <div class="winnerName" id="winnerName"></div>
         <div class="winnerStats" id="winnerStats"></div>
+        <div class="winnerTopWrap">
+          <div class="winnerTopTitle">Топ-10 переможців</div>
+          <ol class="winnerTopList" id="winnerTopList">
+            <li class="winnerTopEmpty">Завантаження…</li>
+          </ol>
+        </div>
         <div class="winnerActions">
           <button class="actionBtn primary" id="shareBtn">Поділитись з друзями</button>
           <button class="actionBtn" id="playAgainBtn">Зіграти ще раз</button>
@@ -339,6 +405,55 @@
         const wins = data?.wins ?? 0;
         el.innerHTML = `Перемагав <b>${wins}</b> ${wins === 1 ? "раз" : "разів"} серед усіх гравців`;
       } catch {}
+    }
+
+    function decodeFbKey(key) {
+      try {
+        return decodeURIComponent(key);
+      } catch {
+        return key;
+      }
+    }
+
+    async function loadTopWinners() {
+      const el = document.getElementById("winnerTopList");
+      if (!el) return;
+      if (!FIREBASE_DB || FIREBASE_DB === "YOUR_FIREBASE_URL") {
+        el.innerHTML = '<li class="winnerTopEmpty">Топ-10 недоступний</li>';
+        return;
+      }
+
+      try {
+        const r = await fetch(`${FIREBASE_DB}${FB_PATH}.json`);
+        if (!r.ok) throw new Error("Failed to load leaderboard");
+        const data = await r.json();
+        const entries = Object.entries(data || {})
+          .map(([key, value]) => ({
+            name: decodeFbKey(key),
+            wins: Number(value?.wins ?? 0) || 0
+          }))
+          .filter(item => item.name && item.wins > 0)
+          .sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name));
+
+        el.innerHTML = "";
+        if (!entries.length) {
+          el.innerHTML = '<li class="winnerTopEmpty">Поки що немає даних</li>';
+          return;
+        }
+
+        entries.slice(0, 10).forEach((item, index) => {
+          const li = document.createElement("li");
+          li.className = "winnerTopItem";
+          li.innerHTML = `
+            <span class="winnerTopRank">${index + 1}</span>
+            <span>${item.name}</span>
+            <span class="winnerTopWins">${item.wins}</span>
+          `;
+          el.appendChild(li);
+        });
+      } catch {
+        el.innerHTML = '<li class="winnerTopEmpty">Не вдалося завантажити топ-10</li>';
+      }
     }
 
     let deck = [];
@@ -436,7 +551,10 @@
       history.replaceState({}, "", `?winner=${encodeURIComponent(name)}`);
       document.getElementById("winnerStats").textContent = "";
       if (!fromLink) recordWin(name);
-      displayWins(name);
+      Promise.all([
+        displayWins(name),
+        loadTopWinners()
+      ]);
     }
 
     function showToast(msg) {
