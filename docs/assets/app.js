@@ -264,10 +264,21 @@ const StandupHub = (() => {
   }
 
   function generateAvatarUrl(name){
-    const colors = ["FF8A00", "FF6B35", "F7931E", "FDB913", "FFB81C"];
-    const hash = name.split("").reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0);
-    const bgColor = colors[Math.abs(hash) % colors.length];
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&bold=true&size=260`;
+    // Return SVG silhouette instead of generating avatar with letters
+    const silhouette = `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#1f1f2b;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#0d0d14;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="200" height="200" fill="url(#grad)"/>
+        <circle cx="100" cy="60" r="35" fill="#666"/>
+        <path d="M 50 120 Q 50 100 100 100 Q 150 100 150 120 L 150 180 Q 150 200 130 200 L 70 200 Q 50 200 50 180 Z" fill="#888"/>
+      </svg>
+    `;
+    return "data:image/svg+xml," + encodeURIComponent(silhouette);
   }
 
   function displayPerformerCard(performer, imageUrl, filteredAll){

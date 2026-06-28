@@ -88,7 +88,7 @@
       background: var(--panel);
       border: 2px solid var(--border);
       border-radius: 20px;
-      padding: 36px 20px;
+      padding: 16px;
       cursor: pointer;
       text-align: center;
       font-weight: 900;
@@ -98,9 +98,32 @@
       user-select: none;
       position: relative;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 160px;
+      gap: 12px;
+      min-height: 400px;
+      overflow: hidden;
+    }
+
+    .fighterPhoto {
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+      border-radius: 16px;
+      object-fit: cover;
+      object-position: center;
+      background: linear-gradient(135deg,#1f1f2b,#10101a);
+      flex-shrink: 0;
+      aspect-ratio: 1;
+    }
+
+    .fighterName {
+      font-size: 16px;
+      font-weight: 900;
+      padding: 8px;
+      word-break: break-word;
+      margin-top: auto;
     }
 
     .fighterCard:hover {
@@ -475,6 +498,7 @@
     let challenger = "";
     let turn = 0;        // rounds completed
     let busy = false;
+    let performersData = {};
 
     const gameSection  = document.getElementById("gameSection");
     const winnerScreen = document.getElementById("winnerScreen");
@@ -485,6 +509,44 @@
     const shareBtn     = document.getElementById("shareBtn");
     const playAgainBtn = document.getElementById("playAgainBtn");
     const copyToast    = document.getElementById("copyToast");
+
+    function generateSilhouette() {
+      const silhouette = `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#1f1f2b;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#0d0d14;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" fill="url(#grad)"/>
+          <circle cx="100" cy="60" r="35" fill="#666"/>
+          <path d="M 50 120 Q 50 100 100 100 Q 150 100 150 120 L 150 180 Q 150 200 130 200 L 70 200 Q 50 200 50 180 Z" fill="#888"/>
+        </svg>
+      `;
+      return "data:image/svg+xml," + encodeURIComponent(silhouette);
+    }
+
+    async function getPerformerPhotoUrl(performer) {
+      // Try jpg first, then png
+      for (const format of [".jpg", ".png"]) {
+        const path = `./photo/${encodeURIComponent(performer)}${format}`;
+        try {
+          const r = await fetch(path, { method: "HEAD", cache: "no-cache" });
+          if (r.ok) return path;
+        } catch {}
+      }
+      return null;
+    }
+
+    async function loadPerformerPhotos(names) {
+      const photoMap = {};
+      for (const name of names) {
+        const url = await getPerformerPhotoUrl(name);
+        photoMap[name] = url || generateSilhouette();
+      }
+      return photoMap;
+    }
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -522,8 +584,18 @@
 
     function renderRound() {
       buildRoundBar();
-      cardA.textContent = champion;
-      cardB.textContent = challenger;
+      
+      const photoA = performersData[champion] || generateSilhouette();
+      const photoB = performersData[challenger] || generateSilhouette();
+      
+      cardA.innerHTML = `
+        <img src="${photoA}" alt="${champion}" class="fighterPhoto" />
+        <div class="fighterName">${champion}</div>
+      `;
+      cardB.innerHTML = `
+        <img src="${photoB}" alt="${challenger}" class="fighterPhoto" />
+        <div class="fighterName">${challenger}</div>
+      `;
       cardA.className = "fighterCard";
       cardB.className = "fighterCard";
       busy = false;
@@ -695,9 +767,13 @@
     // Load comedian names from rating.json
     fetch("data/rating.json", { cache: "no-cache" })
       .then(r => r.ok ? r.json() : [])
-      .then(data => {
+      .then(async data => {
         const names = (data || []).map(r => r.performer).filter(Boolean);
         window._gameNames = names;
+        
+        // Load photos for all performers
+        performersData = await loadPerformerPhotos(names);
+        
         if (sharedWinner) {
           showWinner(sharedWinner, true);
         } else {
@@ -711,11 +787,16 @@
             .map(el => el.textContent.trim())
             .filter(Boolean);
           window._gameNames = names;
-          if (sharedWinner) {
-            showWinner(sharedWinner, true);
-          } else if (names.length >= 2) {
-            startGame(names);
-          }
+          
+          // Load photos for fallback names
+          loadPerformerPhotos(names).then(photos => {
+            performersData = photos;
+            if (sharedWinner) {
+              showWinner(sharedWinner, true);
+            } else if (names.length >= 2) {
+              startGame(names);
+            }
+          });
         }, 500);
       });
   </script>
