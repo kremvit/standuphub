@@ -289,6 +289,165 @@ body{
 }
 
 /* =========================
+   PERFORMER PROFILE SECTION
+   ========================= */
+.performerSection{
+  display:flex;
+  gap:20px;
+  align-items:flex-start;
+}
+
+.performerCard{
+  flex-shrink:0;
+  width:260px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  display:none;
+}
+
+.performerCard.active{
+  display:flex;
+  flex-direction:column;
+}
+
+.performerCard img{
+  width:100%;
+  height:auto;
+  display:block;
+  object-fit:cover;
+  aspect-ratio:1/1;
+  background:linear-gradient(135deg,#1f1f2b,#10101a);
+}
+
+.performerCardBody{
+  padding:16px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.performerCardName{
+  font-size:18px;
+  font-weight:950;
+  line-height:1.1;
+  color:var(--text);
+}
+
+.performerCardStat{
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+
+.performerCardStatLabel{
+  color:var(--muted);
+}
+
+.performerCardStatValue{
+  font-weight:700;
+  color:var(--text);
+}
+
+.performerCardInstagram{
+  display:flex;
+  gap:8px;
+  padding-top:8px;
+  border-top:1px solid var(--border);
+  margin-top:8px;
+}
+
+.performerInstagramLink,
+.performerInstagramLink:visited{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 12px;
+  border-radius:8px;
+  background:rgba(255,138,0,.15);
+  border:1px solid rgba(255,138,0,.4);
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:700;
+  font-size:13px;
+  transition:all 200ms ease;
+}
+
+.performerInstagramLink:hover{
+  border-color:rgba(255,138,0,.8);
+  background:rgba(255,138,0,.25);
+  box-shadow:0 0 12px rgba(255,138,0,.2);
+}
+
+.performerCardLinks{
+  display:flex;
+  gap:8px;
+  padding-top:8px;
+  border-top:1px solid var(--border);
+}
+
+.performerInstagram{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  color:var(--text);
+  text-decoration:none;
+  transition:all 200ms ease;
+}
+
+.performerInstagram:hover{
+  border-color:rgba(255,138,0,.6);
+  background:rgba(255,138,0,.12);
+  color:var(--accent);
+  box-shadow:0 0 12px rgba(255,138,0,.2);
+}
+
+.performerContent{
+  flex:1;
+  min-width:0;
+}
+
+@media (max-width:1200px){
+  .performerSection{
+    flex-direction:column;
+  }
+  .performerCard{
+    width:100%;
+    max-width:280px;
+  }
+}
+
+@media (max-width:720px){
+  .performerSection{
+    gap:14px;
+  }
+  .performerCard{
+    flex-direction:row;
+    width:100%;
+    max-width:none;
+  }
+  .performerCard img{
+    width:120px;
+    height:120px;
+    min-width:120px;
+  }
+  .performerCardBody{
+    flex:1;
+    padding:12px;
+  }
+}
+
+/* =========================
    GRID + CARDS
    ========================= */
 .grid{
@@ -458,19 +617,68 @@ body{
   padding:14px;
   box-shadow:var(--shadow);
   display:flex;
-  justify-content:space-between;
+  flex-direction:column;
   text-decoration:none;
   color:var(--text);
 }
 .comedianCard:hover{ border-color: rgba(255,138,0,.55); }
 
+.comedianTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:8px;
+}
+
 .comedianName{ font-weight:900; font-size:16px; }
+
+.comedianRank{
+  font-weight:900;
+  color:#111;
+  background:var(--accent);
+  border-radius:6px;
+  padding:4px 8px;
+  font-size:12px;
+  flex-shrink:0;
+}
+
 .comedianMeta{
   color:var(--muted);
   font-size:12px;
   display:flex;
   gap:8px;
   flex-wrap:wrap;
+  margin-bottom:8px;
+}
+
+.comedianLinks{
+  display:flex;
+  gap:8px;
+  padding-top:8px;
+  border-top:1px solid var(--border);
+  margin-top:auto;
+}
+
+.comedianInstagram{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:8px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  color:var(--text);
+  text-decoration:none;
+  transition:all 200ms ease;
+}
+
+.comedianInstagram:hover{
+  border-color:rgba(255,138,0,.6);
+  background:rgba(255,138,0,.12);
+  color:var(--accent);
+  box-shadow:0 0 12px rgba(255,138,0,.2);
 }
 
 /* =========================

@@ -218,6 +218,94 @@ const StandupHub = (() => {
     document.title = p ? `${p} • StandupHub` : "StandupHub";
   }
 
+  // ---------- performer card ----------
+  function renderPerformerCard(filteredAll){
+    const cardEl = qs("performerCard");
+    if (!cardEl) return;
+
+    const performer = state.performer || "";
+    if (!performer){
+      cardEl.classList.remove("active");
+      return;
+    }
+
+    // Try to find photo with .jpg or .png extension
+    const photoFormats = [".jpg", ".png"];
+    let photoPath = null;
+    let checkCount = 0;
+
+    function tryNextFormat(){
+      if (checkCount >= photoFormats.length){
+        // No photo found, use generated avatar
+        const avatarUrl = generateAvatarUrl(performer);
+        displayPerformerCard(performer, avatarUrl, filteredAll);
+        return;
+      }
+
+      const format = photoFormats[checkCount];
+      const testPath = `./photo/${encodeURIComponent(performer)}${format}`;
+      checkCount++;
+
+      fetch(testPath, { method: "HEAD", cache: "no-cache" })
+        .then(r => {
+          if (r.ok){
+            photoPath = testPath;
+            displayPerformerCard(performer, photoPath, filteredAll);
+          } else {
+            tryNextFormat();
+          }
+        })
+        .catch(() => {
+          tryNextFormat();
+        });
+    }
+
+    tryNextFormat();
+  }
+
+  function generateAvatarUrl(name){
+    const colors = ["FF8A00", "FF6B35", "F7931E", "FDB913", "FFB81C"];
+    const hash = name.split("").reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0);
+    const bgColor = colors[Math.abs(hash) % colors.length];
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&bold=true&size=260`;
+  }
+
+  function displayPerformerCard(performer, imageUrl, filteredAll){
+    const cardEl = qs("performerCard");
+    if (!cardEl) return;
+
+    const count = filteredAll.length;
+    const views = filteredAll.reduce((s,v)=> s + getViews(v), 0);
+    const performerData = DATA.performers?.[performer] || {};
+    const instagram = performerData.instagram;
+    
+    let instagramHtml = "";
+    if (instagram){
+      instagramHtml = `
+        <a href="${escapeAttr(instagram)}" target="_blank" rel="noopener noreferrer" class="performerInstagramLink">
+          Instagram
+        </a>
+      `;
+    }
+    
+    cardEl.innerHTML = `
+      <img src="${escapeAttr(imageUrl)}" alt="${escapeHtml(performer)}" />
+      <div class="performerCardBody">
+        <div class="performerCardName">${escapeHtml(performer)}</div>
+        <div class="performerCardStat">
+          <span class="performerCardStatLabel">Відео:</span>
+          <span class="performerCardStatValue">${fmtNum(count)}</span>
+        </div>
+        <div class="performerCardStat">
+          <span class="performerCardStatLabel">Переглядів:</span>
+          <span class="performerCardStatValue">${fmtNum(views)}</span>
+        </div>
+        ${instagramHtml ? `<div class="performerCardInstagram">${instagramHtml}</div>` : ""}
+      </div>
+    `;
+    cardEl.classList.add("active");
+  }
+
   // ---------- modal ----------
   let modalEl = null;
   let modalFrame = null;
@@ -439,7 +527,9 @@ const StandupHub = (() => {
     let filtered = applyFilters(DATA.videos || []);
     filtered = applySort(filtered);
 
-    if (state.mode === "performer") renderHeaderForComedian(filtered);
+    if (state.mode === "performer"){
+      renderPerformerCard(filtered);
+    }
 
     const { slice, total, pages } = paginate(filtered);
     renderGrid(slice, total);
@@ -452,6 +542,35 @@ const StandupHub = (() => {
     return await r.json();
   }
 
+  async function loadText(path){
+    const r = await fetch(path, { cache: "no-cache" });
+    if (!r.ok) throw new Error(`Failed to load ${path}: ${r.status}`);
+    return await r.text();
+  }
+
+  function parsePerformersFile(text){
+    const performers = {};
+    const lines = text.split("\n").filter(l => l.trim());
+    for (const line of lines){
+      const parts = line.split("|").map(p => p.trim());
+      if (parts.length === 0) continue;
+      
+      const primaryName = parts[0];
+      let instagram = null;
+      
+      // Search for Instagram link anywhere in the line
+      for (const part of parts){
+        if (part.includes("instagram.com")){
+          instagram = part;
+          break;
+        }
+      }
+      
+      performers[primaryName] = { instagram };
+    }
+    return performers;
+  }
+
   // ---------- INIT pages ----------
   async function init({mode, performer}){
     state.mode = mode;
@@ -459,13 +578,15 @@ const StandupHub = (() => {
 
     readUrl();
 
-    const [videos, rating] = await Promise.all([
+    const [videos, rating, performersText] = await Promise.all([
       loadJson("data/videos.json"),
       loadJson("data/rating.json"),
+      loadText("../performers.txt").catch(() => ""),
     ]);
 
     DATA.videos = videos || [];
     DATA.rating = rating || [];
+    DATA.performers = parsePerformersFile(performersText);
 
     renderSidebar();
     bindControls();
@@ -600,6 +721,9 @@ const StandupHub = (() => {
   // ✅ NEW: comedians page renderer
   async function initComedians(){
     const rating = await loadJson("data/rating.json");
+    const performersText = await loadText("../performers.txt").catch(() => "");
+    const performers = parsePerformersFile(performersText);
+    
     DATA.rating = rating || [];
     renderSidebar();
 
@@ -648,6 +772,20 @@ const StandupHub = (() => {
 
       grid.innerHTML = rows.map(r => {
         const p = r.performer || "";
+        const performerData = performers?.[p] || {};
+        const instagram = performerData.instagram;
+        
+        let instagramLink = "";
+        if (instagram){
+          instagramLink = `
+            <a href="${escapeAttr(instagram)}" target="_blank" rel="noopener noreferrer" class="comedianInstagram" title="Instagram">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.204-.012 3.584-.07 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1 1 12.324 0 6.162 6.162 0 0 1-12.324 0zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm4.965-10.322a1.44 1.44 0 1 1 2.881.001 1.44 1.44 0 0 1-2.881-.001z"/>
+              </svg>
+            </a>
+          `;
+        }
+        
         return `
           <a class="comedianCard" href="./comedian.html?p=${encodeURIComponent(p)}">
             <div class="comedianTop">
@@ -660,6 +798,7 @@ const StandupHub = (() => {
               <span class="badge">peak ${fmtNum(r.peak_views)}</span>
               <span class="badge">like ${Number(r.like_rate_smooth_pct||0).toFixed(2)}%</span>
             </div>
+            ${instagramLink ? `<div class="comedianLinks">${instagramLink}</div>` : ""}
           </a>
         `;
       }).join("");
