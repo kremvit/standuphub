@@ -499,6 +499,7 @@
     let turn = 0;        // rounds completed
     let busy = false;
     let performersData = {};
+    const photoCache = {};  // Cache photo URLs to avoid repeated requests
 
     const gameSection  = document.getElementById("gameSection");
     const winnerScreen = document.getElementById("winnerScreen");
@@ -528,24 +529,27 @@
     }
 
     async function getPerformerPhotoUrl(performer) {
+      // Check cache first
+      if (performer in photoCache) {
+        return photoCache[performer];
+      }
+
       // Try jpg first, then png
       for (const format of [".jpg", ".png"]) {
         const path = `./photo/${encodeURIComponent(performer)}${format}`;
         try {
           const r = await fetch(path, { method: "HEAD", cache: "no-cache" });
-          if (r.ok) return path;
+          if (r.ok) {
+            photoCache[performer] = path;
+            return path;
+          }
         } catch {}
       }
-      return null;
-    }
-
-    async function loadPerformerPhotos(names) {
-      const photoMap = {};
-      for (const name of names) {
-        const url = await getPerformerPhotoUrl(name);
-        photoMap[name] = url || generateSilhouette();
-      }
-      return photoMap;
+      
+      // Cache the silhouette as well to avoid rechecking
+      const silhouette = generateSilhouette();
+      photoCache[performer] = silhouette;
+      return silhouette;
     }
 
     function shuffle(arr) {
@@ -585,19 +589,23 @@
     function renderRound() {
       buildRoundBar();
       
-      const photoA = performersData[champion] || generateSilhouette();
-      const photoB = performersData[challenger] || generateSilhouette();
+      // Lazy load photos only when needed
+      Promise.all([
+        getPerformerPhotoUrl(champion),
+        getPerformerPhotoUrl(challenger)
+      ]).then(([photoA, photoB]) => {
+        cardA.innerHTML = `
+          <img src="${photoA}" alt="${champion}" class="fighterPhoto" />
+          <div class="fighterName">${champion}</div>
+        `;
+        cardB.innerHTML = `
+          <img src="${photoB}" alt="${challenger}" class="fighterPhoto" />
+          <div class="fighterName">${challenger}</div>
+        `;
+        cardA.className = "fighterCard";
+        cardB.className = "fighterCard";
+      });
       
-      cardA.innerHTML = `
-        <img src="${photoA}" alt="${champion}" class="fighterPhoto" />
-        <div class="fighterName">${champion}</div>
-      `;
-      cardB.innerHTML = `
-        <img src="${photoB}" alt="${challenger}" class="fighterPhoto" />
-        <div class="fighterName">${challenger}</div>
-      `;
-      cardA.className = "fighterCard";
-      cardB.className = "fighterCard";
       busy = false;
     }
 
@@ -767,13 +775,11 @@
     // Load comedian names from rating.json
     fetch("data/rating.json", { cache: "no-cache" })
       .then(r => r.ok ? r.json() : [])
-      .then(async data => {
+      .then(data => {
         const names = (data || []).map(r => r.performer).filter(Boolean);
         window._gameNames = names;
         
-        // Load photos for all performers
-        performersData = await loadPerformerPhotos(names);
-        
+        // Don't preload photos - load them lazily as needed
         if (sharedWinner) {
           showWinner(sharedWinner, true);
         } else {
@@ -788,15 +794,11 @@
             .filter(Boolean);
           window._gameNames = names;
           
-          // Load photos for fallback names
-          loadPerformerPhotos(names).then(photos => {
-            performersData = photos;
-            if (sharedWinner) {
-              showWinner(sharedWinner, true);
-            } else if (names.length >= 2) {
-              startGame(names);
-            }
-          });
+          if (sharedWinner) {
+            showWinner(sharedWinner, true);
+          } else if (names.length >= 2) {
+            startGame(names);
+          }
         }, 500);
       });
   </script>
