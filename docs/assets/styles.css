@@ -436,14 +436,32 @@ body{
     width:100%;
     max-width:none;
   }
+  .performerCard.active{
+    flex-direction:row;
+  }
   .performerCard img{
-    width:120px;
-    height:120px;
-    min-width:120px;
+    width:136px;
+    height:136px;
+    min-width:136px;
   }
   .performerCardBody{
     flex:1;
     padding:12px;
+  }
+}
+
+@media (orientation:portrait) and (max-width:900px){
+  .performerCard,
+  .performerCard.active{
+    flex-direction:row;
+    width:100%;
+    max-width:none;
+  }
+
+  .performerCard img{
+    width:140px;
+    height:140px;
+    min-width:140px;
   }
 }
 
