@@ -432,17 +432,21 @@ body{
     gap:14px;
   }
   .performerCard{
+    align-items:stretch;
     flex-direction:row;
     width:100%;
     max-width:none;
   }
   .performerCard.active{
+    align-items:stretch;
     flex-direction:row;
   }
   .performerCard img{
     width:136px;
-    height:136px;
+    height:auto;
     min-width:136px;
+    align-self:stretch;
+    aspect-ratio:auto;
   }
   .performerCardBody{
     flex:1;
@@ -453,6 +457,7 @@ body{
 @media (orientation:portrait) and (max-width:900px){
   .performerCard,
   .performerCard.active{
+    align-items:stretch;
     flex-direction:row;
     width:100%;
     max-width:none;
@@ -460,8 +465,10 @@ body{
 
   .performerCard img{
     width:140px;
-    height:140px;
+    height:auto;
     min-width:140px;
+    align-self:stretch;
+    aspect-ratio:auto;
   }
 }
 
