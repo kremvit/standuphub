@@ -5,6 +5,12 @@ on:
   schedule:
     # 06:15 UTC daily (adjust if you want)
     - cron: "15 6 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "performers.txt"
+      - "docs/**"
 
 permissions:
   contents: read
@@ -33,6 +39,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run pipeline
+        if: github.event_name != 'push'
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
         run: |
