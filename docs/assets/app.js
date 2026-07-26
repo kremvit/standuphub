@@ -1,5 +1,5 @@
 const StandupHub = (() => {
-  const DATA = { videos: [], rating: [] };
+  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map() };
 
   const state = {
     mode: "all",
@@ -184,6 +184,95 @@ const StandupHub = (() => {
   }
   function escapeAttr(s){ return escapeHtml(s); }
 
+  function buildBiosIndex(bios){
+    const index = new Map();
+    const entries = Object.entries(bios || {});
+
+    for (const [key, value] of entries){
+      const item = value || {};
+      const variants = [key, item.name, ...(Array.isArray(item.aliases) ? item.aliases : [])];
+      for (const variant of variants){
+        const norm = String(variant || "").trim().toLowerCase();
+        if (!norm || index.has(norm)) continue;
+        index.set(norm, item);
+      }
+    }
+
+    return index;
+  }
+
+  function getBioByPerformerName(name){
+    const norm = String(name || "").trim().toLowerCase();
+    if (!norm) return null;
+    return DATA.biosIndex.get(norm) || null;
+  }
+
+  function escapeRegex(text){
+    return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function sanitizeBioText(rawText, performerName, bioName){
+    let text = String(rawText || "").trim();
+    if (!text) return "";
+
+    const leadingNames = [performerName, bioName]
+      .map(v => String(v || "").trim())
+      .filter(Boolean);
+
+    for (const name of leadingNames){
+      const pattern = new RegExp(`^${escapeRegex(name)}\\s*[-—:]\\s*`, "i");
+      text = text.replace(pattern, "").trim();
+    }
+
+    text = text
+      .replace(/український/gi, "")
+      .replace(/українська/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+,/g, ",")
+      .replace(/\s+\./g, ".")
+      .trim();
+
+    text = text.replace(/^([^\p{L}]*)(\p{L})/u, (m, prefix, firstChar) => {
+      return prefix + firstChar.toLocaleUpperCase("uk-UA");
+    });
+
+    return text;
+  }
+
+  function applyBioMobileToggle(bioEl){
+    const textEl = bioEl.querySelector(".comedianBioText");
+    const toggleEl = bioEl.querySelector(".comedianBioToggle");
+    if (!textEl || !toggleEl) return;
+
+    const isMobile = window.matchMedia("(max-width: 720px)").matches;
+    textEl.classList.remove("isCollapsed");
+    toggleEl.hidden = true;
+
+    if (!isMobile) return;
+
+    const lineHeight = parseFloat(window.getComputedStyle(textEl).lineHeight) || 22;
+    const lineCount = Math.ceil(textEl.scrollHeight / lineHeight);
+
+    if (lineCount <= 6) return;
+
+    textEl.classList.add("isCollapsed");
+    toggleEl.hidden = false;
+    toggleEl.textContent = "Більше...";
+
+    toggleEl.addEventListener("click", () => {
+      const expanded = toggleEl.getAttribute("aria-expanded") === "true";
+      if (expanded){
+        textEl.classList.add("isCollapsed");
+        toggleEl.textContent = "Більше...";
+        toggleEl.setAttribute("aria-expanded", "false");
+      } else {
+        textEl.classList.remove("isCollapsed");
+        toggleEl.textContent = "Менше";
+        toggleEl.setAttribute("aria-expanded", "true");
+      }
+    });
+  }
+
   // ---------- sidebar ----------
   function renderSidebar(){
     const el = qs("sidebarTop");
@@ -315,6 +404,42 @@ const StandupHub = (() => {
       </div>
     `;
     cardEl.classList.add("active");
+  }
+
+  function renderPerformerBio(){
+    const bioEl = qs("comedianBio");
+    if (!bioEl) return;
+
+    if (state.mode !== "performer" || !state.performer){
+      bioEl.hidden = true;
+      bioEl.innerHTML = "";
+      return;
+    }
+
+    const bioData = getBioByPerformerName(state.performer);
+    const bioText = sanitizeBioText(bioData?.bio, state.performer, bioData?.name);
+
+    if (!bioText){
+      bioEl.hidden = true;
+      bioEl.innerHTML = "";
+      return;
+    }
+
+    const suffix = "за версією Gemini";
+    const baseText = bioText.endsWith(suffix)
+      ? bioText.slice(0, -suffix.length).trim()
+      : bioText;
+
+    bioEl.innerHTML = `
+      <p class="comedianBioText">${escapeHtml(baseText)}</p>
+      <button class="comedianBioToggle" type="button" aria-expanded="false" hidden>Більше...</button>
+      <div class="comedianBioSource" aria-label="Джерело біографії">
+        <span class="comedianBioSourceIcon" aria-hidden="true"></span>
+        <span>${escapeHtml(suffix)}</span>
+      </div>
+    `;
+    bioEl.hidden = false;
+    applyBioMobileToggle(bioEl);
   }
 
   // ---------- modal ----------
@@ -541,6 +666,7 @@ const StandupHub = (() => {
     if (state.mode === "performer"){
       renderPerformerCard(filtered);
     }
+    renderPerformerBio();
 
     const { slice, total, pages } = paginate(filtered);
     renderGrid(slice, total);
@@ -557,6 +683,18 @@ const StandupHub = (() => {
     const r = await fetch(path, { cache: "no-cache" });
     if (!r.ok) throw new Error(`Failed to load ${path}: ${r.status}`);
     return await r.text();
+  }
+
+  async function loadJsonAny(paths){
+    let lastError = null;
+    for (const path of paths){
+      try {
+        return await loadJson(path);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError || new Error("Failed to load JSON from all provided paths");
   }
 
   function parsePerformersFile(text){
@@ -589,15 +727,18 @@ const StandupHub = (() => {
 
     readUrl();
 
-    const [videos, rating, performersText] = await Promise.all([
+    const [videos, rating, performersText, bios] = await Promise.all([
       loadJson("data/videos.json"),
       loadJson("data/rating.json"),
       loadText("performers.txt").catch(() => ""),
+      loadJsonAny(["comedians_bios.json", "../comedians_bios.json"]).catch(() => ({})),
     ]);
 
     DATA.videos = videos || [];
     DATA.rating = rating || [];
     DATA.performers = parsePerformersFile(performersText);
+    DATA.bios = bios || {};
+    DATA.biosIndex = buildBiosIndex(DATA.bios);
 
     renderSidebar();
     bindControls();

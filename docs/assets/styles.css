@@ -417,6 +417,78 @@ body{
   min-width:0;
 }
 
+.comedianBio{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:14px 16px;
+  margin-bottom:12px;
+}
+
+.comedianBioTitle{
+  margin:0 0 8px;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:900;
+}
+
+.comedianBioText{
+  margin:0;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--text);
+}
+
+.comedianBioText.isCollapsed{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:6;
+  overflow:hidden;
+}
+
+.comedianBioToggle{
+  margin-top:10px;
+  border:1px solid var(--border);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.comedianBioToggle:hover{
+  border-color: rgba(255,138,0,.6);
+}
+
+.comedianBioSource{
+  margin-top:10px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.comedianBioSourceIcon{
+  width:14px;
+  height:14px;
+  background-image:url("gemini-logo.svg");
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+}
+
+@media (min-width:721px){
+  .comedianBioToggle{
+    display:none !important;
+  }
+}
+
 @media (max-width:1200px){
   .performerSection{
     flex-direction:column;
