@@ -28,6 +28,7 @@ def main():
     sync_performers_file()
     run([sys.executable, "scripts/fetch.py"])
     run([sys.executable, "scripts/rate.py"])
+    run([sys.executable, "scripts/build_photo_index.py"])
     run([sys.executable, "scripts/export_json.py"])
     print("\n✅ Pipeline finished")
 

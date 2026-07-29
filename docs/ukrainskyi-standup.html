@@ -141,7 +141,6 @@
     StandupHub.init({ mode: "all", performer: null });
 
     (function initComedianCarousel(){
-      const PHOTO_EXTENSIONS = [".jpg", ".png", ".jpeg", ".webp", ".gif"];
       const ROTATE_MS = 7000;
 
       const photoEl = document.getElementById("heroCarouselPhoto");
@@ -159,11 +158,19 @@
       let currentIndex = 0;
       let timerId = null;
       let transitionToken = 0;
-      const resolvedPhotoCache = new Map();
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       function normalizeText(value){
         return String(value || "").trim();
+      }
+
+      function normalizeKey(value){
+        return normalizeText(value)
+          .toLocaleLowerCase("uk-UA")
+          .normalize("NFKD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[’'`]/g, "")
+          .replace(/\s+/g, " ");
       }
 
       function shortBio(text){
@@ -207,35 +214,6 @@
           const j = Math.floor(Math.random() * (i + 1));
           [arr[i], arr[j]] = [arr[j], arr[i]];
         }
-      }
-
-      function testImage(url){
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
-          img.src = url;
-        });
-      }
-
-      async function resolvePhoto(item){
-        const cacheKey = normalizeText(item?.name || item?.key);
-        if (resolvedPhotoCache.has(cacheKey)) return resolvedPhotoCache.get(cacheKey);
-
-        const names = buildNameVariants(item, item?.key);
-        for (const name of names){
-          for (const ext of PHOTO_EXTENSIONS){
-            const candidate = `./photo/${encodeURIComponent(name)}${ext}`;
-            const ok = await testImage(candidate);
-            if (ok){
-              resolvedPhotoCache.set(cacheKey, candidate);
-              return candidate;
-            }
-          }
-        }
-
-        resolvedPhotoCache.set(cacheKey, null);
-        return null;
       }
 
       async function renderSlide(index){
@@ -285,33 +263,44 @@
       }
 
       async function loadSlides(){
-        const [biosResponse, ratingResponse] = await Promise.all([
+        const [biosResponse, ratingResponse, photoIndexResponse] = await Promise.all([
           fetch("./comedians_bios.json", { cache: "no-cache" }),
-          fetch("./data/rating.json", { cache: "no-cache" })
+          fetch("./data/rating.json", { cache: "no-cache" }),
+          fetch("./data/photo_index.json", { cache: "no-cache" })
         ]);
 
         const biosJson = biosResponse.ok ? await biosResponse.json() : {};
         const ratingJson = ratingResponse.ok ? await ratingResponse.json() : [];
+        const photoIndexJson = photoIndexResponse.ok ? await photoIndexResponse.json() : [];
 
         const ratings = Array.isArray(ratingJson) ? ratingJson : [];
         const bios = biosJson && typeof biosJson === "object" ? biosJson : {};
+        const photoIndex = Array.isArray(photoIndexJson) ? photoIndexJson : [];
+
+        const photoByName = new Map();
+        photoIndex.forEach((entry) => {
+          const key = normalizeKey(entry?.name);
+          const path = normalizeText(entry?.path);
+          if (!key || !path) return;
+          photoByName.set(key, path);
+        });
 
         const byName = new Map();
         Object.entries(bios).forEach(([key, value]) => {
           if (!value || typeof value !== "object") return;
           const name = normalizeText(value.name || key);
           if (!name) return;
-          byName.set(name.toLowerCase(), { ...value, key, name });
+          byName.set(normalizeKey(name), { ...value, key, name });
         });
 
         const ordered = [];
         ratings.forEach((row) => {
           const performer = normalizeText(row?.performer);
           if (!performer) return;
-          const item = byName.get(performer.toLowerCase());
+          const item = byName.get(normalizeKey(performer));
           if (!item) return;
           ordered.push(item);
-          byName.delete(performer.toLowerCase());
+          byName.delete(normalizeKey(performer));
         });
 
         byName.forEach((item) => ordered.push(item));
@@ -319,13 +308,21 @@
         const candidates = ordered.filter((item) => normalizeText(item.name) && normalizeText(item.bio));
         shuffleInPlace(candidates);
 
-        const withPhotos = await Promise.all(
-          candidates.map(async (item) => {
-            const photo = await resolvePhoto(item);
-            if (!photo) return null;
-            return { ...item, photo };
-          })
-        );
+        const withPhotos = candidates.map((item) => {
+          const variants = buildNameVariants(item, item?.key);
+          let photo = null;
+
+          for (const name of variants){
+            const maybe = photoByName.get(normalizeKey(name));
+            if (maybe){
+              photo = maybe;
+              break;
+            }
+          }
+
+          if (!photo) return null;
+          return { ...item, photo };
+        });
 
         slides = withPhotos.filter(Boolean);
 
