@@ -1043,3 +1043,167 @@ body{
   height: 20px;
   fill: currentColor;
 }
+
+/* =========================
+   UKRAINSKYI STANDUP CAROUSEL
+   ========================= */
+.heroCarousel{
+  display:grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+  gap:16px;
+  margin-bottom:18px;
+  background:linear-gradient(145deg, rgba(255,138,0,.11), rgba(18,18,26,.95));
+  border:1px solid rgba(255,138,0,.25);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  position:relative;
+  min-height:360px;
+  align-items:start;
+}
+
+.heroCarouselMediaWrap{
+  height:360px;
+  min-height:360px;
+  max-height:360px;
+  background:#101018;
+  transition:opacity 220ms ease;
+}
+
+.heroCarouselPhoto{
+  width:100%;
+  height:100%;
+  min-height:240px;
+  display:block;
+  object-fit:cover;
+}
+
+.heroCarouselContent{
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:360px;
+  transition:opacity 220ms ease, transform 220ms ease;
+}
+
+.heroCarousel.isFading .heroCarouselMediaWrap,
+.heroCarousel.isFading .heroCarouselContent{
+  opacity:.25;
+}
+
+.heroCarousel.isFading .heroCarouselContent{
+  transform:translateY(6px);
+}
+
+.heroCarouselKicker{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+
+.heroCarouselName{
+  margin:0;
+  font-size:28px;
+  line-height:1.08;
+}
+
+.heroCarouselBio{
+  margin:0;
+  color:var(--text);
+  line-height:1.65;
+  font-size:15px;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:5;
+  overflow:hidden;
+}
+
+.heroCarouselLink{
+  align-self:flex-start;
+  margin-top:2px;
+}
+
+.heroCarouselMeta{
+  margin-top:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.heroCarouselNav{
+  display:contents;
+}
+
+.heroCarouselArrow{
+  width:32px;
+  height:28px;
+  border:0;
+  border-radius:0;
+  background:rgba(233,233,239,.45);
+  color:transparent;
+  font-size:0;
+  line-height:0;
+  cursor:pointer;
+  transition:opacity 160ms ease, transform 160ms ease, background-color 160ms ease;
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:3;
+}
+
+#heroCarouselPrev{
+  clip-path:polygon(100% 0, 0 50%, 100% 100%);
+  left:12px;
+}
+
+#heroCarouselNext{
+  clip-path:polygon(0 0, 100% 50%, 0 100%);
+  right:12px;
+}
+
+.heroCarouselArrow:hover:not(:disabled){
+  background:rgba(255,138,0,.65);
+  transform:translateY(calc(-50% - 1px));
+}
+
+.heroCarouselArrow:disabled{
+  opacity:.3;
+  cursor:not-allowed;
+}
+
+@media (max-width: 900px){
+  .heroCarousel{
+    grid-template-columns:1fr;
+    min-height:0;
+  }
+
+  .heroCarouselMediaWrap,
+  .heroCarouselPhoto{
+    height:300px;
+    min-height:300px;
+    max-height:300px;
+  }
+
+  .heroCarouselContent{
+    padding:14px;
+    min-height:260px;
+  }
+
+  .heroCarouselName{
+    font-size:24px;
+  }
+
+  #heroCarouselPrev{
+    left:8px;
+  }
+
+  #heroCarouselNext{
+    right:8px;
+  }
+}

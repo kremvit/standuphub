@@ -51,6 +51,27 @@
       </header>
 
       <section>
+        <div class="heroCarousel" id="heroCarousel" aria-live="polite">
+          <div class="heroCarouselMediaWrap">
+            <img id="heroCarouselPhoto" class="heroCarouselPhoto" src="./assets/comedians-collage.jpg" alt="Комік" loading="lazy" />
+          </div>
+
+          <div class="heroCarouselContent">
+            <div class="heroCarouselKicker">Комік дня</div>
+            <h2 id="heroCarouselName" class="heroCarouselName">Завантажуємо...</h2>
+            <p id="heroCarouselBio" class="heroCarouselBio"></p>
+            <a id="heroCarouselLink" class="navBtn heroCarouselLink" href="./comedians.html">На сторінку коміка →</a>
+
+            <div class="heroCarouselMeta">
+              <div class="heroCarouselNav" role="group" aria-label="Керування каруселлю">
+                <button id="heroCarouselPrev" class="heroCarouselArrow" type="button" aria-label="Попередній комік">←</button>
+                <button id="heroCarouselNext" class="heroCarouselArrow" type="button" aria-label="Наступний комік">→</button>
+              </div>
+              <span id="heroCarouselCounter">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
         <h1>Український стендап</h1>
 
         <p>
@@ -118,6 +139,243 @@
   <script>
     // Потрібно, щоб “Топ коміків” у сайдбарі заповнився
     StandupHub.init({ mode: "all", performer: null });
+
+    (function initComedianCarousel(){
+      const PHOTO_EXTENSIONS = [".jpg", ".png", ".jpeg", ".webp", ".gif"];
+      const ROTATE_MS = 7000;
+
+      const photoEl = document.getElementById("heroCarouselPhoto");
+      const carouselEl = document.getElementById("heroCarousel");
+      const nameEl = document.getElementById("heroCarouselName");
+      const bioEl = document.getElementById("heroCarouselBio");
+      const linkEl = document.getElementById("heroCarouselLink");
+      const counterEl = document.getElementById("heroCarouselCounter");
+      const prevBtn = document.getElementById("heroCarouselPrev");
+      const nextBtn = document.getElementById("heroCarouselNext");
+
+      if (!photoEl || !carouselEl || !nameEl || !bioEl || !linkEl || !counterEl || !prevBtn || !nextBtn) return;
+
+      let slides = [];
+      let currentIndex = 0;
+      let timerId = null;
+      let transitionToken = 0;
+      const resolvedPhotoCache = new Map();
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function normalizeText(value){
+        return String(value || "").trim();
+      }
+
+      function shortBio(text){
+        const raw = normalizeText(text).replace(/\s+/g, " ");
+        if (!raw) return "Біографія цього коміка скоро з'явиться на сайті.";
+
+        const chunks = raw.split(/(?<=[.!?])\s+/).filter(Boolean);
+        const picked = [];
+        let total = 0;
+
+        for (const chunk of chunks){
+          if (picked.length >= 2) break;
+          if (total + chunk.length > 320 && picked.length > 0) break;
+          picked.push(chunk);
+          total += chunk.length;
+        }
+
+        if (picked.length > 0) return picked.join(" ");
+        return raw.length > 320 ? raw.slice(0, 320).trim() + "..." : raw;
+      }
+
+      function buildNameVariants(item, fallbackKey){
+        const variants = [];
+        const push = (value) => {
+          const v = normalizeText(value);
+          if (!v) return;
+          if (!variants.includes(v)) variants.push(v);
+        };
+
+        push(item?.name);
+        push(fallbackKey);
+        if (Array.isArray(item?.aliases)){
+          item.aliases.forEach(push);
+        }
+
+        return variants;
+      }
+
+      function shuffleInPlace(arr){
+        for (let i = arr.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      }
+
+      function testImage(url){
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        });
+      }
+
+      async function resolvePhoto(item){
+        const cacheKey = normalizeText(item?.name || item?.key);
+        if (resolvedPhotoCache.has(cacheKey)) return resolvedPhotoCache.get(cacheKey);
+
+        const names = buildNameVariants(item, item?.key);
+        for (const name of names){
+          for (const ext of PHOTO_EXTENSIONS){
+            const candidate = `./photo/${encodeURIComponent(name)}${ext}`;
+            const ok = await testImage(candidate);
+            if (ok){
+              resolvedPhotoCache.set(cacheKey, candidate);
+              return candidate;
+            }
+          }
+        }
+
+        resolvedPhotoCache.set(cacheKey, null);
+        return null;
+      }
+
+      async function renderSlide(index){
+        if (!slides.length) return;
+        currentIndex = (index + slides.length) % slides.length;
+        const item = slides[currentIndex];
+
+        nameEl.textContent = normalizeText(item.name) || "Комік";
+        bioEl.textContent = shortBio(item.bio);
+        linkEl.href = `./comedian.html?p=${encodeURIComponent(item.name)}`;
+        counterEl.textContent = `${currentIndex + 1} / ${slides.length}`;
+        photoEl.src = item.photo;
+        photoEl.alt = `Фото: ${normalizeText(item.name) || "комік"}`;
+      }
+
+      function sleep(ms){
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function showSlide(index, options = {}){
+        const skipAnimation = !!options.skipAnimation || prefersReducedMotion;
+        const token = ++transitionToken;
+
+        if (skipAnimation){
+          await renderSlide(index);
+          return;
+        }
+
+        carouselEl.classList.add("isFading");
+        await sleep(180);
+        if (token !== transitionToken) return;
+
+        await renderSlide(index);
+        if (token !== transitionToken) return;
+
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        if (token !== transitionToken) return;
+
+        carouselEl.classList.remove("isFading");
+      }
+
+      function startRotation(){
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(() => {
+          showSlide(currentIndex + 1);
+        }, ROTATE_MS);
+      }
+
+      async function loadSlides(){
+        const [biosResponse, ratingResponse] = await Promise.all([
+          fetch("./comedians_bios.json", { cache: "no-cache" }),
+          fetch("./data/rating.json", { cache: "no-cache" })
+        ]);
+
+        const biosJson = biosResponse.ok ? await biosResponse.json() : {};
+        const ratingJson = ratingResponse.ok ? await ratingResponse.json() : [];
+
+        const ratings = Array.isArray(ratingJson) ? ratingJson : [];
+        const bios = biosJson && typeof biosJson === "object" ? biosJson : {};
+
+        const byName = new Map();
+        Object.entries(bios).forEach(([key, value]) => {
+          if (!value || typeof value !== "object") return;
+          const name = normalizeText(value.name || key);
+          if (!name) return;
+          byName.set(name.toLowerCase(), { ...value, key, name });
+        });
+
+        const ordered = [];
+        ratings.forEach((row) => {
+          const performer = normalizeText(row?.performer);
+          if (!performer) return;
+          const item = byName.get(performer.toLowerCase());
+          if (!item) return;
+          ordered.push(item);
+          byName.delete(performer.toLowerCase());
+        });
+
+        byName.forEach((item) => ordered.push(item));
+
+        const candidates = ordered.filter((item) => normalizeText(item.name) && normalizeText(item.bio));
+        shuffleInPlace(candidates);
+
+        const withPhotos = await Promise.all(
+          candidates.map(async (item) => {
+            const photo = await resolvePhoto(item);
+            if (!photo) return null;
+            return { ...item, photo };
+          })
+        );
+
+        slides = withPhotos.filter(Boolean);
+
+        if (!slides.length){
+          nameEl.textContent = "Коміки";
+          bioEl.textContent = "Наразі немає коміків із фото для каруселі.";
+          linkEl.href = "./comedians.html";
+          counterEl.textContent = "0 / 0";
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          return;
+        }
+
+        prevBtn.disabled = false;
+        nextBtn.disabled = false;
+        await showSlide(0, { skipAnimation: true });
+        startRotation();
+      }
+
+      prevBtn.addEventListener("click", () => {
+        if (!slides.length) return;
+        showSlide(currentIndex - 1);
+        startRotation();
+      });
+
+      nextBtn.addEventListener("click", () => {
+        if (!slides.length) return;
+        showSlide(currentIndex + 1);
+        startRotation();
+      });
+
+      loadSlides().catch(() => {
+        nameEl.textContent = "Коміки";
+        bioEl.textContent = "Не вдалося завантажити карусель. Спробуйте оновити сторінку.";
+        linkEl.href = "./comedians.html";
+        counterEl.textContent = "0 / 0";
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!slides.length) return;
+        if (document.hidden){
+          if (timerId) clearInterval(timerId);
+          timerId = null;
+          return;
+        }
+        startRotation();
+      });
+    })();
   </script>
 </body>
 </html>
