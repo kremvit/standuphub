@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./favicon-180.png" />
+  <title>Мережа коміків • StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    .networkWrap {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 90px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    #networkSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .networkControls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .networkControlLabel {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .networkSlider {
+      accent-color: var(--accent);
+      width: 140px;
+    }
+
+    .networkControlVal {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent);
+      min-width: 24px;
+    }
+
+    .nodeTooltip {
+      position: fixed;
+      pointer-events: none;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      z-index: 999;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 120ms;
+    }
+
+    .nodeTooltip.visible { opacity: 1; }
+
+    .nodeTooltipSub {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .zoomHint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      pointer-events: none;
+      opacity: 0.6;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-J8G4SLH1YT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-J8G4SLH1YT');
+</script>
+<body>
+  <div class="layout">
+    <main class="main" style="grid-column:1/-1">
+      <header class="topbar">
+        <div class="topBrand">
+          <a class="brandLink" href="./index.html">
+            <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+          </a>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
+        </div>
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn" href="./statistics.html">Статистика</a>
+          <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
+          <a class="navBtn" href="./game.html">Кар'єра</a>
+          <a class="navBtn active" href="./network.html">Мережа</a>
+        </div>
+        <div class="controls">
+          <div class="networkControls">
+            <span class="networkControlLabel">Мін. зв'язків:</span>
+            <input type="range" id="thresholdSlider" class="networkSlider" min="1" max="50" value="5" />
+            <span class="networkControlVal" id="thresholdVal">5</span>
+            <span class="networkControlLabel" style="margin-left:12px">Показати імена:</span>
+            <input type="range" id="labelSlider" class="networkSlider" min="0" max="50" value="10" />
+            <span class="networkControlVal" id="labelVal">10+</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="networkWrap">
+        <svg id="networkSvg"></svg>
+        <div class="zoomHint" id="zoomHint">Scroll для zoom • Drag для переміщення • Click для переходу</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="nodeTooltip" id="nodeTooltip">
+    <div id="tooltipName"></div>
+    <div class="nodeTooltipSub" id="tooltipSub"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script>
+  (async () => {
+    const [rating, recs] = await Promise.all([
+      fetch("data/rating.json").then(r => r.json()),
+      fetch("data/recommendations.json").then(r => r.json()),
+    ]);
+
+    const thresholdSlider = document.getElementById("thresholdSlider");
+    const thresholdVal    = document.getElementById("thresholdVal");
+    const labelSlider     = document.getElementById("labelSlider");
+    const labelVal        = document.getElementById("labelVal");
+    const tooltip         = document.getElementById("nodeTooltip");
+    const tooltipName     = document.getElementById("tooltipName");
+    const tooltipSub      = document.getElementById("tooltipSub");
+
+    // Build lookup: performer -> video_count
+    const videoCount = {};
+    for (const r of rating) videoCount[r.performer] = r.video_count || 0;
+
+    // All performer names that appear in recommendations
+    const allNames = new Set(Object.keys(recs));
+    for (const v of Object.values(recs)) for (const k of Object.keys(v)) allNames.add(k);
+
+    const svg = d3.select("#networkSvg");
+    const wrap = document.querySelector(".networkWrap");
+
+    let simulation, linkSel, nodeSel, labelSel, photoSel, photoGroupSel;
+    const photoCache = new Map();
+
+    function getSize() {
+      return { w: wrap.clientWidth, h: wrap.clientHeight };
+    }
+
+    function buildGraph(threshold) {
+      const nodes = [...allNames].map(name => ({
+        id: name,
+        videos: videoCount[name] || 1,
+      }));
+
+      const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+      const seen = new Set();
+      const links = [];
+      for (const [a, targets] of Object.entries(recs)) {
+        for (const [b, count] of Object.entries(targets)) {
+          if (count < threshold) continue;
+          const key = [a, b].sort().join("|||");
+          if (seen.has(key)) continue;
+          seen.add(key);
+          if (!nodeMap.has(a) || !nodeMap.has(b)) continue;
+          links.push({ source: a, target: b, value: count });
+        }
+      }
+
+      const degree = new Map(nodes.map(n => [n.id, 0]));
+      for (const l of links) {
+        degree.set(l.source, (degree.get(l.source) || 0) + 1);
+        degree.set(l.target, (degree.get(l.target) || 0) + 1);
+      }
+      nodes.forEach((n, i) => { n.degree = degree.get(n.id) || 0; n.idx = i; });
+
+      return { nodes, links };
+    }
+
+    function render(threshold, labelThreshold) {
+      const { w, h } = getSize();
+      const { nodes, links } = buildGraph(threshold);
+
+      svg.selectAll("*").remove();
+
+      const maxVideos = d3.max(nodes, d => d.videos) || 1;
+      const maxVal    = d3.max(links, d => d.value) || 1;
+
+      const rScale   = d3.scaleSqrt().domain([0, maxVideos]).range([4, 32]);
+      const lWidth   = d3.scaleSqrt().domain([0, maxVal]).range([0.4, 4]);
+      const lOpacity = d3.scaleLinear().domain([0, maxVal]).range([0.08, 0.55]);
+
+      const maxDeg = d3.max(nodes, d => d.degree) || 1;
+      const cScale = d3.scaleLinear().domain([0, maxDeg]).range(["#2a2a3a", "#ff8a00"]);
+
+      // Defs: one clipPath per node (circle at origin)
+      const defs = svg.append("defs");
+      nodes.forEach(n => {
+        const r = rScale(n.videos);
+        defs.append("clipPath")
+          .attr("id", `clip-${n.idx}`)
+          .append("circle")
+            .attr("cx", 0).attr("cy", 0).attr("r", r);
+      });
+
+      const g = svg.append("g");
+
+      let currentK = 1;
+      let photosTriggered = false;
+
+      const zoomBehavior = d3.zoom()
+        .scaleExtent([0.2, 4])
+        .on("zoom", e => {
+          g.attr("transform", e.transform);
+          currentK = e.transform.k;
+
+          // Fade in photos when zoomed in enough
+          const photoOpacity = Math.max(0, Math.min(1, (currentK - 1.4) / 0.6));
+          photoGroupSel?.style("opacity", photoOpacity);
+
+          // Trigger loading once when zooming past threshold
+          if (currentK > 1.4 && !photosTriggered) {
+            photosTriggered = true;
+            photoSel?.each(function(d) {
+              const el = d3.select(this);
+              const jpg = `./photo/${encodeURIComponent(d.id)}.jpg`;
+              const png = `./photo/${encodeURIComponent(d.id)}.png`;
+              el.attr("href", jpg);
+              this.addEventListener("error", function onJpgErr() {
+                this.removeEventListener("error", onJpgErr);
+                el.attr("href", png);
+                this.addEventListener("error", function onPngErr() {
+                  this.removeEventListener("error", onPngErr);
+                  el.attr("href", ""); // no photo — show nothing
+                });
+              });
+            });
+          }
+        });
+
+      svg.call(zoomBehavior);
+
+      // Expose zoom for programmatic use (e.g. tests)
+      window.__networkZoom = (k, tx, ty) => {
+        svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx ?? 0, ty ?? 0).scale(k ?? 2));
+      };
+
+      linkSel = g.append("g")
+        .selectAll("line")
+        .data(links)
+        .join("line")
+          .attr("stroke", "#ff8a00")
+          .attr("stroke-width", d => lWidth(d.value))
+          .attr("stroke-opacity", d => lOpacity(d.value));
+
+      nodeSel = g.append("g")
+        .selectAll("circle")
+        .data(nodes)
+        .join("circle")
+          .attr("r", d => rScale(d.videos))
+          .attr("fill", d => cScale(d.degree))
+          .attr("stroke", d => d.degree > 0 ? "rgba(255,138,0,0.5)" : "rgba(255,255,255,0.08)")
+          .attr("stroke-width", 1.2)
+          .style("cursor", "pointer")
+          .on("mouseover", (e, d) => {
+            tooltipName.textContent = d.id;
+            tooltipSub.textContent = `${d.videos} відео • ${d.degree} зв'язків`;
+            tooltip.classList.add("visible");
+          })
+          .on("mousemove", e => {
+            tooltip.style.left = (e.clientX + 14) + "px";
+            tooltip.style.top  = (e.clientY - 10) + "px";
+          })
+          .on("mouseout", () => tooltip.classList.remove("visible"))
+          .on("click", (e, d) => {
+            window.location.href = `comedian.html?p=${encodeURIComponent(d.id)}`;
+          })
+          .call(d3.drag()
+            .on("start", (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+            .on("drag",  (e, d) => { d.fx = e.x; d.fy = e.y; })
+            .on("end",   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+          );
+
+      // Photo layer: each node gets a <g> translated to its position,
+      // image at (-r,-r) clipped by circle at (0,0) — correct local coords
+      photoGroupSel = g.append("g")
+        .style("pointer-events", "none")
+        .style("opacity", 0);
+
+      // <g> wrappers — one per node, translated in tick
+      const photoNodeSel = photoGroupSel
+        .selectAll("g.pn")
+        .data(nodes)
+        .join("g")
+          .attr("class", "pn");
+
+      // <image> inside each <g>, positioned at (-r,-r)
+      photoSel = photoNodeSel
+        .append("image")
+          .attr("x",      d => -rScale(d.videos))
+          .attr("y",      d => -rScale(d.videos))
+          .attr("width",  d => rScale(d.videos) * 2)
+          .attr("height", d => rScale(d.videos) * 2)
+          .attr("clip-path", d => `url(#clip-${d.idx})`)
+          .attr("preserveAspectRatio", "xMidYMid slice")
+          .attr("href", "");
+
+      labelSel = g.append("g")
+        .selectAll("text")
+        .data(nodes.filter(d => d.videos >= labelThreshold))
+        .join("text")
+          .attr("text-anchor", "middle")
+          .attr("dy", d => rScale(d.videos) + 11)
+          .attr("fill", "#e9e9ef")
+          .attr("font-size", "10px")
+          .attr("font-family", "ui-sans-serif, system-ui, sans-serif")
+          .attr("font-weight", "700")
+          .attr("pointer-events", "none")
+          .text(d => d.id);
+
+      if (simulation) simulation.stop();
+
+      simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(d => 80 + rScale(d.source.videos) + rScale(d.target.videos)))
+        .force("charge", d3.forceManyBody().strength(d => -80 - rScale(d.videos) * 6))
+        .force("center", d3.forceCenter(w / 2, h / 2))
+        .force("collide", d3.forceCollide(d => rScale(d.videos) + 6))
+        .on("tick", () => {
+          linkSel
+            .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+          nodeSel
+            .attr("cx", d => d.x).attr("cy", d => d.y);
+          photoGroupSel.selectAll("g.pn")
+            .attr("transform", d => `translate(${d.x},${d.y})`);
+          labelSel
+            .attr("x", d => d.x).attr("y", d => d.y);
+        });
+    }
+
+    let currentThreshold = 5;
+    let currentLabel = 10;
+
+    thresholdSlider.addEventListener("input", () => {
+      currentThreshold = +thresholdSlider.value;
+      thresholdVal.textContent = currentThreshold;
+      render(currentThreshold, currentLabel);
+    });
+
+    labelSlider.addEventListener("input", () => {
+      currentLabel = +labelSlider.value;
+      labelVal.textContent = currentLabel + "+";
+      render(currentThreshold, currentLabel);
+    });
+
+    render(currentThreshold, currentLabel);
+
+    window.addEventListener("resize", () => render(currentThreshold, currentLabel));
+  })();
+  </script>
+</body>
+</html>
