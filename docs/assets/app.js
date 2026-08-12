@@ -1,5 +1,5 @@
 const StandupHub = (() => {
-  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map() };
+  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map(), recommendations: {} };
 
   const state = {
     mode: "all",
@@ -659,6 +659,39 @@ const StandupHub = (() => {
     }
   }
 
+  function renderSimilarComedians(){
+    const el = qs("similarComedians");
+    if (!el) return;
+
+    if (state.mode !== "performer" || !state.performer){
+      el.hidden = true;
+      return;
+    }
+
+    const recs = DATA.recommendations?.[state.performer];
+    if (!recs || Object.keys(recs).length === 0){
+      el.hidden = true;
+      return;
+    }
+
+    const top5 = Object.entries(recs)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    el.hidden = false;
+    el.innerHTML = `
+      <div class="similarTitle">Схожі коміки</div>
+      <div class="similarList">
+        ${top5.map(([name]) => `
+          <a class="similarItem" href="comedian.html?p=${encodeURIComponent(name)}">
+            <span class="similarName">${escapeHtml(name)}</span>
+          </a>
+        `).join("")}
+      </div>
+    `;
+  }
+
+
   function render(){
     let filtered = applyFilters(DATA.videos || []);
     filtered = applySort(filtered);
@@ -667,6 +700,7 @@ const StandupHub = (() => {
       renderPerformerCard(filtered);
     }
     renderPerformerBio();
+    renderSimilarComedians();
 
     const { slice, total, pages } = paginate(filtered);
     renderGrid(slice, total);
@@ -727,11 +761,12 @@ const StandupHub = (() => {
 
     readUrl();
 
-    const [videos, rating, performersText, bios] = await Promise.all([
+    const [videos, rating, performersText, bios, recommendations] = await Promise.all([
       loadJson("data/videos.json"),
       loadJson("data/rating.json"),
       loadText("performers.txt").catch(() => ""),
       loadJsonAny(["comedians_bios.json", "../comedians_bios.json"]).catch(() => ({})),
+      loadJson("data/recommendations.json").catch(() => ({})),
     ]);
 
     DATA.videos = videos || [];
@@ -739,6 +774,7 @@ const StandupHub = (() => {
     DATA.performers = parsePerformersFile(performersText);
     DATA.bios = bios || {};
     DATA.biosIndex = buildBiosIndex(DATA.bios);
+    DATA.recommendations = recommendations || {};
 
     renderSidebar();
     bindControls();

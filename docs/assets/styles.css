@@ -545,6 +545,69 @@ body{
 }
 
 /* =========================
+   SIMILAR COMEDIANS
+   ========================= */
+.similarComedians{
+  margin-top:24px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+}
+
+.similarTitle{
+  font-size:14px;
+  font-weight:900;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:12px;
+}
+
+.similarList{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+
+.similarItem{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  text-decoration:none;
+  transition:border-color 180ms,background 180ms,box-shadow 180ms;
+}
+
+.similarItem:hover{
+  border-color:rgba(255,138,0,.6);
+  background:rgba(255,138,0,.08);
+  box-shadow:0 0 10px rgba(255,138,0,.15);
+}
+
+.similarName{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+}
+
+.similarCount{
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  background:rgba(255,255,255,.06);
+  border-radius:999px;
+  padding:2px 7px;
+  min-width:20px;
+  text-align:center;
+}
+
+/* =========================
    GRID + CARDS
    ========================= */
 .grid{
