@@ -268,6 +268,45 @@ body{
 }
 .control.search input{ min-width:182px; }
 
+/* DESKTOP: keep the brand, navigation, filters, and search on one line */
+@media (min-width: 1101px){
+  .topbar{
+    flex-wrap:nowrap;
+    gap:12px;
+  }
+  .topBrand{
+    flex:0 0 180px;
+    min-width:180px;
+  }
+  .topBrand .slogan{
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .navLeft{
+    flex:1 1 auto;
+    min-width:0;
+    flex-wrap:nowrap;
+    gap:5px;
+  }
+  .navBtn{
+    padding:8px 9px;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .controls{
+    flex:0 0 auto;
+    flex-wrap:nowrap;
+    gap:6px;
+  }
+  .control select,
+  .control input{
+    min-width:130px;
+    padding:8px 9px;
+    font-size:13px;
+  }
+  .control.search input{ min-width:155px; }
+}
+
 /* MOBILE */
 @media (max-width: 768px){
   .topbar{
