@@ -124,8 +124,8 @@
             <input type="range" id="thresholdSlider" class="networkSlider" min="1" max="50" value="5" />
             <span class="networkControlVal" id="thresholdVal">5</span>
             <span class="networkControlLabel" style="margin-left:12px">Показати імена:</span>
-            <input type="range" id="labelSlider" class="networkSlider" min="0" max="50" value="10" />
-            <span class="networkControlVal" id="labelVal">10+</span>
+            <input type="range" id="labelSlider" class="networkSlider" min="0" max="50" value="0" />
+            <span class="networkControlVal" id="labelVal">0+</span>
           </div>
         </div>
       </header>
@@ -369,7 +369,7 @@
     }
 
     let currentThreshold = 5;
-    let currentLabel = 10;
+    let currentLabel = 0;
 
     thresholdSlider.addEventListener("input", () => {
       currentThreshold = +thresholdSlider.value;
