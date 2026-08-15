@@ -30,6 +30,7 @@ def main():
     run([sys.executable, "scripts/rate.py"])
     run([sys.executable, "scripts/build_photo_index.py"])
     run([sys.executable, "scripts/export_json.py"])
+    run([sys.executable, "scripts/fetch_concerts.py"])
     print("\n✅ Pipeline finished")
 
 if __name__ == "__main__":

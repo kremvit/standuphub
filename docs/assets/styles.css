@@ -414,6 +414,64 @@ body{
   margin-top:8px;
 }
 
+.comedianEvents{
+  margin-bottom:24px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+}
+
+.comedianEventsTitle{
+  color:var(--muted);
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.06em;
+  margin-bottom:12px;
+  text-transform:uppercase;
+}
+
+.comedianEventsList{ display:grid; gap:10px; }
+
+.comedianEvent{
+  display:grid;
+  gap:5px;
+  padding:12px 14px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:10px;
+}
+
+.comedianEventAdditional{ display:none; }
+.comedianEventsExpanded .comedianEventAdditional{ display:grid; }
+
+.comedianEventsToggle{
+  margin-top:10px;
+  border:1px solid var(--border);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:999px;
+  padding:7px 13px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.comedianEventsToggle:hover{ border-color:rgba(255,138,0,.6); }
+
+.comedianEventName{ font-weight:850; line-height:1.25; }
+.comedianEventMeta{ color:var(--muted); font-size:13px; }
+
+.comedianEventLink{
+  color:var(--accent);
+  font-size:13px;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.comedianEventLink:hover{ text-decoration:underline; }
+
 .performerInstagramLink,
 .performerInstagramLink:visited{
   flex:1;

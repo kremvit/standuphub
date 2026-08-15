@@ -1,5 +1,5 @@
 const StandupHub = (() => {
-  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map(), recommendations: {} };
+  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map(), recommendations: {}, events: {} };
 
   const state = {
     mode: "all",
@@ -442,6 +442,60 @@ const StandupHub = (() => {
     applyBioMobileToggle(bioEl);
   }
 
+  function formatEventDate(raw){
+    const ms = parseDateMs(raw);
+    if (!ms) return "";
+    return new Date(ms).toLocaleString("uk-UA", {
+      day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"
+    });
+  }
+
+  function renderPerformerEvents(){
+    const eventsEl = qs("comedianEvents");
+    if (!eventsEl) return;
+
+    if (state.mode !== "performer" || !state.performer){
+      eventsEl.hidden = true;
+      eventsEl.innerHTML = "";
+      return;
+    }
+
+    const events = Array.isArray(DATA.events?.[state.performer])
+      ? DATA.events[state.performer]
+      : [];
+    if (!events.length){
+      eventsEl.hidden = true;
+      eventsEl.innerHTML = "";
+      return;
+    }
+
+    eventsEl.hidden = false;
+    eventsEl.innerHTML = `
+      <div class="comedianEventsTitle">Найближчі концерти</div>
+      <div class="comedianEventsList">
+        ${events.map((event, index) => `
+          <article class="comedianEvent${index > 0 ? " comedianEventAdditional" : ""}">
+            <div class="comedianEventName">${escapeHtml(event.title)}</div>
+            <div class="comedianEventMeta">📅 ${escapeHtml(formatEventDate(event.start))}</div>
+            <div class="comedianEventMeta">📍 ${escapeHtml([event.city, event.venue].filter(Boolean).join(", "))}</div>
+            <a class="comedianEventLink" href="${escapeAttr(event.url)}" target="_blank" rel="noopener noreferrer">🎟 Квитки: ${escapeHtml(event.source || "сайт події")}</a>
+          </article>
+        `).join("")}
+      </div>
+      ${events.length > 1 ? `<button class="comedianEventsToggle" type="button" aria-expanded="false">Більше...</button>` : ""}
+    `;
+
+    const toggle = eventsEl.querySelector(".comedianEventsToggle");
+    if (toggle){
+      toggle.addEventListener("click", () => {
+        const expanded = toggle.getAttribute("aria-expanded") === "true";
+        eventsEl.classList.toggle("comedianEventsExpanded", !expanded);
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        toggle.textContent = expanded ? "Більше..." : "Менше";
+      });
+    }
+  }
+
   // ---------- modal ----------
   let modalEl = null;
   let modalFrame = null;
@@ -700,6 +754,7 @@ const StandupHub = (() => {
       renderPerformerCard(filtered);
     }
     renderPerformerBio();
+    renderPerformerEvents();
     renderSimilarComedians();
 
     const { slice, total, pages } = paginate(filtered);
@@ -761,12 +816,13 @@ const StandupHub = (() => {
 
     readUrl();
 
-    const [videos, rating, performersText, bios, recommendations] = await Promise.all([
+    const [videos, rating, performersText, bios, recommendations, events] = await Promise.all([
       loadJson("data/videos.json"),
       loadJson("data/rating.json"),
       loadText("performers.txt").catch(() => ""),
       loadJsonAny(["comedians_bios.json", "../comedians_bios.json"]).catch(() => ({})),
       loadJson("data/recommendations.json").catch(() => ({})),
+      loadJson("data/events.json").catch(() => ({})),
     ]);
 
     DATA.videos = videos || [];
@@ -775,6 +831,7 @@ const StandupHub = (() => {
     DATA.bios = bios || {};
     DATA.biosIndex = buildBiosIndex(DATA.bios);
     DATA.recommendations = recommendations || {};
+    DATA.events = events || {};
 
     renderSidebar();
     bindControls();
