@@ -671,7 +671,12 @@ const StandupHub = (() => {
     function byClub(rePattern){
       return videos
         .filter(v => rePattern.test(String(v?.channel_title || "")))
-        .sort((a, b) => getViews(b) - getViews(a));
+        .sort((a, b) => {
+          const da = parseDateMs(getPublishedRaw(a)) || 0;
+          const db = parseDateMs(getPublishedRaw(b)) || 0;
+          if (db !== da) return db - da;
+          return getViews(b) - getViews(a);
+        });
     }
 
     function uniqueByPerformer(items, limit){
