@@ -763,6 +763,11 @@ body{
   gap:3px;
 }
 
+.homeRowTitleWrap.noSubtitle{
+  min-height:34px;
+  justify-content:center;
+}
+
 .homeRowTitle{
   margin:0;
   font-size:28px;
@@ -801,6 +806,33 @@ body{
   grid-template-columns:repeat(var(--row-columns, 10), minmax(0, 1fr));
   gap:8px;
   min-height:170px;
+}
+
+.homeRail.isAnimatingNext{
+  animation: homeRailSlideNext 260ms cubic-bezier(.22,.61,.36,1);
+}
+
+.homeRail.isAnimatingPrev{
+  animation: homeRailSlidePrev 260ms cubic-bezier(.22,.61,.36,1);
+}
+
+@keyframes homeRailSlideNext{
+  0%{ opacity:1; transform:translateX(0); }
+  45%{ opacity:.72; transform:translateX(-10px); }
+  100%{ opacity:1; transform:translateX(0); }
+}
+
+@keyframes homeRailSlidePrev{
+  0%{ opacity:1; transform:translateX(0); }
+  45%{ opacity:.72; transform:translateX(10px); }
+  100%{ opacity:1; transform:translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .homeRail.isAnimatingNext,
+  .homeRail.isAnimatingPrev{
+    animation:none !important;
+  }
 }
 
 .railCard{

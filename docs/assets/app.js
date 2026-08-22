@@ -762,7 +762,7 @@ const StandupHub = (() => {
       const header = document.createElement("header");
       header.className = "homeRowHeader";
       header.innerHTML = `
-        <div class="homeRowTitleWrap">
+        <div class="homeRowTitleWrap${row.subtitle ? "" : " noSubtitle"}">
           <h2 class="homeRowTitle">
             ${row.logo ? `<img class="homeRowLogo" src="${escapeAttr(row.logo)}" alt="${escapeAttr(row.title)} logo" />` : ""}
             <span>${escapeHtml(row.title)}</span>
@@ -783,6 +783,7 @@ const StandupHub = (() => {
       prevBtn.setAttribute("aria-label", `Прокрутити ${row.title} ліворуч`);
       prevBtn.textContent = "‹";
       prevBtn.disabled = total <= 1;
+      prevBtn.dataset.dir = "prev";
 
       const nextBtn = document.createElement("button");
       nextBtn.className = "railNav railNavNext";
@@ -790,6 +791,7 @@ const StandupHub = (() => {
       nextBtn.setAttribute("aria-label", `Прокрутити ${row.title} праворуч`);
       nextBtn.textContent = "›";
       nextBtn.disabled = total <= 1;
+      nextBtn.dataset.dir = "next";
 
       actions.appendChild(prevBtn);
       actions.appendChild(nextBtn);
@@ -811,17 +813,29 @@ const StandupHub = (() => {
           track.appendChild(createVideoCard(item, true));
         }
       }
+
+      function animateTrack(direction){
+        const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (prefersReduced) return;
+        track.classList.remove("isAnimatingPrev", "isAnimatingNext");
+        // Force reflow so repeated clicks retrigger animation.
+        void track.offsetWidth;
+        track.classList.add(direction === "prev" ? "isAnimatingPrev" : "isAnimatingNext");
+      }
+
       prevBtn.addEventListener("click", () => {
         if (total <= 1) return;
+        animateTrack("prev");
         state.homeRowOffsets[row.key] =
           (Number(state.homeRowOffsets[row.key] || 0) - 1 + total) % total;
-        renderHomeRows(DATA.videos || []);
+        window.setTimeout(() => renderHomeRows(DATA.videos || []), 140);
       });
       nextBtn.addEventListener("click", () => {
         if (total <= 1) return;
+        animateTrack("next");
         state.homeRowOffsets[row.key] =
           (Number(state.homeRowOffsets[row.key] || 0) + 1) % total;
-        renderHomeRows(DATA.videos || []);
+        window.setTimeout(() => renderHomeRows(DATA.videos || []), 140);
       });
 
       viewport.appendChild(track);
