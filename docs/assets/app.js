@@ -552,6 +552,197 @@ const StandupHub = (() => {
     if (modalFrame) modalFrame.src = "";
   }
 
+  function createVideoCard(v, compact = false){
+    const card = document.createElement("div");
+    card.className = compact ? "card railCard" : "card";
+
+    const vid = getVideoId(v);
+    const thumbUrl = vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "";
+
+    const title = getTitle(v);
+    const performer = getPerformer(v);
+    const views = getViews(v);
+    const dur = getDurationSec(v);
+    const pub = getPublishedRaw(v);
+
+    card.innerHTML = `
+      <div class="thumb"
+           style="background-image:url('${escapeAttr(thumbUrl)}'); background-size:cover; background-position:center;">
+        <button class="playBtn" type="button" aria-label="Play">▶</button>
+        <div class="duration">${fmtDuration(dur)}</div>
+      </div>
+
+      <div class="cardBody">
+        <div class="cardTitle">${escapeHtml(title)}</div>
+        <div class="cardMeta">
+          <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(performer || "")}">
+            ${escapeHtml(performer || "")}
+          </a>
+          <span class="badge">${fmtNum(views)} views</span>
+          <span class="badge">${fmtDate(pub)}</span>
+        </div>
+      </div>
+    `;
+
+    card.querySelector(".playBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal({ videoId: vid, title: title || "YouTube video" });
+    });
+
+    return card;
+  }
+
+  function setHomeModeVisibility(enabled){
+    const home = qs("homeRows");
+    if (home) home.hidden = !enabled;
+  }
+
+  function buildHomeRows(videos){
+    const byDate = videos.slice().sort((a, b) => {
+      const da = parseDateMs(getPublishedRaw(a)) || 0;
+      const db = parseDateMs(getPublishedRaw(b)) || 0;
+      return db - da;
+    });
+
+    const DAY = 24 * 60 * 60 * 1000;
+    const sixMonthsAgo = Date.now() - 183 * DAY;
+    const bestSixMonths = videos
+      .filter(v => {
+        const ms = parseDateMs(getPublishedRaw(v));
+        return ms != null && ms >= sixMonthsAgo;
+      })
+      .sort((a, b) => getViews(b) - getViews(a));
+
+    const forgottenClassics = videos
+      .filter(v => {
+        const ms = parseDateMs(getPublishedRaw(v));
+        if (!ms) return false;
+        const year = new Date(ms).getUTCFullYear();
+        return year === 2022 || year === 2023;
+      })
+      .sort((a, b) => getViews(b) - getViews(a));
+
+    return [
+      {
+        key: "best-6m",
+        title: "Найкраще за пів року",
+        subtitle: "Топ за переглядами за останні 6 місяців",
+        items: bestSixMonths.slice(0, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "forgotten-classics",
+        title: "Забута класика",
+        subtitle: "Найкращі відео 2022-2023",
+        items: forgottenClassics.slice(0, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+    ];
+  }
+
+  function renderHomeRows(videos){
+    const host = qs("homeRows");
+    if (!host) return false;
+
+    host.innerHTML = "";
+    const rows = buildHomeRows(videos || []);
+    state.homeRowOffsets = state.homeRowOffsets || {};
+
+    for (const row of rows){
+      const rowSize = Math.max(1, Number(row.visibleCount || 10));
+      const total = row.items.length;
+      const visibleCount = Math.min(rowSize, total);
+      const maxOffset = Math.max(0, total - 1);
+      const safeOffset = Math.min(
+        Math.max(0, Number(state.homeRowOffsets[row.key] || 0)),
+        maxOffset
+      );
+      state.homeRowOffsets[row.key] = safeOffset;
+
+      const visibleItems = [];
+      for (let i = 0; i < visibleCount; i++){
+        const idx = (safeOffset + i) % total;
+        visibleItems.push(row.items[idx]);
+      }
+
+      const section = document.createElement("section");
+      section.className = "homeRow";
+      section.setAttribute("aria-label", row.title);
+
+      const header = document.createElement("header");
+      header.className = "homeRowHeader";
+      header.innerHTML = `
+        <div class="homeRowTitleWrap">
+          <h2 class="homeRowTitle">${escapeHtml(row.title)}</h2>
+          <p class="homeRowSubtitle">${escapeHtml(row.subtitle)}</p>
+        </div>
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "homeRowActions";
+
+      const viewport = document.createElement("div");
+      viewport.className = "homeRailViewport";
+
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "railNav railNavPrev";
+      prevBtn.type = "button";
+      prevBtn.setAttribute("aria-label", `Прокрутити ${row.title} ліворуч`);
+      prevBtn.textContent = "‹";
+      prevBtn.disabled = total <= 1;
+
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "railNav railNavNext";
+      nextBtn.type = "button";
+      nextBtn.setAttribute("aria-label", `Прокрутити ${row.title} праворуч`);
+      nextBtn.textContent = "›";
+      nextBtn.disabled = total <= 1;
+
+      actions.appendChild(prevBtn);
+      actions.appendChild(nextBtn);
+      header.appendChild(actions);
+
+      const track = document.createElement("div");
+      track.className = "homeRail";
+      track.id = `home-rail-${row.key}`;
+      const columns = Math.max(1, Number(row.columns || visibleCount));
+      track.style.setProperty("--row-columns", String(columns));
+
+      if (!visibleItems.length){
+        const empty = document.createElement("div");
+        empty.className = "homeRowEmpty";
+        empty.textContent = "Поки немає відео для цієї підбірки.";
+        track.appendChild(empty);
+      } else {
+        for (const item of visibleItems){
+          track.appendChild(createVideoCard(item, true));
+        }
+      }
+      prevBtn.addEventListener("click", () => {
+        if (total <= 1) return;
+        state.homeRowOffsets[row.key] =
+          (Number(state.homeRowOffsets[row.key] || 0) - 1 + total) % total;
+        renderHomeRows(DATA.videos || []);
+      });
+      nextBtn.addEventListener("click", () => {
+        if (total <= 1) return;
+        state.homeRowOffsets[row.key] =
+          (Number(state.homeRowOffsets[row.key] || 0) + 1) % total;
+        renderHomeRows(DATA.videos || []);
+      });
+
+      viewport.appendChild(track);
+
+      section.appendChild(header);
+      section.appendChild(viewport);
+      host.appendChild(section);
+    }
+
+    return true;
+  }
+
   // ---------- grid ----------
   function renderGrid(videosPage, totalFiltered){
     const grid = qs("grid");
@@ -571,43 +762,7 @@ const StandupHub = (() => {
     }
 
     for (const v of videosPage){
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const vid = getVideoId(v);
-      const thumbUrl = vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "";
-
-      const title = getTitle(v);
-      const performer = getPerformer(v);
-      const views = getViews(v);
-      const dur = getDurationSec(v);
-      const pub = getPublishedRaw(v);
-
-      card.innerHTML = `
-        <div class="thumb"
-             style="background-image:url('${escapeAttr(thumbUrl)}'); background-size:cover; background-position:center;">
-          <button class="playBtn" type="button" aria-label="Play">▶</button>
-          <div class="duration">${fmtDuration(dur)}</div>
-        </div>
-
-        <div class="cardBody">
-          <div class="cardTitle">${escapeHtml(title)}</div>
-          <div class="cardMeta">
-            <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(performer || "")}">
-              ${escapeHtml(performer || "")}
-            </a>
-            <span class="badge">${fmtNum(views)} views</span>
-            <span class="badge">${fmtDate(pub)}</span>
-          </div>
-        </div>
-      `;
-
-      card.querySelector(".playBtn").addEventListener("click", (e) => {
-        e.preventDefault();
-        openModal({ videoId: vid, title: title || "YouTube video" });
-      });
-
-      grid.appendChild(card);
+      grid.appendChild(createVideoCard(v));
     }
   }
 
@@ -747,8 +902,17 @@ const StandupHub = (() => {
 
 
   function render(){
+    state.pageSize = (state.mode === "all") ? 8 : 10;
+
     let filtered = applyFilters(DATA.videos || []);
     filtered = applySort(filtered);
+
+    if (state.mode === "all"){
+      setHomeModeVisibility(true);
+      renderHomeRows(filtered);
+    } else {
+      setHomeModeVisibility(false);
+    }
 
     if (state.mode === "performer"){
       renderPerformerCard(filtered);
