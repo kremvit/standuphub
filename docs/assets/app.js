@@ -450,8 +450,37 @@ const StandupHub = (() => {
     applyBioMobileToggle(bioEl);
   }
 
-  function formatEventDate(raw){
-    const ms = parseDateMs(raw);
+  function formatEventDate(raw, source){
+    const value = String(raw || "").trim();
+    if (!value) return "";
+
+    // For concert listings we keep source-local wall time to avoid timezone shifts
+    // caused by browser locale conversion (e.g. 19:00 becoming 22:00).
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+    if (m){
+      const year = Number(m[1]);
+      const month = Number(m[2]);
+      const day = Number(m[3]);
+      const hh = Number(m[4] ?? "00");
+      const mm = Number(m[5] ?? "00");
+      const dateOnly = new Date(year, month - 1, day, hh, mm);
+
+      // Karabas startDate values in current feed are shifted by +3h.
+      // Correct display-time to match the actual event card time.
+      if (String(source || "").toLowerCase() === "karabas"){
+        dateOnly.setHours(dateOnly.getHours() - 3);
+      }
+
+      const dayMonth = dateOnly.toLocaleDateString("uk-UA", {
+        day: "numeric",
+        month: "long",
+      });
+      const hhOut = String(dateOnly.getHours()).padStart(2, "0");
+      const mmOut = String(dateOnly.getMinutes()).padStart(2, "0");
+      return `${dayMonth} о ${hhOut}:${mmOut}`;
+    }
+
+    const ms = parseDateMs(value);
     if (!ms) return "";
     return new Date(ms).toLocaleString("uk-UA", {
       day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"
@@ -484,7 +513,7 @@ const StandupHub = (() => {
         ${events.map((event, index) => `
           <article class="comedianEvent${index > 0 ? " comedianEventAdditional" : ""}">
             <div class="comedianEventName">${escapeHtml(event.title)}</div>
-            <div class="comedianEventMeta">📅 ${escapeHtml(formatEventDate(event.start))}</div>
+            <div class="comedianEventMeta">📅 ${escapeHtml(formatEventDate(event.start, event.source))}</div>
             <div class="comedianEventMeta">📍 ${escapeHtml([event.city, event.venue].filter(Boolean).join(", "))}</div>
             <a class="comedianEventLink" href="${escapeAttr(event.url)}" target="_blank" rel="noopener noreferrer">🎟 Квитки: ${escapeHtml(event.source || "сайт події")}</a>
           </article>
