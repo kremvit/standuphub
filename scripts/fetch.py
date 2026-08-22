@@ -18,6 +18,8 @@ from tqdm import tqdm
 
 API_KEY = os.getenv("YT_API_KEY")
 BASE_URL = "https://www.googleapis.com/youtube/v3"
+YT_RETRY_ATTEMPTS = 5
+YT_RETRY_BACKOFF_SEC = 1.0
 
 CUTOFF_DATE = datetime(2022, 2, 24, tzinfo=timezone.utc)
 
@@ -72,12 +74,41 @@ def yt_get(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError("Set YT_API_KEY environment variable first.")
     params = dict(params)
     params["key"] = API_KEY
-    r = requests.get(f"{BASE_URL}/{endpoint}", params=params, timeout=30)
-    if r.status_code >= 400:
-        print("YT ERROR", r.status_code, r.url)
-        print(r.text[:2000])  # <- головне: причина тут
-    r.raise_for_status()
-    return r.json()
+
+    last_error: Optional[Exception] = None
+    for attempt in range(1, YT_RETRY_ATTEMPTS + 1):
+        try:
+            r = requests.get(f"{BASE_URL}/{endpoint}", params=params, timeout=30)
+            if r.status_code >= 400:
+                print("YT ERROR", r.status_code, r.url)
+                print(r.text[:2000])  # <- головне: причина тут
+
+            retryable_http = r.status_code in (429, 500, 502, 503, 504)
+            if retryable_http and attempt < YT_RETRY_ATTEMPTS:
+                delay = YT_RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+                print(
+                    f"YT RETRY {attempt}/{YT_RETRY_ATTEMPTS}: status={r.status_code}, "
+                    f"sleep={delay:.1f}s"
+                )
+                time.sleep(delay)
+                continue
+
+            r.raise_for_status()
+            return r.json()
+        except requests.RequestException as error:
+            last_error = error
+            if attempt >= YT_RETRY_ATTEMPTS:
+                break
+            delay = YT_RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+            print(
+                f"YT RETRY {attempt}/{YT_RETRY_ATTEMPTS}: "
+                f"{type(error).__name__}, sleep={delay:.1f}s"
+            )
+            time.sleep(delay)
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("YT request failed with unknown error")
 
 
 def parse_duration(d: str) -> int:
