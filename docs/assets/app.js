@@ -28,6 +28,7 @@ const StandupHub = (() => {
   }
   function getVideoId(v){ return (v?.video_id ?? v?.videoId ?? v?.id ?? ""); }
   function getViews(v){ return Number(v?.view_count ?? v?.viewCount ?? v?.views ?? 0) || 0; }
+  function getLikes(v){ return Number(v?.like_count ?? v?.likeCount ?? v?.likes ?? 0) || 0; }
   function getDurationSec(v){
     return Number(v?.duration_sec ?? v?.durationSec ?? v?.duration_seconds ?? v?.durationSeconds ?? 0) || 0;
   }
@@ -210,6 +211,13 @@ const StandupHub = (() => {
   function escapeRegex(text){
     return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
+
+  const CLUB_LOGOS = {
+    underground: "assets/club-logos/underground.jpg",
+    brodiachyi: "assets/club-logos/brodiachyi.jpg",
+    cherepakha: "assets/club-logos/cherepakha.jpg",
+    battleClub: "assets/club-logos/battle.jpg",
+  };
 
   function sanitizeBioText(rawText, performerName, bioName){
     let text = String(rawText || "").trim();
@@ -622,6 +630,42 @@ const StandupHub = (() => {
       })
       .sort((a, b) => getViews(b) - getViews(a));
 
+    const viewersChoice = videos
+      .filter(v => getViews(v) >= 1000 && getLikes(v) > 0)
+      .sort((a, b) => {
+        const aRate = getLikes(a) / Math.max(1, getViews(a));
+        const bRate = getLikes(b) / Math.max(1, getViews(b));
+        if (bRate !== aRate) return bRate - aRate;
+        return getViews(b) - getViews(a);
+      });
+
+    function byClub(rePattern){
+      return videos
+        .filter(v => rePattern.test(String(v?.channel_title || "")))
+        .sort((a, b) => getViews(b) - getViews(a));
+    }
+
+    function uniqueByPerformer(items, limit){
+      const result = [];
+      const used = new Set();
+
+      for (const item of items){
+        const performer = String(getPerformer(item) || "").trim();
+        const key = performer ? performer.toLowerCase() : `video:${getVideoId(item)}`;
+        if (used.has(key)) continue;
+        used.add(key);
+        result.push(item);
+        if (result.length >= limit) break;
+      }
+
+      return result;
+    }
+
+    const underground = byClub(/підпіль/i);
+    const brodiachyi = byClub(/бродяч/i);
+    const cherepakha = byClub(/череп/i);
+    const standupBattleClub = byClub(/stand\s*up\s*battle\s*club|standup\s*battle\s*club|battle\s*club/i);
+
     return [
       {
         key: "best-6m",
@@ -636,6 +680,50 @@ const StandupHub = (() => {
         title: "Забута класика",
         subtitle: "Найкращі відео 2022-2023",
         items: forgottenClassics.slice(0, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "viewers-choice",
+        title: "Вибір глядачів",
+        subtitle: "Найвищий відсоток лайків",
+        items: viewersChoice.slice(0, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "club-underground",
+        title: "Підпільний",
+        subtitle: "",
+        logo: CLUB_LOGOS.underground,
+        items: uniqueByPerformer(underground, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "club-brodiachyi",
+        title: "Бродячий",
+        subtitle: "",
+        logo: CLUB_LOGOS.brodiachyi,
+        items: uniqueByPerformer(brodiachyi, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "club-cherepakha",
+        title: "ЧерепаХА",
+        subtitle: "",
+        logo: CLUB_LOGOS.cherepakha,
+        items: uniqueByPerformer(cherepakha, 10),
+        visibleCount: 4,
+        columns: 4,
+      },
+      {
+        key: "club-battle",
+        title: "Standup Battle Club",
+        subtitle: "",
+        logo: CLUB_LOGOS.battleClub,
+        items: uniqueByPerformer(standupBattleClub, 10),
         visibleCount: 4,
         columns: 4,
       },
@@ -675,8 +763,11 @@ const StandupHub = (() => {
       header.className = "homeRowHeader";
       header.innerHTML = `
         <div class="homeRowTitleWrap">
-          <h2 class="homeRowTitle">${escapeHtml(row.title)}</h2>
-          <p class="homeRowSubtitle">${escapeHtml(row.subtitle)}</p>
+          <h2 class="homeRowTitle">
+            ${row.logo ? `<img class="homeRowLogo" src="${escapeAttr(row.logo)}" alt="${escapeAttr(row.title)} logo" />` : ""}
+            <span>${escapeHtml(row.title)}</span>
+          </h2>
+          ${row.subtitle ? `<p class="homeRowSubtitle">${escapeHtml(row.subtitle)}</p>` : ""}
         </div>
       `;
 
@@ -830,6 +921,7 @@ const StandupHub = (() => {
     const sortEl = qs("sortSelect");
     const rangeEl = qs("rangeSelect");
     const searchEl = qs("searchInput");
+    const suggestionsEl = qs("performerSuggestions");
 
     if (sortEl){
       sortEl.value = state.sort;
@@ -857,9 +949,18 @@ const StandupHub = (() => {
 
     if (searchEl){
       searchEl.value = state.search;
+      if (suggestionsEl){
+        if (String(state.search || "").trim().length > 0) searchEl.setAttribute("list", "performerSuggestions");
+        else searchEl.removeAttribute("list");
+      }
+
       let t = null;
       searchEl.addEventListener("input", () => {
         state.search = searchEl.value;
+        if (suggestionsEl){
+          if (String(searchEl.value || "").trim().length > 0) searchEl.setAttribute("list", "performerSuggestions");
+          else searchEl.removeAttribute("list");
+        }
         state.page = 1;
         syncUrl();
         clearTimeout(t);
@@ -909,7 +1010,7 @@ const StandupHub = (() => {
 
     if (state.mode === "all"){
       setHomeModeVisibility(true);
-      renderHomeRows(filtered);
+      renderHomeRows(DATA.videos || []);
     } else {
       setHomeModeVisibility(false);
     }
@@ -967,10 +1068,31 @@ const StandupHub = (() => {
           break;
         }
       }
+
+      const aliases = parts.filter(part => part && !/^https?:\/\//i.test(part));
       
-      performers[primaryName] = { instagram };
+      performers[primaryName] = { instagram, aliases };
     }
     return performers;
+  }
+
+  function renderSearchSuggestions(){
+    const datalist = qs("performerSuggestions");
+    if (!datalist) return;
+
+    const names = new Set();
+    for (const [primaryName, meta] of Object.entries(DATA.performers || {})){
+      if (primaryName) names.add(primaryName);
+      const aliases = Array.isArray(meta?.aliases) ? meta.aliases : [];
+      for (const alias of aliases){
+        if (alias) names.add(alias);
+      }
+    }
+
+    const sortedNames = [...names].sort((a, b) => a.localeCompare(b, "uk"));
+    datalist.innerHTML = sortedNames
+      .map(name => `<option value="${escapeAttr(name)}"></option>`)
+      .join("");
   }
 
   // ---------- INIT pages ----------
@@ -998,6 +1120,7 @@ const StandupHub = (() => {
     DATA.events = events || {};
 
     renderSidebar();
+    renderSearchSuggestions();
     bindControls();
     render();
   }
