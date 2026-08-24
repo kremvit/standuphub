@@ -1182,7 +1182,11 @@ const StandupHub = (() => {
   }
 
   async function initRating(){
-    const rating = await loadJson("data/rating.json");
+    const [rating, performerPages] = await Promise.all([
+      loadJson("data/rating.json"),
+      loadJson("data/performer_pages.json").catch(() => ({})),
+    ]);
+    DATA.performerPages = performerPages || {};
     let ratingByYear = null;
     try {
       ratingByYear = await loadJson("data/rating_by_year.json");

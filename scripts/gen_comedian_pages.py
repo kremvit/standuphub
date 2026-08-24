@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -40,6 +41,18 @@ def render_page(template: str, name: str, bio: str, url: str) -> str:
     return page
 
 
+def update_app_script_versions(docs: Path, version: str) -> None:
+    for page_path in docs.rglob("*.html"):
+        page = page_path.read_text(encoding="utf-8")
+        updated = re.sub(
+            r'assets/app\.js(?:\?v=[^"\']+)?',
+            f"assets/app.js?v={version}",
+            page,
+        )
+        if updated != page:
+            page_path.write_text(updated, encoding="utf-8")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--docs", default="docs")
@@ -47,6 +60,7 @@ def main() -> None:
     args = parser.parse_args()
 
     docs = Path(args.docs)
+    app_hash = hashlib.sha256((docs / "assets/app.js").read_bytes()).hexdigest()[:12]
     template = (docs / "comedian.html").read_text(encoding="utf-8")
     performers = list(dict.fromkeys(read_performers(Path("performers.txt"))))
     bios_path = docs / "comedians_bios.json"
@@ -72,6 +86,7 @@ def main() -> None:
         bio = str(bio_data.get("bio", "")).strip()
         (docs / f"{slug}.html").write_text(render_page(template, name, bio, url), encoding="utf-8")
 
+    update_app_script_versions(docs, app_hash)
     (docs / "data").mkdir(parents=True, exist_ok=True)
     (docs / "data/performer_pages.json").write_text(
         json.dumps(page_map, ensure_ascii=False, indent=2) + "\n",
