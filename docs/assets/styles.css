@@ -979,12 +979,22 @@ body{
 }
 
 .cardTitle{
+  appearance:none;
+  border:0;
+  padding:0;
+  margin:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+  font-family:inherit;
   font-weight:800;
   font-size:14px;
   line-height:1.2;
   max-height:2.4em;
   overflow:hidden;
 }
+.cardTitle:hover{ color:var(--accent); }
 
 .cardMeta{
   font-size:12px;

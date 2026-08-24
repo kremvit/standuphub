@@ -615,7 +615,7 @@ const StandupHub = (() => {
       </div>
 
       <div class="cardBody">
-        <div class="cardTitle">${escapeHtml(title)}</div>
+        <button class="cardTitle" type="button" aria-label="Відкрити відео: ${escapeAttr(title)}">${escapeHtml(title)}</button>
         <div class="cardMeta">
           <a class="badge linkBadge" href="${performerPageUrl(performer || "")}"
           >
@@ -629,6 +629,9 @@ const StandupHub = (() => {
 
     card.querySelector(".playBtn").addEventListener("click", (e) => {
       e.preventDefault();
+      openModal({ videoId: vid, title: title || "YouTube video" });
+    });
+    card.querySelector(".cardTitle").addEventListener("click", () => {
       openModal({ videoId: vid, title: title || "YouTube video" });
     });
 
