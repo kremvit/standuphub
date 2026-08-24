@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./favicon-180.png" />
+  <title>Дімка Носов — стендап-комік • StandupHub</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="canonical" href="https://standuphub.com.ua/dimka-nosov.html" />
+  <meta name="description" content="Стендап-відео, біографія та виступи коміка Дімка Носов на StandupHub." />
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-J8G4SLH1YT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-J8G4SLH1YT');
+</script>
+<body>
+  <div class="layout">
+    <main class="main">
+      <header class="topbar">
+        <!-- BRAND BLOCK (зліва, як на інших сторінках) -->
+        <div class="topBrand">
+          <a class="brandLink" href="./index.html">
+            <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+          </a>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
+        </div>
+
+        <!-- NAV -->
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./comedians.html">Коміки</a>
+          <a class="navBtn" href="./about.html">Про сайт</a>
+          <a class="navBtn" href="./statistics.html">Статистика</a>
+          <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
+          <a class="navBtn" href="./game.html">Кар'єра</a>
+          <a class="navBtn" href="./network.html">Мережа</a>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+          <div class="control">
+            <label>Сортування</label>
+            <select id="sortSelect">
+              <option value="date_desc">Останні додані</option>
+              <option value="views_desc">Найбільше переглядів</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label>Найкраще</label>
+            <select id="rangeSelect">
+              <option value="all">Увесь час</option>
+              <option value="1m">За місяць</option>
+              <option value="6m">За пів року</option>
+              <option value="1y">За рік</option>
+            </select>
+          </div>
+
+          <div class="control search">
+            <label>Пошук</label>
+            <input id="searchInput" placeholder="назва відео / комік" />
+          </div>
+        </div>
+      </header>
+
+      <section class="performerSection">
+        <div id="performerCard" class="performerCard"></div>
+        <div class="performerContent">
+          <article id="comedianBio" class="comedianBio" hidden></article>
+          <section id="comedianEvents" class="comedianEvents" hidden></section>
+          <div id="grid" class="grid"></div>
+          <div id="pagination" class="pagination"></div>
+          <div id="similarComedians" class="similarComedians" hidden></div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
+      </div>
+    </aside>
+  </div>
+
+  <script src="assets/app.js?v=20260824"></script>
+  <script>
+    const p = new URLSearchParams(location.search).get("p") || "Дімка Носов";
+    StandupHub.init({ mode: "performer", performer: p });
+  </script>
+</body>
+</html>

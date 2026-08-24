@@ -224,7 +224,7 @@
 
         nameEl.textContent = normalizeText(item.name) || "Комік";
         bioEl.textContent = shortBio(item.bio);
-        linkEl.href = `./comedian.html?p=${encodeURIComponent(item.name)}`;
+        linkEl.href = StandupHub.performerPageUrl(item.name);
         counterEl.textContent = `${currentIndex + 1} / ${slides.length}`;
         photoEl.src = item.photo;
         photoEl.alt = `Фото: ${normalizeText(item.name) || "комік"}`;

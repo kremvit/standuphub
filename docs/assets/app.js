@@ -1,5 +1,5 @@
 const StandupHub = (() => {
-  const DATA = { videos: [], rating: [], bios: {}, biosIndex: new Map(), recommendations: {}, events: {} };
+  const DATA = { videos: [], rating: [], performers: {}, performerPages: {}, bios: {}, biosIndex: new Map(), recommendations: {}, events: {} };
 
   const state = {
     mode: "all",
@@ -34,6 +34,11 @@ const StandupHub = (() => {
   }
   function getPerformer(v){ return (v?.performer ?? v?.comedian ?? v?.author ?? ""); }
   function getTitle(v){ return (v?.title ?? v?.name ?? ""); }
+
+  function performerPageUrl(name){
+    const slug = DATA.performerPages?.[name];
+    return slug ? `./${encodeURIComponent(slug)}.html` : `./comedian.html?p=${encodeURIComponent(name)}`;
+  }
 
   // ---------- robust date -> ms ----------
   function parseDateMs(raw){
@@ -290,7 +295,7 @@ const StandupHub = (() => {
     for (const r of top){
       const a = document.createElement("a");
       a.className = "sideItem";
-      a.href = `./comedian.html?p=${encodeURIComponent(r.performer)}`;
+      a.href = performerPageUrl(r.performer);
       a.innerHTML = `
         <div class="sideLeft">
           <div class="sideName">${escapeHtml(r.performer)}</div>
@@ -612,7 +617,8 @@ const StandupHub = (() => {
       <div class="cardBody">
         <div class="cardTitle">${escapeHtml(title)}</div>
         <div class="cardMeta">
-          <a class="badge linkBadge" href="./comedian.html?p=${encodeURIComponent(performer || "")}">
+          <a class="badge linkBadge" href="${performerPageUrl(performer || "")}"
+          >
             ${escapeHtml(performer || "")}
           </a>
           <span class="badge">${fmtNum(views)} views</span>
@@ -1041,7 +1047,7 @@ const StandupHub = (() => {
       <div class="similarTitle">Схожі коміки</div>
       <div class="similarList">
         ${top5.map(([name]) => `
-          <a class="similarItem" href="comedian.html?p=${encodeURIComponent(name)}">
+          <a class="similarItem" href="${performerPageUrl(name)}">
             <span class="similarName">${escapeHtml(name)}</span>
           </a>
         `).join("")}
@@ -1150,10 +1156,11 @@ const StandupHub = (() => {
 
     readUrl();
 
-    const [videos, rating, performersText, bios, recommendations, events] = await Promise.all([
+    const [videos, rating, performersText, performerPages, bios, recommendations, events] = await Promise.all([
       loadJson("data/videos.json"),
       loadJson("data/rating.json"),
       loadText("performers.txt").catch(() => ""),
+      loadJson("data/performer_pages.json").catch(() => ({})),
       loadJsonAny(["comedians_bios.json", "../comedians_bios.json"]).catch(() => ({})),
       loadJson("data/recommendations.json").catch(() => ({})),
       loadJson("data/events.json").catch(() => ({})),
@@ -1162,6 +1169,7 @@ const StandupHub = (() => {
     DATA.videos = videos || [];
     DATA.rating = rating || [];
     DATA.performers = parsePerformersFile(performersText);
+    DATA.performerPages = performerPages || {};
     DATA.bios = bios || {};
     DATA.biosIndex = buildBiosIndex(DATA.bios);
     DATA.recommendations = recommendations || {};
@@ -1253,7 +1261,7 @@ const StandupHub = (() => {
               ${columns.map(c => {
                 if (c.key === "performer"){
                   const p = r.performer || "";
-                  return `<td><a class="performerLink" href="./comedian.html?p=${encodeURIComponent(p)}">${escapeHtml(p)}</a></td>`;
+                  return `<td><a class="performerLink" href="${performerPageUrl(p)}">${escapeHtml(p)}</a></td>`;
                 }
                 const val = r[c.key];
                 if (c.type === "num"){
@@ -1300,8 +1308,12 @@ const StandupHub = (() => {
 
   // ✅ NEW: comedians page renderer
   async function initComedians(){
-    const rating = await loadJson("data/rating.json");
+    const [rating, performerPages] = await Promise.all([
+      loadJson("data/rating.json"),
+      loadJson("data/performer_pages.json").catch(() => ({})),
+    ]);
     DATA.rating = rating || [];
+    DATA.performerPages = performerPages || {};
     renderSidebar();
 
     const grid = qs("comediansGrid");
@@ -1350,7 +1362,7 @@ const StandupHub = (() => {
       grid.innerHTML = rows.map(r => {
         const p = r.performer || "";
         return `
-          <a class="comedianCard" href="./comedian.html?p=${encodeURIComponent(p)}">
+          <a class="comedianCard" href="${performerPageUrl(p)}">
             <div class="comedianTop">
               <div class="comedianName">${escapeHtml(p)}</div>
               <div class="comedianRank">#${escapeHtml(r.rank)}</div>
@@ -1384,10 +1396,14 @@ const StandupHub = (() => {
   }
 
   async function initAbout(){
-    const rating = await loadJson("data/rating.json");
+    const [rating, performerPages] = await Promise.all([
+      loadJson("data/rating.json"),
+      loadJson("data/performer_pages.json").catch(() => ({})),
+    ]);
     DATA.rating = rating || [];
+    DATA.performerPages = performerPages || {};
     renderSidebar();
   }
 
-  return { init, initRating, initComedians, initAbout };
+  return { init, initRating, initComedians, initAbout, performerPageUrl };
 })();

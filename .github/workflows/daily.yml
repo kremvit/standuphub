@@ -11,6 +11,7 @@ on:
     paths:
       - "performers.txt"
       - "docs/**"
+      - "scripts/**"
 
 permissions:
   contents: read
@@ -48,6 +49,9 @@ jobs:
       # sitemap.xml + robots.txt
       - name: Generate sitemap.xml and robots.txt
         run: |
+          python scripts/gen_comedian_pages.py \
+            --base https://standuphub.com.ua \
+            --docs docs
           python scripts/gen_sitemap.py \
             --base https://standuphub.com.ua \
             --docs docs
