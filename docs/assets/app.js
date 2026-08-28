@@ -189,6 +189,7 @@ const StandupHub = (() => {
       .replaceAll("'","&#039;");
   }
   function escapeAttr(s){ return escapeHtml(s); }
+  function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
   function buildBiosIndex(bios){
     const index = new Map();
@@ -492,6 +493,11 @@ const StandupHub = (() => {
     });
   }
 
+  function isUpcomingEvent(event){
+    const startMs = parseDateMs(event?.start);
+    return startMs != null && startMs >= Date.now();
+  }
+
   function renderPerformerEvents(){
     const eventsEl = qs("comedianEvents");
     if (!eventsEl) return;
@@ -502,9 +508,9 @@ const StandupHub = (() => {
       return;
     }
 
-    const events = Array.isArray(DATA.events?.[state.performer])
+    const events = (Array.isArray(DATA.events?.[state.performer])
       ? DATA.events[state.performer]
-      : [];
+      : []).filter(isUpcomingEvent);
     if (!events.length){
       eventsEl.hidden = true;
       eventsEl.innerHTML = "";
@@ -536,6 +542,64 @@ const StandupHub = (() => {
         toggle.textContent = expanded ? "Більше..." : "Менше";
       });
     }
+  }
+
+  function renderAgenda(){
+    const agendaEl = qs("agendaList");
+    if (!agendaEl) return;
+
+    const events = new Map();
+    for (const [performer, performerEvents] of Object.entries(DATA.events || {})){
+      if (!Array.isArray(performerEvents)) continue;
+      for (const event of performerEvents.filter(isUpcomingEvent)){
+        const title = String(event?.title || "").trim();
+        if (!title) continue;
+        const date = String(event?.start || "").slice(0, 10);
+        const city = String(event?.city || "").trim();
+        const key = `${title.toLocaleLowerCase("uk")}|${date}|${city.toLocaleLowerCase("uk")}`;
+        const existing = events.get(key);
+        if (existing){
+          existing.participants.add(performer);
+          continue;
+        }
+        events.set(key, { ...event, participants: new Set([performer]) });
+      }
+    }
+
+    const sortedEvents = [...events.values()].sort((a, b) => {
+      return (parseDateMs(a.start) || Number.MAX_SAFE_INTEGER) - (parseDateMs(b.start) || Number.MAX_SAFE_INTEGER);
+    });
+
+    for (const event of sortedEvents){
+      const title = String(event.title || "").toLocaleLowerCase("uk");
+      for (const performer of Object.keys(DATA.performers || {})){
+        const surname = String(performer).trim().split(/\s+/).pop().toLocaleLowerCase("uk");
+        if (surname && surname.length >= 4 && new RegExp(`(^|[^\\p{L}])${escapeRegExp(surname)}([^\\p{L}]|$)`, "iu").test(title)){
+          event.participants.add(performer);
+        }
+      }
+    }
+
+    if (!sortedEvents.length){
+      agendaEl.innerHTML = `<div class="agendaEmpty">Найближчих концертів поки немає.</div>`;
+      return;
+    }
+
+    agendaEl.innerHTML = sortedEvents.map(event => `
+      <article class="agendaEvent">
+        <div class="agendaEventDate">${escapeHtml(formatEventDate(event.start, event.source))}</div>
+        <div class="agendaEventBody">
+          <h2 class="agendaEventTitle">${escapeHtml(event.title)}</h2>
+          <div class="agendaEventMeta">${escapeHtml([event.city, event.venue].filter(Boolean).join(", ") || "Місце уточнюється")}</div>
+          <div class="agendaParticipants">
+            ${[...event.participants].sort((a, b) => a.localeCompare(b, "uk")).map(name => `
+              <a class="agendaParticipant" href="${escapeAttr(performerPageUrl(name))}">${escapeHtml(name)}</a>
+            `).join("")}
+          </div>
+          <a class="comedianEventLink" href="${escapeAttr(event.url || "#")}" target="_blank" rel="noopener noreferrer">Квитки: ${escapeHtml(event.source || "сайт події")} ↗</a>
+        </div>
+      </article>
+    `).join("");
   }
 
   // ---------- modal ----------
@@ -1060,6 +1124,11 @@ const StandupHub = (() => {
 
 
   function render(){
+    if (state.mode === "agenda"){
+      setHomeModeVisibility(false);
+      renderAgenda();
+      return;
+    }
     state.pageSize = (state.mode === "all") ? 8 : 10;
 
     let filtered = applyFilters(DATA.videos || []);

@@ -52,6 +52,7 @@ jobs:
           python scripts/gen_comedian_pages.py \
             --base https://standuphub.com.ua \
             --docs docs
+          cp generated/comedians/*.html docs/
           python scripts/gen_sitemap.py \
             --base https://standuphub.com.ua \
             --docs docs

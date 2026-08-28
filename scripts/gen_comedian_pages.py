@@ -43,6 +43,7 @@ def render_page(template: str, name: str, bio: str, url: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--docs", default="docs")
+    parser.add_argument("--output", default="generated/comedians")
     parser.add_argument("--base", required=True)
     args = parser.parse_args()
 
@@ -55,7 +56,10 @@ def main() -> None:
     used_slugs: set[str] = set()
     page_map: dict[str, str] = {}
 
-    for old_page in docs.glob("comedian-*.html"):
+    output_dir = Path(args.output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for old_page in output_dir.glob("*.html"):
         old_page.unlink()
 
     for name in performers:
@@ -66,11 +70,14 @@ def main() -> None:
             slug = f"{original_slug}-{suffix}"
             suffix += 1
         used_slugs.add(slug)
+        old_page = docs / f"{slug}.html"
+        if old_page.exists():
+            old_page.unlink()
         url = f"{base}/{slug}.html"
         page_map[name] = slug
         bio_data = bios.get(name, {})
         bio = str(bio_data.get("bio", "")).strip()
-        (docs / f"{slug}.html").write_text(render_page(template, name, bio, url), encoding="utf-8")
+        (output_dir / f"{slug}.html").write_text(render_page(template, name, bio, url), encoding="utf-8")
 
     (docs / "data").mkdir(parents=True, exist_ok=True)
     (docs / "data/performer_pages.json").write_text(

@@ -208,7 +208,7 @@ body{
   display:flex;
   gap:10px;
   align-items:center;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
 }
 
 .navBtn{
@@ -221,6 +221,46 @@ body{
   font-weight:800;
 }
 .navBtn:hover{ border-color: rgba(255,138,0,.6); }
+
+.navMore{ position:relative; }
+.navMore summary{
+  list-style:none;
+  cursor:pointer;
+  font-size:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.navMore summary::-webkit-details-marker{ display:none; }
+.navMore summary::before{
+  content:"Ще";
+  font-size:13px;
+}
+.navMore summary::after{
+  content:"";
+  width:6px;
+  height:6px;
+  border-right:2px solid var(--accent);
+  border-bottom:2px solid var(--accent);
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform 160ms ease;
+}
+.navMore[open] summary::after{ transform:translateY(2px) rotate(225deg); }
+.navMoreMenu{
+  position:absolute;
+  z-index:20;
+  top:calc(100% + 8px);
+  right:0;
+  display:grid;
+  gap:5px;
+  min-width:180px;
+  padding:7px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:var(--shadow);
+}
+.navMoreMenu .navBtn{ display:block; }
 
 .navBtn.active,
 .navBtn[aria-current="page"]{
@@ -286,7 +326,7 @@ body{
   .navLeft{
     flex:1 1 auto;
     min-width:0;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
     gap:8px;
   }
   .navBtn{
@@ -326,8 +366,10 @@ body{
     flex-direction:column;
     align-items:stretch;
   }
-  .topBrand{ order:1; }
-  .navLeft{ order:2; }
+  .topBrand{ order:1; min-width:0; max-width:100%; }
+  .navLeft{ order:2; width:100%; min-width:0; flex-wrap:wrap; }
+  .navMore{ min-width:0; }
+  .navMoreMenu{ max-width:calc(100vw - 44px); }
   .controls{
     order:3;
     margin-left:0;
@@ -470,6 +512,75 @@ body{
 }
 
 .comedianEventLink:hover{ text-decoration:underline; }
+
+.agendaIntro{
+  max-width:760px;
+  margin-bottom:20px;
+}
+
+.agendaTitle{
+  margin:0 0 8px;
+  font-size:clamp(30px, 4vw, 48px);
+  line-height:1;
+}
+
+.agendaLead{
+  margin:0;
+  color:var(--muted);
+  font-size:16px;
+}
+
+.agendaList{
+  display:grid;
+  gap:12px;
+  max-width:980px;
+}
+
+.agendaEvent{
+  display:grid;
+  grid-template-columns:150px minmax(0, 1fr);
+  gap:18px;
+  padding:18px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+}
+
+.agendaEventDate{
+  color:var(--accent);
+  font-size:15px;
+  font-weight:900;
+  line-height:1.25;
+}
+
+.agendaEventBody{ display:grid; gap:8px; min-width:0; }
+.agendaEventTitle{ margin:0; font-size:20px; line-height:1.2; }
+.agendaEventMeta{ color:var(--muted); font-size:14px; }
+
+.agendaParticipants{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.agendaParticipant{
+  padding:6px 9px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--panel2);
+  color:var(--text);
+  font-size:13px;
+  font-weight:750;
+  text-decoration:none;
+}
+
+.agendaParticipant:hover{ border-color:rgba(255,138,0,.6); }
+.agendaEmpty{ color:var(--muted); }
+
+@media (max-width:600px){
+  .agendaEvent{ grid-template-columns:1fr; gap:10px; }
+}
 
 .performerInstagramLink,
 .performerInstagramLink:visited{

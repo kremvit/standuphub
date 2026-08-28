@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./favicon-180.png" />
+  <title>Афіша стендап-концертів — StandupHub</title>
+  <meta name="description" content="Найближчі стендап-концерти українських коміків та учасники кожної події." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <main class="main">
+      <header class="topbar">
+        <div class="topBrand">
+          <a class="brandLink" href="./index.html">
+            <span class="brandA">Stand Up</span><span class="brandB">Hub</span>
+          </a>
+          <div class="slogan">Твоя щоденна доза стендапу</div>
+        </div>
+
+        <div class="navLeft">
+          <a class="navBtn" href="./index.html">Відео</a>
+          <a class="navBtn" href="./rating.html">Рейтинг</a>
+          <a class="navBtn" href="./afisha.html">Афіша</a>
+          <a class="navBtn" href="./funnier.html">Хто смішніший?</a>
+          <details class="navMore">
+            <summary class="navBtn">Ще⌄</summary>
+            <div class="navMoreMenu">
+              <a class="navBtn" href="./comedians.html">Коміки</a>
+              <a class="navBtn" href="./about.html">Про сайт</a>
+              <a class="navBtn" href="./statistics.html">Статистика</a>
+              <a class="navBtn" href="./game.html">Кар'єра</a>
+              <a class="navBtn" href="./network.html">Мережа</a>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <section class="agendaIntro">
+        <h1 class="agendaTitle">Афіша</h1>
+        <p class="agendaLead">Найближчі концерти та коміки, які беруть у них участь.</p>
+      </section>
+      <section id="agendaList" class="agendaList" aria-live="polite"></section>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebarSection">
+        <div class="sidebarTitle">Топ коміків</div>
+        <div id="sidebarTop" class="sidebarList"></div>
+        <a class="sideAllBtn" href="./comedians.html">Усі коміки →</a>
+      </div>
+    </aside>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    StandupHub.init({ mode: "agenda", performer: null });
+  </script>
+</body>
+</html>
