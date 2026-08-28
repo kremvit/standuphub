@@ -368,7 +368,7 @@ body{
   }
   .topBrand{ order:1; min-width:0; max-width:100%; }
   .navLeft{ order:2; width:100%; min-width:0; flex-wrap:wrap; }
-  .navMore{ min-width:0; }
+  .navMore{ min-width:0; margin-left:auto; }
   .navMoreMenu{ max-width:calc(100vw - 44px); }
   .controls{
     order:3;
@@ -379,6 +379,24 @@ body{
   .control input{
     min-width:0;
     width:100%;
+  }
+}
+
+@media (max-width: 500px){
+  .navLeft{
+    position:relative;
+  }
+  .navMore{
+    position:relative;
+    left:auto;
+    right:auto;
+    margin-left:0;
+    flex:0 0 100%;
+  }
+  .navMore summary{ width:max-content; }
+  .navMoreMenu{
+    left:0;
+    right:auto;
   }
 }
 
