@@ -53,7 +53,7 @@ jobs:
             --base https://standuphub.com.ua \
             --docs docs
           cp generated/comedians/*.html docs/
-          test -f docs/dimka-nosov.html
+          python -c "import json; from pathlib import Path; pages=json.loads(Path('docs/data/performer_pages.json').read_text(encoding='utf-8')); missing=[slug for slug in pages.values() if not Path('docs', f'{slug}.html').is_file()]; assert not missing, f'Missing generated pages: {missing}'; print(f'Validated {len(pages)} comedian pages')"
           python scripts/gen_sitemap.py \
             --base https://standuphub.com.ua \
             --docs docs
