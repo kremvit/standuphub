@@ -2,6 +2,9 @@
 
 Daily YouTube stand-up aggregator + rating + static site.
 
+## Add a performer
+Add the performer to `performers.txt` and their YouTube channel to `channels.txt`, then push to `main`. GitHub Actions will run the pipeline, generate the performer page, and deploy the updated site. The `YT_API_KEY` repository secret must be configured.
+
 ## Local run
 ```bash
 export YT_API_KEY="YOUR_KEY"
