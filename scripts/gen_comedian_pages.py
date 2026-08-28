@@ -59,6 +59,15 @@ def main() -> None:
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    legacy_dir = docs / "comedians"
+    if legacy_dir.exists():
+        for legacy_page in legacy_dir.glob("*.html"):
+            legacy_page.unlink()
+        try:
+            legacy_dir.rmdir()
+        except OSError:
+            pass
+
     for old_page in output_dir.glob("*.html"):
         old_page.unlink()
 

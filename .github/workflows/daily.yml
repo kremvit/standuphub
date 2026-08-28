@@ -53,6 +53,7 @@ jobs:
             --base https://standuphub.com.ua \
             --docs docs
           cp generated/comedians/*.html docs/
+          test -f docs/dimka-nosov.html
           python scripts/gen_sitemap.py \
             --base https://standuphub.com.ua \
             --docs docs
