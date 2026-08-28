@@ -12,6 +12,7 @@ on:
       - "performers.txt"
       - "docs/**"
       - "scripts/**"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
