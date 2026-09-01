@@ -37,6 +37,7 @@ from __future__ import annotations
 import csv
 import math
 import re
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
@@ -133,6 +134,10 @@ def normalize_spaces(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def normalize_text(s: str) -> str:
+    return unicodedata.normalize("NFC", normalize_spaces(s))
+
+
 def clamp(x: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, x))
 
@@ -198,7 +203,7 @@ def load_performers(path: Path) -> List[Tuple[str, re.Pattern]]:
         if not line or line.startswith("#"):
             continue
 
-        parts = [normalize_spaces(p) for p in line.split("|")]
+        parts = [normalize_text(p) for p in line.split("|")]
         parts = [p for p in parts if p]
         if not parts:
             continue
@@ -208,7 +213,7 @@ def load_performers(path: Path) -> List[Tuple[str, re.Pattern]]:
         seen: Set[str] = set()
 
         for a in [canonical] + parts[1:]:
-            a = normalize_spaces(a)
+            a = normalize_text(a)
             if not a:
                 continue
             key = safe_casefold(a)
@@ -319,7 +324,7 @@ def read_videos_csv(path: Path) -> List[VideoRow]:
 # ---------- Core logic ----------
 
 def match_performers_in_title(title: str, compiled_aliases: List[Tuple[str, re.Pattern]]) -> Set[str]:
-    t = normalize_spaces(title)
+    t = normalize_text(title)
     matched: Set[str] = set()
     for canonical, rx in compiled_aliases:
         if rx.search(t):
