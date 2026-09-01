@@ -97,6 +97,10 @@ body{
 }
 .sideItem:hover{ border-color: rgba(255,138,0,.5); }
 
+.rankChange{ margin-left:6px; font-weight:900; }
+.rankUp{ color:#62d98b; }
+.rankDown{ color:#ff7777; }
+
 .sideLeft{ display:flex; flex-direction:column; gap:2px; }
 .sideName{ font-weight:700; font-size:14px; }
 .sideMeta{ color:var(--muted); font-size:12px; }

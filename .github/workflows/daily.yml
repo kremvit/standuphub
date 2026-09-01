@@ -16,7 +16,7 @@ on:
       - ".github/workflows/**"
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -46,6 +46,18 @@ jobs:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
         run: |
           python scripts/run_pipeline.py
+
+      - name: Save monthly rating snapshot
+        run: |
+          if git diff --quiet -- docs/data/rating_history.json; then
+            echo "Monthly rating snapshot already exists."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/data/rating_history.json
+            git commit -m "Save monthly rating snapshot"
+            git push
+          fi
       
       # sitemap.xml + robots.txt
       - name: Generate sitemap.xml and robots.txt

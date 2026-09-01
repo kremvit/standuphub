@@ -4,6 +4,7 @@
 import csv
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -45,6 +46,7 @@ def _match_performers(title: str, compiled) -> set:
 
 OUT_DIR = Path("out")
 WEB_DATA = Path("docs/data")
+RATING_HISTORY_PATH = WEB_DATA / "rating_history.json"
 
 def read_csv(path: Path):
     with path.open("r", encoding="utf-8-sig", newline="") as f:
@@ -67,6 +69,15 @@ def to_float(x, default=0.0):
         return float(s)
     except Exception:
         return default
+
+def load_rating_history():
+    if not RATING_HISTORY_PATH.exists():
+        return {}
+    try:
+        history = json.loads(RATING_HISTORY_PATH.read_text(encoding="utf-8"))
+        return history if isinstance(history, dict) else {}
+    except json.JSONDecodeError:
+        return {}
 
 def main():
     WEB_DATA.mkdir(parents=True, exist_ok=True)
@@ -107,6 +118,35 @@ def main():
         r["like_rate_smooth_pct"] = to_float(r.get("like_rate_smooth_pct"))
         r["performer"] = (r.get("performer") or "").strip()
 
+    history = load_rating_history()
+    current_period = datetime.now(timezone.utc).strftime("%Y-%m")
+    snapshot_created = current_period not in history
+    if snapshot_created:
+        history[current_period] = [
+            {"performer": row["performer"], "rank": row["rank"]}
+            for row in rating
+        ]
+        RATING_HISTORY_PATH.write_text(
+            json.dumps(history, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    if snapshot_created:
+        reference_periods = sorted(period for period in history if period < current_period)
+        reference_snapshot = history[reference_periods[-1]] if reference_periods else []
+    else:
+        reference_snapshot = history[current_period]
+    previous_ranks = {
+        row.get("performer", ""): to_int(row.get("rank"))
+        for row in reference_snapshot
+        if isinstance(row, dict)
+    }
+
+    for r in rating:
+        previous_rank = previous_ranks.get(r["performer"])
+        r["previous_rank"] = previous_rank
+        r["rank_change"] = previous_rank - r["rank"] if previous_rank else None
+
     # Read optional year-specific rating CSVs
     rating_by_year = {"all": rating}
     for year in range(2022, 2027):
@@ -123,6 +163,7 @@ def main():
     print("OK -> docs/data/videos.json")
     print("OK -> docs/data/rating.json")
     print("OK -> docs/data/rating_by_year.json")
+    print(f"OK -> {RATING_HISTORY_PATH}")
 
     # Build co-occurrence recommendations from ALL video sources
     compiled_aliases = _load_performers(Path("performers.txt"))

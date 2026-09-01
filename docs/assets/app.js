@@ -1344,6 +1344,15 @@ const StandupHub = (() => {
                   const n = Number(val);
                   const isInt = Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9;
                   if (!Number.isFinite(n)) return `<td></td>`;
+                  if (c.key === "rank"){
+                    const change = Number(r.rank_change);
+                    const arrow = change > 0
+                      ? `<span class="rankChange rankUp" title="Піднявся на ${change} позицій">↑ (+${change})</span>`
+                      : change < 0
+                        ? `<span class="rankChange rankDown" title="Опустився на ${Math.abs(change)} позицій">↓ (-${Math.abs(change)})</span>`
+                        : "";
+                    return `<td>#${fmtNum(n)}${arrow}</td>`;
+                  }
                   return `<td>${isInt ? fmtNum(n) : n.toFixed(4)}</td>`;
                 }
                 return `<td>${escapeHtml(val)}</td>`;
