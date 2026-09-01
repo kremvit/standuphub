@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+import argparse
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ load_dotenv()
 # ============================================================
 
 INPUT_FILE = Path("performers.txt")
-OUTPUT_FILE = Path("comedians_bios.json")
+OUTPUT_FILE = Path("docs/comedians_bios.json")
 
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
@@ -649,6 +650,14 @@ def is_connection_error(error_text: str) -> bool:
 # ============================================================
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--missing-only",
+        action="store_true",
+        help="Generate biographies only for comedians absent from the JSON file.",
+    )
+    args = parser.parse_args()
+
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
@@ -687,11 +696,18 @@ def main() -> None:
         name = comedian["name"]
         existing = results.get(name)
 
-        if (
-            existing
-            and not result_needs_regeneration(
-                existing=existing,
-                name=name,
+        has_bio = isinstance(existing, dict) and bool(
+            clean_bio(str(existing.get("bio", "")))
+        )
+
+        if existing and (
+            (args.missing_only and has_bio)
+            or (
+                not args.missing_only
+                and not result_needs_regeneration(
+                    existing=existing,
+                    name=name,
+                )
             )
         ):
             print(
