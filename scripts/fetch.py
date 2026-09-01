@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import csv
@@ -350,19 +351,44 @@ def export_rejected_csv(path: str, items: List[Dict[str, Any]]) -> None:
         w.writerows(items)
 
 
+def load_existing_rows(path: str, channel_id: str) -> List[Dict[str, Any]]:
+    if not os.path.exists(path):
+        return []
+
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return [
+            row for row in csv.DictReader(f)
+            if row.get("channel_id") != channel_id
+        ]
+
+
 # =========================
 # MAIN
 # =========================
 
 def main() -> None:
-    with open("channels.txt", encoding="utf-8") as f:
-        channel_inputs = [l.strip() for l in f if l.strip() and not l.strip().startswith("#")]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--channel",
+        help="Refresh one channel and keep the previously collected videos from all others.",
+    )
+    args = parser.parse_args()
+
+    if args.channel:
+        channel_inputs = [args.channel.strip()]
+    else:
+        with open("channels.txt", encoding="utf-8") as f:
+            channel_inputs = [l.strip() for l in f if l.strip() and not l.strip().startswith("#")]
 
     accepted_rows: List[Dict[str, Any]] = []
     rejected_rows: List[Dict[str, Any]] = []
 
     for ch in channel_inputs:
         cid = resolve_channel_id(ch)
+        if args.channel:
+            accepted_rows.extend(load_existing_rows(OUT_CSV, cid))
+            rejected_rows.extend(load_existing_rows(OUT_REJECTED_CSV, cid))
+
         uploads_id, channel_name = get_uploads_playlist(cid)
 
         video_ids = get_all_video_ids_from_uploads(uploads_id)
@@ -393,6 +419,7 @@ def main() -> None:
                 rejected_rows.append(rej)
 
     accepted_rows.sort(key=lambda x: x["published_at"], reverse=True)
+    rejected_rows.sort(key=lambda x: x["published_at"], reverse=True)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     export_csv(OUT_CSV, accepted_rows)
