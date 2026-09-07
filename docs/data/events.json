@@ -10,16 +10,7 @@
   "Влад Данкевич": [],
   "Юля Різничок": [],
   "Юра Пронюк": [],
-  "Олег Лузанов": [
-    {
-      "title": "Розгони: Вахнич, Кравець, Михайлова, Лузанов",
-      "start": "2026-08-28T22:00:00+03:00",
-      "venue": "",
-      "city": "",
-      "url": "https://lviv.karabas.com/28-08-roz-hony-vakhnych-kravets-mykhaylova-luzanov/",
-      "source": "Karabas"
-    }
-  ],
+  "Олег Лузанов": [],
   "Олег Грюндік": [],
   "Вадим Ковалик": [],
   "Вадим Кириленко": [],
@@ -43,36 +34,34 @@
   "Настя Сіль": [],
   "Богдан Вахнич": [
     {
-      "title": "Розгони: Вахнич, Кравець, Михайлова, Лузанов",
-      "start": "2026-08-28T22:00:00+03:00",
-      "venue": "",
-      "city": "",
-      "url": "https://lviv.karabas.com/28-08-roz-hony-vakhnych-kravets-mykhaylova-luzanov/",
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-09-27T19:00:00+03:00",
+      "venue": "Палац культури ім. Гната Хоткевича",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-12/",
+      "source": "Karabas"
+    },
+    {
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-09-27T22:00:00+03:00",
+      "venue": "Палац культури ім. Гната Хоткевича",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-13/",
+      "source": "Karabas"
+    },
+    {
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-11-27T21:00:00+02:00",
+      "venue": "Центр Довженка",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-29/",
       "source": "Karabas"
     }
   ],
   "Олександр Дмитрович": [],
   "Вадим Дзюнько": [],
-  "Валерія Михайлова": [
-    {
-      "title": "Розгони: Вахнич, Кравець, Михайлова, Лузанов",
-      "start": "2026-08-28T22:00:00+03:00",
-      "venue": "",
-      "city": "",
-      "url": "https://lviv.karabas.com/28-08-roz-hony-vakhnych-kravets-mykhaylova-luzanov/",
-      "source": "Karabas"
-    }
-  ],
-  "Максим Кравець": [
-    {
-      "title": "Розгони: Вахнич, Кравець, Михайлова, Лузанов",
-      "start": "2026-08-28T22:00:00+03:00",
-      "venue": "",
-      "city": "",
-      "url": "https://lviv.karabas.com/28-08-roz-hony-vakhnych-kravets-mykhaylova-luzanov/",
-      "source": "Karabas"
-    }
-  ],
+  "Валерія Михайлова": [],
+  "Максим Кравець": [],
   "Ігор Рапіта": [],
   "Ігор Нерівний": [],
   "Марина Войцеховська": [],
@@ -103,37 +92,30 @@
   "Богдан Боярин": [
     {
       "title": "Батя 2. Сольний стендап концерт Богдана Боярина",
-      "start": "2026-12-19T16:30:00+02:00",
-      "venue": "Зал Театральний готелю \"Турист\"",
-      "city": "Київ",
-      "url": "https://concert.ua/uk/event/kiyiv-batja-2-solnii-stendap-koncert",
+      "start": "2026-11-06T18:00:00+02:00",
+      "venue": "Центр культури і мистецтв Бориспільської міської ради",
+      "city": "Бориспіль",
+      "url": "https://concert.ua/uk/event/borispil-batja-2-solnii-stendap-koncert",
       "source": "Concert.ua"
     }
   ],
-  "Алла Волкова": [],
+  "Алла Волкова": [
+    {
+      "title": "(Київ) Алла Волкова Сольний Стендап Концерт",
+      "start": "2026-10-08T19:30:00+03:00",
+      "venue": "Бочка PUB",
+      "city": "Київ",
+      "url": "https://concert.ua/uk/event/alla-volkova-solnii-stendap-koncert-kiyiv",
+      "source": "Concert.ua"
+    }
+  ],
   "Паша Пінчук": [
     {
-      "title": "Львів Вечір Імпровізації Паші Пінчука",
-      "start": "2026-09-04T20:00:00+03:00",
-      "venue": "Міський палац культури ім. Г. Хоткевича",
-      "city": "Львів",
-      "url": "https://concert.ua/uk/event/lviv-vechir-improvizaciyi-pashi-pinchuka",
-      "source": "Concert.ua"
-    },
-    {
-      "title": "Вечір Імпровізації Паші Пінчука",
-      "start": "2026-09-04T23:00:00+03:00",
-      "venue": "",
-      "city": "",
-      "url": "https://lviv.karabas.com/vechir-improvizatsii-pashi-pinchuka-21/",
-      "source": "Karabas"
-    },
-    {
-      "title": "Житомир Вечір Імпровізації Паші Пінчука",
-      "start": "2026-09-11T19:30:00+03:00",
-      "venue": "КЗ Палац Культури",
-      "city": "Житомир",
-      "url": "https://concert.ua/uk/event/zhitomir-vechir-improvizaciyi-pashi-pinchuka",
+      "title": "Хмельницький Вечір Імпровізації Паші Пінчука",
+      "start": "2026-09-12T19:30:00+03:00",
+      "venue": " Хмельницький академічний обласний театр ляльок",
+      "city": "Хмельницький",
+      "url": "https://concert.ua/uk/event/hmelnickii-vechir-improvizaciyi-pashi-pinchuka",
       "source": "Concert.ua"
     },
     {
@@ -150,39 +132,48 @@
   "Данило Повар": [
     {
       "title": "Вечір імпровізації Повара Данила та Вови Маслова",
-      "start": "2026-09-04T19:30:00+03:00",
-      "venue": "Hell’s Pub",
-      "city": "Умань",
-      "url": "https://concert.ua/uk/event/uman-gumoristichne-shou-naicikavishii-gljadach",
+      "start": "2026-09-09T19:30:00+03:00",
+      "venue": "Державний університет економіки і технологій ",
+      "city": "Кривий Ріг",
+      "url": "https://concert.ua/uk/event/krivii-rig-gumoristichne-shou-naicikavishii-gljadach",
       "source": "Concert.ua"
     },
     {
       "title": "Вечір імпровізації Повара Данила та Вови Маслова",
-      "start": "2026-09-05T19:00:00+03:00",
-      "venue": "Пасаж",
-      "city": "Одеса",
-      "url": "https://concert.ua/uk/event/odesa-vechir-improvizaciyi-povara-danila-ta-vovi-maslova",
+      "start": "2026-09-11T19:30:00+03:00",
+      "venue": "Будинок на Троїцькій",
+      "city": "Дніпро",
+      "url": "https://concert.ua/uk/event/dnipro-gumoristichne-shou-naicikavishii-gljadach",
       "source": "Concert.ua"
     }
   ],
-  "Богдан Богаченко": [],
+  "Богдан Богаченко": [
+    {
+      "title": "Богдан Богаченко. Сольний стендап «У пошуках щастя»",
+      "start": "2026-09-24T22:00:00+03:00",
+      "venue": "",
+      "city": "",
+      "url": "https://lviv.karabas.com/bohdan-bohachenko-sol-nyy-stendap-u-poshukakh-shchastya-11/",
+      "source": "Karabas"
+    }
+  ],
   "Андрій Пілат": [],
   "Ануар Айяд": [],
   "Вова Маслов": [
     {
       "title": "Вечір імпровізації Повара Данила та Вови Маслова",
-      "start": "2026-09-04T19:30:00+03:00",
-      "venue": "Hell’s Pub",
-      "city": "Умань",
-      "url": "https://concert.ua/uk/event/uman-gumoristichne-shou-naicikavishii-gljadach",
+      "start": "2026-09-09T19:30:00+03:00",
+      "venue": "Державний університет економіки і технологій ",
+      "city": "Кривий Ріг",
+      "url": "https://concert.ua/uk/event/krivii-rig-gumoristichne-shou-naicikavishii-gljadach",
       "source": "Concert.ua"
     },
     {
       "title": "Вечір імпровізації Повара Данила та Вови Маслова",
-      "start": "2026-09-05T19:00:00+03:00",
-      "venue": "Пасаж",
-      "city": "Одеса",
-      "url": "https://concert.ua/uk/event/odesa-vechir-improvizaciyi-povara-danila-ta-vovi-maslova",
+      "start": "2026-09-11T19:30:00+03:00",
+      "venue": "Будинок на Троїцькій",
+      "city": "Дніпро",
+      "url": "https://concert.ua/uk/event/dnipro-gumoristichne-shou-naicikavishii-gljadach",
       "source": "Concert.ua"
     }
   ],
@@ -193,72 +184,112 @@
   "Саша Качура": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-29T19:00:00+03:00",
+      "start": "2026-09-12T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-29-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-12-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-30T19:00:00+03:00",
+      "start": "2026-09-13T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-30-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
-      "title": "Підпільний Стендап на ВДНГ",
-      "start": "2026-09-05T18:00:00+03:00",
+      "title": "Підпільний Стендап",
+      "start": "2026-09-17T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-pidpilnyi-stendap-na-vdnh",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-17-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
-      "title": "Імпровізаційне Шоу \"Королі Крінжу\"",
-      "start": "2026-09-05T19:00:00+03:00",
+      "title": "Імпровізаційне шоу \"Королі Крінжу\" (19.09 о 16:00)",
+      "start": "2026-09-19T16:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-kk",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-improvizatsiine-shou-koroli-krinzhu-19-09-o-1",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-19T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
-  "Женя Євсюков": [],
+  "Женя Євсюков": [
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-11T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-11-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-13T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-18T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-18-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    }
+  ],
   "Катя Федоркова": [],
-  "Джейхун Сафаров": [
-    {
-      "title": "Київ Сольний Стендап Концерт Джейхуна Сафарова",
-      "start": "2026-09-19T16:30:00+03:00",
-      "venue": "Підвал Культури",
-      "city": "Київ",
-      "url": "https://concert.ua/uk/event/kiyiv-solnii-stendap-koncert-dzheihuna-safarova",
-      "source": "Concert.ua"
-    }
-  ],
+  "Джейхун Сафаров": [],
   "Настя Зухвала": [
     {
-      "title": "Підпільний Стендап",
-      "start": "2026-08-28T19:00:00+03:00",
+      "title": "Настя Зухвала. Сольна перевірка матеріалу",
+      "start": "2026-09-09T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-28-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-09-zuhvala",
       "source": "Underground Standup"
     },
     {
       "title": "Підпільний Стендап",
-      "start": "2026-09-04T19:00:00+03:00",
+      "start": "2026-09-11T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-04-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-11-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
-      "title": "Підпільний Стендап на ВДНГ",
-      "start": "2026-09-05T18:00:00+03:00",
+      "title": "Підпільний Стендап",
+      "start": "2026-09-13T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-pidpilnyi-stendap-na-vdnh",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-19T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-20T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-20-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
@@ -266,18 +297,26 @@
   "Антон Тимошенко": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-29T19:00:00+03:00",
+      "start": "2026-09-17T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-29-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-17-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-30T19:00:00+03:00",
+      "start": "2026-09-19T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-30-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-20T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-20-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
@@ -285,28 +324,44 @@
   "Антон Сенін": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-28T19:00:00+03:00",
+      "start": "2026-09-10T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-28-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-10-stendap",
       "source": "Underground Standup"
     },
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-29T19:00:00+03:00",
+      "start": "2026-09-12T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-29-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-12-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
   "Свят Загайкевич": [
     {
-      "title": "Імпровізаційне Шоу \"Королі Крінжу\"",
-      "start": "2026-09-05T19:00:00+03:00",
+      "title": "Майже інтелектуальне шоу",
+      "start": "2026-09-13T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-kk",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-mish",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-18T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-18-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Імпровізаційне шоу \"Королі Крінжу\" (19.09 о 16:00)",
+      "start": "2026-09-19T16:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-improvizatsiine-shou-koroli-krinzhu-19-09-o-1",
       "source": "Underground Standup"
     }
   ],
@@ -316,68 +371,116 @@
   "Артур Петров": [],
   "Антон Стенюк": [
     {
-      "title": "Імпровізаційне Шоу \"Королі Крінжу\"",
-      "start": "2026-09-05T19:00:00+03:00",
+      "title": "Підпільний Стендап",
+      "start": "2026-09-12T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-kk",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-12-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Майже інтелектуальне шоу",
+      "start": "2026-09-13T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-mish",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Імпровізаційне шоу \"Королі Крінжу\" (19.09 о 16:00)",
+      "start": "2026-09-19T16:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-improvizatsiine-shou-koroli-krinzhu-19-09-o-1",
       "source": "Underground Standup"
     }
   ],
   "Ганна Кочегура": [
     {
-      "title": "Підпільний Стендап",
-      "start": "2026-09-04T19:00:00+03:00",
+      "title": "Майже інтелектуальне шоу",
+      "start": "2026-09-13T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-04-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-mish",
       "source": "Underground Standup"
     },
     {
-      "title": "Підпільний Стендап на ВДНГ",
-      "start": "2026-09-05T18:00:00+03:00",
+      "title": "Підпільний Стендап",
+      "start": "2026-09-17T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-pidpilnyi-stendap-na-vdnh",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-17-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Сольний стендап Ганна Кочегура",
+      "start": "2026-12-11T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/12-11-solnyi-stendap-hanna-kochehura",
       "source": "Underground Standup"
     }
   ],
   "Сергій Степанисько": [],
   "Василь Байдак": [
     {
-      "title": "Підпільний Стендап на ВДНГ",
-      "start": "2026-09-05T18:00:00+03:00",
+      "title": "Підпільний Стендап",
+      "start": "2026-09-10T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-05-pidpilnyi-stendap-na-vdnh",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-10-stendap",
       "source": "Underground Standup"
+    },
+    {
+      "title": "Василь Байдак",
+      "start": "2026-10-23T22:00:00+03:00",
+      "venue": "",
+      "city": "",
+      "url": "https://lviv.karabas.com/vasyl-baydak-17/",
+      "source": "Karabas"
     }
   ],
   "Олександр Жипецький": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-28T19:00:00+03:00",
+      "start": "2026-09-11T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-28-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-11-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
-      "title": "Підпільний Стендап",
-      "start": "2026-09-04T19:00:00+03:00",
+      "title": "Майже інтелектуальне шоу",
+      "start": "2026-09-13T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-04-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-13-mish",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Олександр Жипецький. Сольний стендап",
+      "start": "2026-09-18T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-18-zhipeckiy",
       "source": "Underground Standup"
     }
   ],
   "Юра Коломієць": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-09-04T19:00:00+03:00",
+      "start": "2026-09-10T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/09-04-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-10-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-18T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-18-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
@@ -388,7 +491,32 @@
   "Володимир Жогло": [],
   "Олексій Ральніков": [],
   "Тарас Яремій": [],
-  "Славік Мартинюк": [],
+  "Славік Мартинюк": [
+    {
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-09-27T19:00:00+03:00",
+      "venue": "Палац культури ім. Гната Хоткевича",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-12/",
+      "source": "Karabas"
+    },
+    {
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-09-27T22:00:00+03:00",
+      "venue": "Палац культури ім. Гната Хоткевича",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-13/",
+      "source": "Karabas"
+    },
+    {
+      "title": "«Медичні історії. Другий сезон»",
+      "start": "2026-11-27T21:00:00+02:00",
+      "venue": "Центр Довженка",
+      "city": "Львів",
+      "url": "https://lviv.karabas.com/medychni-istorii-druhyy-sezon-29/",
+      "source": "Karabas"
+    }
+  ],
   "Дімка Носов": [],
   "Наталі Скорик": [],
   "Фелікс Редька": [],
@@ -424,6 +552,14 @@
       "city": "Львів",
       "url": "https://lviv.karabas.com/komediyne-shou-ne-problema-50/",
       "source": "Karabas"
+    },
+    {
+      "title": "НЕВИЇЗНИЙ. АНДРІЙ БЕРЕЖКО. СОЛЬНИЙ СТЕНДАП",
+      "start": "2027-01-30T19:00:00+02:00",
+      "venue": "Центр культури та мистецтва НАУ",
+      "city": "Київ",
+      "url": "https://concert.ua/uk/event/neviyiznii-andrii-berezhko-solnii-stendap",
+      "source": "Concert.ua"
     }
   ],
   "Василь Бор": [],
@@ -438,18 +574,18 @@
   "Катерина Дубініна": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-29T19:00:00+03:00",
+      "start": "2026-09-17T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-29-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-17-pidpilnyi-stendap",
       "source": "Underground Standup"
     },
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-30T19:00:00+03:00",
+      "start": "2026-09-20T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-30-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-20-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
@@ -457,10 +593,34 @@
   "Ксенія Швець": [
     {
       "title": "Підпільний Стендап",
-      "start": "2026-08-30T19:00:00+03:00",
+      "start": "2026-09-10T19:00:00+03:00",
       "venue": "Underground Stand Up Club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/08-30-stendap",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-10-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-11T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-11-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-18T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-18-pidpilnyi-stendap",
+      "source": "Underground Standup"
+    },
+    {
+      "title": "Підпільний Стендап",
+      "start": "2026-09-19T19:00:00+03:00",
+      "venue": "Underground Stand Up Club",
+      "city": "Київ",
+      "url": "https://www.undergroundstandup.com/kiyiv/09-19-pidpilnyi-stendap",
       "source": "Underground Standup"
     }
   ],
@@ -476,5 +636,9 @@
   "Кирило Осадчий": [],
   "Вюсал Талибов": [],
   "Іван Голованенко": [],
-  "Макс Редзель": []
+  "Макс Редзель": [],
+  "Роман Васильчук": [],
+  "Ілля Завалій": [],
+  "Дмитро Тарабакін": [],
+  "Дмитро Павловський": []
 }
