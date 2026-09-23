@@ -18,12 +18,20 @@ OUTPUT_PATH = Path("docs/data/events.json")
 PERFORMERS_PATH = Path("performers.txt")
 SOURCES = [
     ("Karabas", "https://lviv.karabas.com/stand-up/"),
-    ("Kontramarka.ua", "https://lviv.kontramarka.ua/uk/standUp"),
 ]
 UNDERGROUND_URL = "https://www.undergroundstandup.com/"
 # Undocumented internal API; the public catalog page returns 403 for bots.
 CONCERT_UA_API_URL = "https://concert.ua/api/v3/search"
 CONCERT_UA_QUERIES = ["standup", "стендап", "стенд ап"]
+# Elasticsearch backend powering Kontramarka's site search widget (used by all city subdomains).
+KONTRAMARKA_API_URL = "https://search.mticket.com.ua:9191/api/uk/events/search"
+KONTRAMARKA_QUERIES = ["standup", "стендап", "стенд ап"]
+KONTRAMARKA_STANDUP_CATEGORY_SUFFIX = "_23"
+KONTRAMARKA_MONTHS = {
+    "січня": 1, "лютого": 2, "березня": 3, "квітня": 4, "травня": 5, "червня": 6,
+    "липня": 7, "серпня": 8, "вересня": 9, "жовтня": 10, "листопада": 11, "грудня": 12,
+}
+KONTRAMARKA_EVENT_TZ = timezone(timedelta(hours=3))
 
 
 def load_performers():
@@ -206,6 +214,56 @@ def fetch_concert_ua_events(headers):
     return events
 
 
+def fetch_kontramarka_events(headers):
+    api_headers = dict(headers)
+    api_headers.update({"Accept": "application/json", "Content-Type": "application/json"})
+
+    events_by_id = {}
+    for query in KONTRAMARKA_QUERIES:
+        try:
+            response = get_with_retry(KONTRAMARKA_API_URL, api_headers, params={"lang": "uk", "query": query})
+        except requests.RequestException as error:
+            print(f"WARNING: Kontramarka.ua unavailable ({query}): {error}")
+            continue
+        for item_id, item in response.json().get("data", {}).items():
+            categories = item.get("categories") or []
+            if any(str(category).endswith(KONTRAMARKA_STANDUP_CATEGORY_SUFFIX) for category in categories):
+                events_by_id[item_id] = item
+
+    events = []
+    for item in events_by_id.values():
+        match = re.search(
+            r"\(([^)]*)\)<br>(\d{1,2})\s+([^\s,]+),\s*(\d{1,2}):(\d{2})",
+            item.get("name", ""),
+        )
+        if not match:
+            continue
+        month = KONTRAMARKA_MONTHS.get(match.group(3).casefold())
+        if not month:
+            continue
+        city, day, hour, minute = match.group(1), int(match.group(2)), int(match.group(4)), int(match.group(5))
+
+        now = datetime.now(KONTRAMARKA_EVENT_TZ)
+        start_dt = datetime(now.year, month, day, hour, minute, tzinfo=KONTRAMARKA_EVENT_TZ)
+        if start_dt < now - timedelta(hours=6):
+            start_dt = start_dt.replace(year=now.year + 1)
+
+        title = item.get("showName") or ""
+        url = item.get("url") or ""
+        if not url or not title or not is_future(start_dt.isoformat()):
+            continue
+        events.append({
+            "title": title,
+            "description": " ".join([title, item.get("siteName", "")]),
+            "start": start_dt.isoformat(),
+            "venue": item.get("siteName", ""),
+            "city": city,
+            "url": url,
+            "source": "Kontramarka.ua",
+        })
+    return events
+
+
 def parse_underground_events(html, headers):
     links = []
     for href in re.findall(r'href=["\']([^"\']+)["\']', html, flags=re.IGNORECASE):
@@ -311,7 +369,7 @@ def main():
         print(f"WARNING: Underground Standup unavailable: {error}")
         underground_events = []
 
-    for event in underground_events + fetch_concert_ua_events(headers):
+    for event in underground_events + fetch_concert_ua_events(headers) + fetch_kontramarka_events(headers):
         if event["url"] in seen:
             continue
         haystack = normalize_text(" ".join([event["title"], event["description"]]))

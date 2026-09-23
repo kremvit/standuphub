@@ -2,7 +2,24 @@
   "Віктор Перунський": [],
   "Віталік Кремінь": [],
   "Тарас Стадницький": [],
-  "Андрій Озарків": [],
+  "Андрій Озарків": [
+    {
+      "title": "СТЕНДАП ПЕРЕВІРКА | ОЗАРКІВ, ТЕРЕШКО, ХАЙК, МИХАЙЛОВА",
+      "start": "2026-09-25T19:30:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-perevirka--ozarkiv-teresko-hajk-mihajlova--25-veresna-125121.html",
+      "source": "Kontramarka.ua"
+    },
+    {
+      "title": "СТЕНДАП НА ТРЬОХ | БОЯРИН, СКОРИК, ОЗАРКІВ ",
+      "start": "2026-09-26T21:15:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-na-troh--boarin-skorik-ozarkiv--26-veresna-125125.html",
+      "source": "Kontramarka.ua"
+    }
+  ],
   "Андрій Сенч": [],
   "Сашко Лопушанський": [],
   "Коля Капішон": [],
@@ -44,7 +61,16 @@
   "Богдан Вахнич": [],
   "Олександр Дмитрович": [],
   "Вадим Дзюнько": [],
-  "Валерія Михайлова": [],
+  "Валерія Михайлова": [
+    {
+      "title": "СТЕНДАП ПЕРЕВІРКА | ОЗАРКІВ, ТЕРЕШКО, ХАЙК, МИХАЙЛОВА",
+      "start": "2026-09-25T19:30:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-perevirka--ozarkiv-teresko-hajk-mihajlova--25-veresna-125121.html",
+      "source": "Kontramarka.ua"
+    }
+  ],
   "Максим Кравець": [],
   "Ігор Рапіта": [],
   "Ігор Нерівний": [],
@@ -128,19 +154,19 @@
       "source": "Concert.ua"
     },
     {
+      "title": "Слава Бу. СТЕНДАП та ІМПРОВІЗАЦІЯ",
+      "start": "2026-10-01T19:00:00+03:00",
+      "venue": "ШELTER Stand-Up Club",
+      "city": "Київ",
+      "url": "https://kontramarka.ua/uk/slava-bu-stendap-ta-improvizacia-125218.html",
+      "source": "Kontramarka.ua"
+    },
+    {
       "title": "СТЕНДАП у Чернігові",
       "start": "2026-10-04T18:00:00",
       "venue": "113 Party Bar",
       "city": "Чернігів",
       "url": "https://concert.ua/uk/event/stendap-chernigiv",
-      "source": "Concert.ua"
-    },
-    {
-      "title": "Слава Бу. СТЕНДАП та ІМПРОВІЗАЦІЯ",
-      "start": "2026-10-08T19:00:00",
-      "venue": "Артпаб \"Ліхтар\"",
-      "city": "Рівне",
-      "url": "https://concert.ua/uk/event/slava-bu-stendap-ta-improvizacija-rivne",
       "source": "Concert.ua"
     }
   ],
@@ -148,6 +174,14 @@
   "Льоня Тору": [],
   "Руслан Колесник": [],
   "Богдан Боярин": [
+    {
+      "title": "СТЕНДАП НА ТРЬОХ | БОЯРИН, СКОРИК, ОЗАРКІВ ",
+      "start": "2026-09-26T21:15:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-na-troh--boarin-skorik-ozarkiv--26-veresna-125125.html",
+      "source": "Kontramarka.ua"
+    },
     {
       "title": "ВЕЧІР ІМПРОВІЗАЦІЇ БОГДАНА БОРИНА ТА ВОВИ МАСЛОВА",
       "start": "2026-10-16T19:00:00",
@@ -179,17 +213,18 @@
       "city": "Миколаїв",
       "url": "https://concert.ua/uk/event/mikolayiv-batja-2-solnii-stendap-koncert",
       "source": "Concert.ua"
-    },
-    {
-      "title": "Батя 2. Сольний стендап концерт Богдана Боярина",
-      "start": "2026-11-01T18:00:00",
-      "venue": "Beit Grand (Єврейський культурний центр)",
-      "city": "Одеса",
-      "url": "https://concert.ua/uk/event/odesa-batja-2-solnii-stendap-koncert",
-      "source": "Concert.ua"
     }
   ],
-  "Алла Волкова": [],
+  "Алла Волкова": [
+    {
+      "title": "Сольний СТЕНДАП концерт Алли Волкової",
+      "start": "2026-10-08T19:30:00+03:00",
+      "venue": "Бочка Pub",
+      "city": "Київ",
+      "url": "https://kontramarka.ua/uk/solnij-stand-up-koncert-alli-volkovoj-76444.html",
+      "source": "Kontramarka.ua"
+    }
+  ],
   "Паша Пінчук": [
     {
       "title": "Вечір Імпровізації Паші Пінчука",
@@ -278,12 +313,12 @@
       "source": "Concert.ua"
     },
     {
-      "title": "Богдан Письменко. Стендап Імпровізація",
-      "start": "2026-10-11T19:00:00",
-      "venue": "Fat Goose Pub",
-      "city": "Харків",
-      "url": "https://concert.ua/uk/event/bogdan-pismenko-stendap-improvizacija-harkiv",
-      "source": "Concert.ua"
+      "title": "Богдан Письменко. Стендап імпровізація",
+      "start": "2026-10-10T18:00:00+03:00",
+      "venue": "Родинний Театр \"Нянькіни\" ",
+      "city": "Суми",
+      "url": "https://sumy.kontramarka.ua/uk/bogdan-pismenko-stendap-improvizacia-125162.html",
+      "source": "Kontramarka.ua"
     }
   ],
   "Саша Качура": [
@@ -358,12 +393,36 @@
       "source": "Underground Standup"
     },
     {
-      "title": "Настя Зухвала. Стендап тур",
-      "start": "2026-11-14T18:00:00",
-      "venue": "Будинок Кіно",
-      "city": "Київ",
-      "url": "https://concert.ua/uk/event/nastja-zuhvala",
-      "source": "Concert.ua"
+      "title": "Сольний стендап Насті Зухвалої «Необовʼязкова ганьба»",
+      "start": "2026-09-29T19:00:00+03:00",
+      "venue": "Полтавська обласна філармонія\t",
+      "city": "Полтава",
+      "url": "https://pl.kontramarka.ua/uk/2809-solnij-stendap-nasti-zuhvaloi-neobovazkova-ganba-v-poltavi-124589.html",
+      "source": "Kontramarka.ua"
+    },
+    {
+      "title": "Сольний стендап Насті Зухвалої «Необовʼязкова ганьба» ",
+      "start": "2026-10-02T18:30:00+03:00",
+      "venue": "Open Space ",
+      "city": "Тернопіль",
+      "url": "https://te.kontramarka.ua/uk/0210-solnij-stendap-nasti-zuhvaloi-neobovazkova-ganba-u-ternopoli-124590.html",
+      "source": "Kontramarka.ua"
+    },
+    {
+      "title": "Сольний стендап Насті Зухвалої «Необовʼязкова ганьба»",
+      "start": "2026-10-18T17:00:00+03:00",
+      "venue": "НЕЗЛАМНИЙ ХАБ",
+      "city": "Запоріжжя",
+      "url": "https://zp.kontramarka.ua/uk/1810-solnij-stendap-nasti-zuhvaloi-neobovazkova-ganba-v-zaporizzi-124597.html",
+      "source": "Kontramarka.ua"
+    },
+    {
+      "title": "Сольний стендап Насті Зухвалої «Необовʼязкова ганьба»",
+      "start": "2026-10-24T16:00:00+03:00",
+      "venue": "FREEDOM art pub",
+      "city": "Миколаїв",
+      "url": "https://mykolaiv.kontramarka.ua/uk/2410-solnij-stendap-nasti-zuhvaloi-neobovazkova-ganba-v-mikolaevi-124599.html",
+      "source": "Kontramarka.ua"
     }
   ],
   "Сергій Ліпко": [
@@ -541,6 +600,14 @@
       "city": "Київ",
       "url": "https://www.undergroundstandup.com/kiyiv/10-10-anton-stenyuk-solnyi-stendap",
       "source": "Underground Standup"
+    },
+    {
+      "title": "Антон Стенюк. Сольний стендап",
+      "start": "2026-10-10T19:00:00+03:00",
+      "venue": "Underground stand up club",
+      "city": "Київ",
+      "url": "https://kontramarka.ua/uk/anton-stenuk-solnij-stendap-1010-125039.html",
+      "source": "Kontramarka.ua"
     }
   ],
   "Ганна Кочегура": [
@@ -577,12 +644,12 @@
       "source": "Underground Standup"
     },
     {
-      "title": "Вечір Імпровізації",
-      "start": "2026-10-01T19:00:00+03:00",
-      "venue": "Underground Stand Up Club",
+      "title": "Ганна Кочегура. Перевірка матеріалу ",
+      "start": "2026-09-30T19:00:00+03:00",
+      "venue": "Underground stand up club",
       "city": "Київ",
-      "url": "https://www.undergroundstandup.com/kiyiv/10-01-vechir-improvizatsiyi",
-      "source": "Underground Standup"
+      "url": "https://kontramarka.ua/uk/ganna-kocegura-perevirka-materialu-3009-125155.html",
+      "source": "Kontramarka.ua"
     }
   ],
   "Сергій Степанисько": [
@@ -719,10 +786,28 @@
   "Сергій Афонський": [],
   "Володимир Жогло": [],
   "Олексій Ральніков": [],
-  "Тарас Яремій": [],
+  "Тарас Яремій": [
+    {
+      "title": "СТЕНДАП ВЕЧІР | ТАРАС ЯРЕМІЙ | 24 ВЕРЕСНЯ",
+      "start": "2026-09-24T20:00:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-vecir--taras-aremij--24-veresna-125397.html",
+      "source": "Kontramarka.ua"
+    }
+  ],
   "Славік Мартинюк": [],
   "Дімка Носов": [],
-  "Наталі Скорик": [],
+  "Наталі Скорик": [
+    {
+      "title": "СТЕНДАП НА ТРЬОХ | БОЯРИН, СКОРИК, ОЗАРКІВ ",
+      "start": "2026-09-26T21:15:00+03:00",
+      "venue": "Довгі бурхливі оплески",
+      "city": "Львів",
+      "url": "https://lviv.kontramarka.ua/uk/stendap-na-troh--boarin-skorik-ozarkiv--26-veresna-125125.html",
+      "source": "Kontramarka.ua"
+    }
+  ],
   "Фелікс Редька": [],
   "Іван Жорноклей": [],
   "Сергій Громовий": [],
@@ -798,12 +883,12 @@
       "source": "Concert.ua"
     },
     {
-      "title": "СТЕНДАП в Одесі",
-      "start": "2026-10-30T19:00:00",
-      "venue": "Beit Grand (Єврейський культурний центр)",
-      "city": "Одеса",
-      "url": "https://concert.ua/uk/event/stendap-v-odesi-30-10",
-      "source": "Concert.ua"
+      "title": "Раміль Янгулов. Сольний СТЕНДАП (Ірпінь)",
+      "start": "2026-10-25T18:00:00+03:00",
+      "venue": "Йорш PUB",
+      "city": "Ірпінь",
+      "url": "https://irp.kontramarka.ua/uk/ramil-angulov-solnij-stendap-irpin-125371.html",
+      "source": "Kontramarka.ua"
     }
   ],
   "Костянтин Ізюмов": [],
