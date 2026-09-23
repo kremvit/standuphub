@@ -592,12 +592,16 @@ const StandupHub = (() => {
     }
 
     const query = String(state.agendaSearch || "").trim().toLocaleLowerCase("uk");
-    const visibleEvents = query
-      ? sortedEvents.filter(event => [...event.participants].some(name => name.toLocaleLowerCase("uk").includes(query)))
+      const visibleEvents = query
+        ? sortedEvents.filter(event => {
+            const city = String(event.city || "").toLocaleLowerCase("uk");
+            return city.includes(query) || [...event.participants].some(name => name.toLocaleLowerCase("uk").includes(query));
+          })
       : sortedEvents;
 
     if (!visibleEvents.length){
       agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій цього коміка найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
+        agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій за цим коміком або містом найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
       return;
     }
 
@@ -1112,6 +1116,17 @@ const StandupHub = (() => {
       agendaSearchEl.value = state.agendaSearch;
 
       const performerNames = () => Object.keys(DATA.performers || {}).sort((a, b) => a.localeCompare(b, "uk"));
+      const cityNames = () => {
+        const cities = new Set();
+        for (const performerEvents of Object.values(DATA.events || {})){
+          if (!Array.isArray(performerEvents)) continue;
+          for (const event of performerEvents){
+            const city = String(event?.city || "").trim();
+            if (city && isUpcomingEvent(event)) cities.add(city);
+          }
+        }
+        return [...cities].sort((a, b) => a.localeCompare(b, "uk"));
+      };
 
       const hideSuggestions = () => {
         if (agendaSuggestionsEl){
@@ -1123,13 +1138,20 @@ const StandupHub = (() => {
       const showSuggestions = () => {
         if (!agendaSuggestionsEl) return;
         const query = agendaSearchEl.value.trim().toLocaleLowerCase("uk");
-        const matches = (query ? performerNames().filter(name => name.toLocaleLowerCase("uk").includes(query)) : performerNames()).slice(0, 8);
+        const suggestions = [
+          ...performerNames().map(value => ({ value, label: value })),
+          ...cityNames().map(value => ({ value, label: `Місто: ${value}` })),
+        ];
+        const matches = (query
+          ? suggestions.filter(item => item.value.toLocaleLowerCase("uk").includes(query))
+          : suggestions
+        ).slice(0, 8);
         if (!matches.length){
           hideSuggestions();
           return;
         }
         agendaSuggestionsEl.innerHTML = matches
-          .map(name => `<button type="button" class="agendaSearchSuggestionItem">${escapeHtml(name)}</button>`)
+          .map(item => `<button type="button" class="agendaSearchSuggestionItem" data-value="${escapeAttr(item.value)}">${escapeHtml(item.label)}</button>`)
           .join("");
         agendaSuggestionsEl.hidden = false;
       };
@@ -1150,8 +1172,9 @@ const StandupHub = (() => {
           const button = e.target.closest(".agendaSearchSuggestionItem");
           if (!button) return;
           e.preventDefault();
-          agendaSearchEl.value = button.textContent;
-          state.agendaSearch = button.textContent;
+          const value = button.dataset.value || button.textContent;
+          agendaSearchEl.value = value;
+          state.agendaSearch = value;
           hideSuggestions();
           renderAgenda();
         });
