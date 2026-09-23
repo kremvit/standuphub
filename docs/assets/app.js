@@ -603,11 +603,9 @@ const StandupHub = (() => {
 
     agendaEl.innerHTML = visibleEvents.map(event => `
       <article class="agendaEvent">
-        <div class="agendaEventDate">
-          <span class="agendaEventDateText">${escapeHtml(formatEventDate(event.start, event.source))}</span>
-          ${eventThumbHtml(event, "agendaEventThumb")}
-        </div>
+        ${eventThumbHtml(event, "agendaEventThumb")}
         <div class="agendaEventBody">
+          <div class="agendaEventDate">${escapeHtml(formatEventDate(event.start, event.source))}</div>
           <h2 class="agendaEventTitle">${escapeHtml(event.title)}</h2>
           <div class="agendaEventMeta">${escapeHtml([event.city, event.venue].filter(Boolean).join(", ") || "Місце уточнюється")}</div>
           <div class="agendaParticipants">

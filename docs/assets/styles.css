@@ -610,6 +610,8 @@ body{
   gap:2px;
 }
 
+.agendaSearchSuggestions[hidden]{ display:none; }
+
 .agendaSearchSuggestionItem{
   display:block;
   width:100%;
@@ -638,7 +640,7 @@ body{
 
 .agendaEvent{
   display:grid;
-  grid-template-columns:150px minmax(0, 1fr);
+  grid-template-columns:84px minmax(0, 1fr);
   gap:18px;
   align-items:start;
   padding:18px;
@@ -665,9 +667,6 @@ body{
 }
 
 .agendaEventDate{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
   color:var(--accent);
   font-size:15px;
   font-weight:900;
@@ -699,7 +698,8 @@ body{
 .agendaEmpty{ color:var(--muted); }
 
 @media (max-width:600px){
-  .agendaEvent{ grid-template-columns:1fr; gap:10px; }
+  .agendaEvent{ grid-template-columns:64px minmax(0, 1fr); gap:12px; padding:14px; }
+  .agendaEventThumb, .agendaEventThumbEmpty{ width:64px; height:64px; }
 }
 
 .performerInstagramLink,
