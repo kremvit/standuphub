@@ -499,12 +499,32 @@ body{
 
 .comedianEvent{
   display:grid;
-  gap:5px;
+  grid-template-columns:64px minmax(0, 1fr);
+  gap:12px;
+  align-items:start;
   padding:12px 14px;
   background:var(--panel2);
   border:1px solid var(--border);
   border-radius:10px;
 }
+
+.comedianEventThumb{
+  width:64px;
+  height:64px;
+  border-radius:8px;
+  object-fit:cover;
+  background:var(--panel);
+  border:1px solid var(--border);
+}
+
+.comedianEventThumbEmpty{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+
+.comedianEventBody{ display:grid; gap:5px; min-width:0; }
 
 .comedianEventAdditional{ display:none; }
 .comedianEventsExpanded .comedianEventAdditional{ display:grid; }
@@ -552,6 +572,64 @@ body{
   font-size:16px;
 }
 
+.agendaSearchWrap{
+  position:relative;
+  max-width:980px;
+  margin-top:14px;
+}
+
+.agendaSearchInput{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 16px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--text);
+  font-size:15px;
+  font-weight:700;
+}
+
+.agendaSearchInput::placeholder{ color:var(--muted); font-weight:600; }
+.agendaSearchInput:focus{ outline:none; border-color:rgba(255,138,0,.6); }
+
+.agendaSearchSuggestions{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  max-height:280px;
+  overflow-y:auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  z-index:20;
+  padding:6px;
+  display:grid;
+  gap:2px;
+}
+
+.agendaSearchSuggestionItem{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:8px 10px;
+  background:transparent;
+  border:none;
+  border-radius:8px;
+  color:var(--text);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.agendaSearchSuggestionItem:hover,
+.agendaSearchSuggestionItem:focus{
+  background:var(--panel2);
+  outline:none;
+}
+
 .agendaList{
   display:grid;
   gap:12px;
@@ -562,6 +640,7 @@ body{
   display:grid;
   grid-template-columns:150px minmax(0, 1fr);
   gap:18px;
+  align-items:start;
   padding:18px;
   background:var(--panel);
   border:1px solid var(--border);
@@ -569,7 +648,26 @@ body{
   box-shadow:var(--shadow);
 }
 
+.agendaEventThumb{
+  width:84px;
+  height:84px;
+  border-radius:10px;
+  object-fit:cover;
+  background:var(--panel2);
+  border:1px solid var(--border);
+}
+
+.agendaEventThumbEmpty{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+}
+
 .agendaEventDate{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
   color:var(--accent);
   font-size:15px;
   font-weight:900;

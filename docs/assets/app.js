@@ -9,7 +9,8 @@ const StandupHub = (() => {
     year: "all",
     page: 1,
     pageSize: 10,
-    search: ""
+    search: "",
+    agendaSearch: ""
   };
 
   function qs(id){ return document.getElementById(id); }
@@ -498,6 +499,13 @@ const StandupHub = (() => {
     return startMs != null && startMs >= Date.now();
   }
 
+  function eventThumbHtml(event, className = "comedianEventThumb"){
+    const poster = String(event?.poster || "").trim();
+    const placeholderJs = `<div class=\\"${className} ${className}Empty\\" aria-hidden=\\"true\\">🎤</div>`;
+    if (!poster) return `<div class="${className} ${className}Empty" aria-hidden="true">🎤</div>`;
+    return `<img class="${className}" src="${escapeAttr(poster)}" alt="" loading="lazy" onerror='this.outerHTML="${placeholderJs}"' />`;
+  }
+
   function renderPerformerEvents(){
     const eventsEl = qs("comedianEvents");
     if (!eventsEl) return;
@@ -523,10 +531,13 @@ const StandupHub = (() => {
       <div class="comedianEventsList">
         ${events.map((event, index) => `
           <article class="comedianEvent${index > 0 ? " comedianEventAdditional" : ""}">
-            <div class="comedianEventName">${escapeHtml(event.title)}</div>
-            <div class="comedianEventMeta">📅 ${escapeHtml(formatEventDate(event.start, event.source))}</div>
-            <div class="comedianEventMeta">📍 ${escapeHtml([event.city, event.venue].filter(Boolean).join(", "))}</div>
-            <a class="comedianEventLink" href="${escapeAttr(event.url)}" target="_blank" rel="noopener noreferrer">🎟 Квитки: ${escapeHtml(event.source || "сайт події")}</a>
+            ${eventThumbHtml(event)}
+            <div class="comedianEventBody">
+              <div class="comedianEventName">${escapeHtml(event.title)}</div>
+              <div class="comedianEventMeta">📅 ${escapeHtml(formatEventDate(event.start, event.source))}</div>
+              <div class="comedianEventMeta">📍 ${escapeHtml([event.city, event.venue].filter(Boolean).join(", "))}</div>
+              <a class="comedianEventLink" href="${escapeAttr(event.url)}" target="_blank" rel="noopener noreferrer">🎟 Квитки: ${escapeHtml(event.source || "сайт події")}</a>
+            </div>
           </article>
         `).join("")}
       </div>
@@ -580,14 +591,22 @@ const StandupHub = (() => {
       }
     }
 
-    if (!sortedEvents.length){
-      agendaEl.innerHTML = `<div class="agendaEmpty">Найближчих концертів поки немає.</div>`;
+    const query = String(state.agendaSearch || "").trim().toLocaleLowerCase("uk");
+    const visibleEvents = query
+      ? sortedEvents.filter(event => [...event.participants].some(name => name.toLocaleLowerCase("uk").includes(query)))
+      : sortedEvents;
+
+    if (!visibleEvents.length){
+      agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій цього коміка найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
       return;
     }
 
-    agendaEl.innerHTML = sortedEvents.map(event => `
+    agendaEl.innerHTML = visibleEvents.map(event => `
       <article class="agendaEvent">
-        <div class="agendaEventDate">${escapeHtml(formatEventDate(event.start, event.source))}</div>
+        <div class="agendaEventDate">
+          <span class="agendaEventDateText">${escapeHtml(formatEventDate(event.start, event.source))}</span>
+          ${eventThumbHtml(event, "agendaEventThumb")}
+        </div>
         <div class="agendaEventBody">
           <h2 class="agendaEventTitle">${escapeHtml(event.title)}</h2>
           <div class="agendaEventMeta">${escapeHtml([event.city, event.venue].filter(Boolean).join(", ") || "Місце уточнюється")}</div>
@@ -1087,6 +1106,58 @@ const StandupHub = (() => {
         clearTimeout(t);
         t = setTimeout(render, 120);
       });
+    }
+
+    const agendaSearchEl = qs("agendaSearch");
+    const agendaSuggestionsEl = qs("agendaSearchSuggestions");
+    if (agendaSearchEl){
+      agendaSearchEl.value = state.agendaSearch;
+
+      const performerNames = () => Object.keys(DATA.performers || {}).sort((a, b) => a.localeCompare(b, "uk"));
+
+      const hideSuggestions = () => {
+        if (agendaSuggestionsEl){
+          agendaSuggestionsEl.hidden = true;
+          agendaSuggestionsEl.innerHTML = "";
+        }
+      };
+
+      const showSuggestions = () => {
+        if (!agendaSuggestionsEl) return;
+        const query = agendaSearchEl.value.trim().toLocaleLowerCase("uk");
+        const matches = (query ? performerNames().filter(name => name.toLocaleLowerCase("uk").includes(query)) : performerNames()).slice(0, 8);
+        if (!matches.length){
+          hideSuggestions();
+          return;
+        }
+        agendaSuggestionsEl.innerHTML = matches
+          .map(name => `<button type="button" class="agendaSearchSuggestionItem">${escapeHtml(name)}</button>`)
+          .join("");
+        agendaSuggestionsEl.hidden = false;
+      };
+
+      let agendaTimer = null;
+      agendaSearchEl.addEventListener("input", () => {
+        state.agendaSearch = agendaSearchEl.value;
+        showSuggestions();
+        clearTimeout(agendaTimer);
+        agendaTimer = setTimeout(renderAgenda, 120);
+      });
+
+      agendaSearchEl.addEventListener("focus", showSuggestions);
+      agendaSearchEl.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
+
+      if (agendaSuggestionsEl){
+        agendaSuggestionsEl.addEventListener("mousedown", (e) => {
+          const button = e.target.closest(".agendaSearchSuggestionItem");
+          if (!button) return;
+          e.preventDefault();
+          agendaSearchEl.value = button.textContent;
+          state.agendaSearch = button.textContent;
+          hideSuggestions();
+          renderAgenda();
+        });
+      }
     }
   }
 

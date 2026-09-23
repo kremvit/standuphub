@@ -136,6 +136,15 @@ def event_location(event):
     return location.get("name", ""), address.get("addressLocality", "")
 
 
+def event_image(event):
+    image = event.get("image")
+    if isinstance(image, list):
+        image = image[0] if image else None
+    if isinstance(image, dict):
+        image = image.get("url")
+    return image or ""
+
+
 def get_with_retry(url, headers, params=None):
     # 403 is treated as a persistent block (bot protection), not retried.
     last_error = None
@@ -209,6 +218,7 @@ def fetch_concert_ua_events(headers):
             "venue": venues[0] if venues else "",
             "city": cities[0] if cities else "",
             "url": url,
+            "poster": item.get("posterUrl") or "",
             "source": "Concert.ua",
         })
     return events
@@ -259,6 +269,7 @@ def fetch_kontramarka_events(headers):
             "venue": item.get("siteName", ""),
             "city": city,
             "url": url,
+            "poster": item.get("picture") or "",
             "source": "Kontramarka.ua",
         })
     return events
@@ -305,6 +316,7 @@ def parse_underground_events(html, headers):
             "venue": "Underground Stand Up Club",
             "city": "Київ",
             "url": url,
+            "poster": "",
             "source": "Underground Standup",
         })
     return events
@@ -356,6 +368,7 @@ def main():
                     "venue": location_name,
                     "city": city,
                     "url": url,
+                    "poster": event_image(event),
                     "source": source_name,
                 })
                 matched = True
