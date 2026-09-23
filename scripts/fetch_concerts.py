@@ -3,6 +3,7 @@
 
 import json
 import re
+import time
 from html import unescape
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,14 +12,18 @@ from urllib.parse import urljoin
 import requests
 
 
+RETRY_ATTEMPTS = 3
+RETRY_BACKOFF_SEC = 2.0
 OUTPUT_PATH = Path("docs/data/events.json")
 PERFORMERS_PATH = Path("performers.txt")
 SOURCES = [
-    ("Concert.ua", "https://concert.ua/uk/catalog/all-cities/humor"),
     ("Karabas", "https://lviv.karabas.com/stand-up/"),
     ("Kontramarka.ua", "https://lviv.kontramarka.ua/uk/standUp"),
 ]
 UNDERGROUND_URL = "https://www.undergroundstandup.com/"
+# Undocumented internal API; the public catalog page returns 403 for bots.
+CONCERT_UA_API_URL = "https://concert.ua/api/v3/search"
+CONCERT_UA_QUERIES = ["standup", "стендап", "стенд ап"]
 
 
 def load_performers():
@@ -123,6 +128,29 @@ def event_location(event):
     return location.get("name", ""), address.get("addressLocality", "")
 
 
+def get_with_retry(url, headers, params=None):
+    # 403 is treated as a persistent block (bot protection), not retried.
+    last_error = None
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            response = requests.get(url, timeout=30, headers=headers, params=params)
+            if response.status_code in (429, 500, 502, 503, 504) and attempt < RETRY_ATTEMPTS:
+                delay = RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+                print(f"RETRY {attempt}/{RETRY_ATTEMPTS}: {url}: status={response.status_code}, sleep={delay:.1f}s")
+                time.sleep(delay)
+                continue
+            response.raise_for_status()
+            return response
+        except requests.RequestException as error:
+            last_error = error
+            if attempt >= RETRY_ATTEMPTS or (getattr(error.response, "status_code", None) == 403):
+                break
+            delay = RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+            print(f"RETRY {attempt}/{RETRY_ATTEMPTS}: {url}: {type(error).__name__}, sleep={delay:.1f}s")
+            time.sleep(delay)
+    raise last_error
+
+
 def is_future(start):
     try:
         date = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
@@ -138,6 +166,46 @@ def strip_html(value):
     return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
 
 
+def fetch_concert_ua_events(headers):
+    api_headers = dict(headers)
+    api_headers.update({
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+    })
+
+    events_by_id = {}
+    for query in CONCERT_UA_QUERIES:
+        try:
+            response = get_with_retry(CONCERT_UA_API_URL, api_headers, params={"query": query})
+        except requests.RequestException as error:
+            print(f"WARNING: Concert.ua unavailable ({query}): {error}")
+            continue
+        for item in response.json().get("response", {}).get("items", []):
+            if item.get("entityType") == "Event" and item.get("id") is not None:
+                events_by_id[item["id"]] = item
+
+    events = []
+    for item in events_by_id.values():
+        start = str(item.get("dateStart", "")).replace(" ", "T")
+        url = urljoin("https://concert.ua", item.get("link") or "")
+        title = item.get("title") or ""
+        if not url or not start or not title or not is_future(start):
+            continue
+        venues = item.get("venuesTitles") or []
+        cities = item.get("venuesCitiesTitles") or []
+        performers_titles = item.get("performersTitles") or []
+        events.append({
+            "title": title,
+            "description": " ".join(performers_titles),
+            "start": start,
+            "venue": venues[0] if venues else "",
+            "city": cities[0] if cities else "",
+            "url": url,
+            "source": "Concert.ua",
+        })
+    return events
+
+
 def parse_underground_events(html, headers):
     links = []
     for href in re.findall(r'href=["\']([^"\']+)["\']', html, flags=re.IGNORECASE):
@@ -151,8 +219,7 @@ def parse_underground_events(html, headers):
         if not match:
             continue
         try:
-            detail = requests.get(url, timeout=30, headers=headers)
-            detail.raise_for_status()
+            detail = get_with_retry(url, headers)
         except requests.RequestException as error:
             print(f"WARNING: Underground event unavailable: {url}: {error}")
             continue
@@ -205,8 +272,7 @@ def main():
 
     for source_name, source_url in SOURCES:
         try:
-            response = requests.get(source_url, timeout=30, headers=headers)
-            response.raise_for_status()
+            response = get_with_retry(source_url, headers)
         except requests.RequestException as error:
             print(f"WARNING: {source_name} unavailable: {error}")
             continue
@@ -239,14 +305,13 @@ def main():
                 seen.add(url)
 
     try:
-        underground_response = requests.get(UNDERGROUND_URL, timeout=30, headers=headers)
-        underground_response.raise_for_status()
+        underground_response = get_with_retry(UNDERGROUND_URL, headers)
         underground_events = parse_underground_events(underground_response.text, headers)
     except requests.RequestException as error:
         print(f"WARNING: Underground Standup unavailable: {error}")
         underground_events = []
 
-    for event in underground_events:
+    for event in underground_events + fetch_concert_ua_events(headers):
         if event["url"] in seen:
             continue
         haystack = normalize_text(" ".join([event["title"], event["description"]]))
