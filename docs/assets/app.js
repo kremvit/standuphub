@@ -574,6 +574,9 @@ const StandupHub = (() => {
         const existing = events.get(key);
         if (existing){
           existing.participants.add(performer);
+          if (existing.source === "Karabas" && event.source !== "Karabas" && event.url){
+            events.set(key, { ...event, participants: existing.participants });
+          }
           continue;
         }
         events.set(key, { ...event, participants: new Set([performer]) });

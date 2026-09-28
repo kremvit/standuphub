@@ -7,7 +7,7 @@ import time
 from html import unescape
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import requests
 from dateutil.tz import gettz
@@ -218,6 +218,12 @@ def strip_html(value):
     return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
 
 
+def normalize_karabas_event_url(url):
+    parsed = urlsplit(url)
+    path = re.sub(r"^/(?:uk|ru|en)(?=/)", "", parsed.path, flags=re.IGNORECASE)
+    return urlunsplit(parsed._replace(path=path))
+
+
 def fetch_karabas_events(headers):
     api_headers = dict(headers)
     api_headers.update({
@@ -259,7 +265,7 @@ def fetch_karabas_events(headers):
         total_pages = max(1, int(data.get("total_pages") or 1))
         for item in data.get("items", []):
             start = item.get("event_date") or item.get("display_date") or item.get("virtual_date")
-            url = item.get("event_url") or ""
+            url = normalize_karabas_event_url(item.get("event_url") or "")
             title = item.get("name") or item.get("alternate_name") or ""
             if not start or not url or not title:
                 continue
