@@ -1274,6 +1274,11 @@ body{
   flex-wrap:wrap;
 }
 
+.agendaPagination[hidden]{ display:none; }
+.agendaPagination .pageBtn:disabled{ opacity:.5; cursor:default; }
+.agendaPagination .pageBtn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.agendaPageEllipsis{ display:flex; align-items:center; padding:0 4px; color:var(--muted); }
+
 .pageBtn{
   background:var(--panel2);
   border:1px solid var(--border);

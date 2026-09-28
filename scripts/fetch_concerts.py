@@ -10,15 +10,15 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
+from dateutil.tz import gettz
 
 
 RETRY_ATTEMPTS = 3
 RETRY_BACKOFF_SEC = 2.0
 OUTPUT_PATH = Path("docs/data/events.json")
 PERFORMERS_PATH = Path("performers.txt")
-SOURCES = [
-    ("Karabas", "https://lviv.karabas.com/stand-up/"),
-]
+KARABAS_API_URL = "https://karabas.com/api/catalog"
+KARABAS_EVENT_TZ = gettz("Europe/Kyiv") or timezone(timedelta(hours=3))
 UNDERGROUND_URL = "https://www.undergroundstandup.com/"
 # Undocumented internal API; the public catalog page returns 403 for bots.
 CONCERT_UA_API_URL = "https://concert.ua/api/v3/search"
@@ -168,6 +168,28 @@ def get_with_retry(url, headers, params=None):
     raise last_error
 
 
+def post_json_with_retry(url, headers, payload):
+    last_error = None
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            response = requests.post(url, timeout=30, headers=headers, json=payload)
+            if response.status_code in (429, 500, 502, 503, 504) and attempt < RETRY_ATTEMPTS:
+                delay = RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+                print(f"RETRY {attempt}/{RETRY_ATTEMPTS}: {url}: status={response.status_code}, sleep={delay:.1f}s")
+                time.sleep(delay)
+                continue
+            response.raise_for_status()
+            return response
+        except requests.RequestException as error:
+            last_error = error
+            if attempt >= RETRY_ATTEMPTS or getattr(error.response, "status_code", None) == 403:
+                break
+            delay = RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+            print(f"RETRY {attempt}/{RETRY_ATTEMPTS}: {url}: {type(error).__name__}, sleep={delay:.1f}s")
+            time.sleep(delay)
+    raise last_error
+
+
 def is_future(start):
     try:
         date = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
@@ -181,6 +203,73 @@ def is_future(start):
 def strip_html(value):
     value = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", value, flags=re.IGNORECASE | re.DOTALL)
     return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
+
+
+def fetch_karabas_events(headers):
+    api_headers = dict(headers)
+    api_headers.update({
+        "Accept": "application/json",
+        "Accept-Language": "uk",
+        "Content-Type": "application/json",
+        "Origin": "https://karabas.com",
+        "Referer": "https://karabas.com/stand-up/",
+    })
+    try:
+        meta_response = post_json_with_retry(f"{KARABAS_API_URL}/events/meta", api_headers, {})
+        meta = meta_response.json()
+    except (requests.RequestException, ValueError) as error:
+        print(f"WARNING: Karabas unavailable (category metadata): {error}")
+        return []
+
+    categories = meta.get("categories") or {}
+    category_items = categories.get("featured", []) + categories.get("other", [])
+    standup = next((item for item in category_items if item.get("slug") == "stand-up"), None)
+    if not standup or not standup.get("id"):
+        print("WARNING: Karabas stand-up category missing from API metadata")
+        return []
+
+    events = []
+    page = 1
+    total_pages = 1
+    while page <= total_pages:
+        try:
+            response = post_json_with_retry(
+                f"{KARABAS_API_URL}/events",
+                api_headers,
+                {"categories": [standup["id"]], "page": page},
+            )
+            data = response.json()
+        except (requests.RequestException, ValueError) as error:
+            print(f"WARNING: Karabas unavailable (page {page}): {error}")
+            break
+
+        total_pages = max(1, int(data.get("total_pages") or 1))
+        for item in data.get("items", []):
+            start = item.get("event_date") or item.get("display_date") or item.get("virtual_date")
+            url = item.get("event_url") or ""
+            title = item.get("name") or item.get("alternate_name") or ""
+            if not start or not url or not title:
+                continue
+            try:
+                start_dt = datetime.fromisoformat(str(start).replace(" ", "T"))
+            except ValueError:
+                continue
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=KARABAS_EVENT_TZ)
+            if not is_future(start_dt.isoformat()):
+                continue
+            events.append({
+                "title": title,
+                "description": strip_html(item.get("description") or ""),
+                "start": start_dt.isoformat(),
+                "venue": item.get("building_name") or item.get("building_group_name") or "",
+                "city": item.get("city_name") or "",
+                "url": url,
+                "poster": item.get("image_big") or item.get("image_medium") or "",
+                "source": "Karabas",
+            })
+        page += 1
+    return events
 
 
 def fetch_concert_ua_events(headers):
@@ -340,41 +429,6 @@ def main():
         "Upgrade-Insecure-Requests": "1",
     }
 
-    for source_name, source_url in SOURCES:
-        try:
-            response = get_with_retry(source_url, headers)
-        except requests.RequestException as error:
-            print(f"WARNING: {source_name} unavailable: {error}")
-            continue
-
-        for event in parse_json_ld(response.text):
-            url = urljoin(source_url, str(event.get("url", "")))
-            start = event.get("startDate")
-            title = event.get("name") or event.get("headline") or ""
-            if not url or not start or not title or not is_future(start) or url in seen:
-                continue
-
-            location_name, city = event_location(event)
-            work = event.get("workPerformed")
-            work_name = work.get("name", "") if isinstance(work, dict) else ""
-            haystack = normalize_text(" ".join([title, event.get("description", ""), work_name]))
-            matched = False
-            for performer, aliases in performers.items():
-                if not any(contains_name_variant(haystack, alias) for alias in aliases):
-                    continue
-                events_by_performer[performer].append({
-                    "title": title,
-                    "start": start,
-                    "venue": location_name,
-                    "city": city,
-                    "url": url,
-                    "poster": event_image(event),
-                    "source": source_name,
-                })
-                matched = True
-            if matched:
-                seen.add(url)
-
     try:
         underground_response = get_with_retry(UNDERGROUND_URL, headers)
         underground_events = parse_underground_events(underground_response.text, headers)
@@ -382,7 +436,7 @@ def main():
         print(f"WARNING: Underground Standup unavailable: {error}")
         underground_events = []
 
-    for event in underground_events + fetch_concert_ua_events(headers) + fetch_kontramarka_events(headers):
+    for event in fetch_karabas_events(headers) + underground_events + fetch_concert_ua_events(headers) + fetch_kontramarka_events(headers):
         if event["url"] in seen:
             continue
         haystack = normalize_text(" ".join([event["title"], event["description"]]))

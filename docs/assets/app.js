@@ -10,8 +10,11 @@ const StandupHub = (() => {
     page: 1,
     pageSize: 10,
     search: "",
-    agendaSearch: ""
+    agendaSearch: "",
+    agendaPage: 1
   };
+
+  const AGENDA_PAGE_SIZE = 20;
 
   function qs(id){ return document.getElementById(id); }
 
@@ -602,10 +605,17 @@ const StandupHub = (() => {
     if (!visibleEvents.length){
       agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій цього коміка найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
         agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій за цим коміком або містом найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
+      renderAgendaPagination(0);
       return;
     }
 
-    agendaEl.innerHTML = visibleEvents.map(event => `
+    const totalPages = Math.ceil(visibleEvents.length / AGENDA_PAGE_SIZE);
+    state.agendaPage = Math.min(Math.max(1, state.agendaPage), totalPages);
+    renderAgendaPagination(totalPages);
+    const pageStart = (state.agendaPage - 1) * AGENDA_PAGE_SIZE;
+    const pageEvents = visibleEvents.slice(pageStart, pageStart + AGENDA_PAGE_SIZE);
+
+    agendaEl.innerHTML = pageEvents.map(event => `
       <article class="agendaEvent">
         ${eventThumbHtml(event, "agendaEventThumb")}
         <div class="agendaEventBody">
@@ -621,6 +631,64 @@ const StandupHub = (() => {
         </div>
       </article>
     `).join("");
+  }
+
+  function renderAgendaPagination(totalPages){
+    const nav = qs("agendaPagination");
+    if (!nav) return;
+    nav.replaceChildren();
+    nav.hidden = totalPages <= 1;
+    if (nav.hidden) return;
+
+    const addButton = (label, page, options = {}) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "pageBtn" + (options.active ? " active" : "");
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute("aria-label", options.ariaLabel || `Сторінка ${page}`);
+      if (options.active) button.setAttribute("aria-current", "page");
+      button.addEventListener("click", () => {
+        state.agendaPage = page;
+        renderAgenda();
+        qs("agendaList")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      nav.appendChild(button);
+    };
+    const addEllipsis = () => {
+      const ellipsis = document.createElement("span");
+      ellipsis.className = "agendaPageEllipsis";
+      ellipsis.setAttribute("aria-hidden", "true");
+      ellipsis.textContent = "…";
+      nav.appendChild(ellipsis);
+    };
+
+    const currentPage = state.agendaPage;
+    addButton("«", Math.max(1, currentPage - 1), {
+      disabled: currentPage === 1,
+      ariaLabel: "Попередня сторінка",
+    });
+
+    const maxButtons = 7;
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let end = Math.min(totalPages, start + maxButtons - 1);
+    start = Math.max(1, end - maxButtons + 1);
+    if (start > 1){
+      addButton("1", 1, { active: currentPage === 1 });
+      if (start > 2) addEllipsis();
+    }
+    for (let page = start; page <= end; page++){
+      addButton(String(page), page, { active: page === currentPage });
+    }
+    if (end < totalPages){
+      if (end < totalPages - 1) addEllipsis();
+      addButton(String(totalPages), totalPages, { active: currentPage === totalPages });
+    }
+
+    addButton("»", Math.min(totalPages, currentPage + 1), {
+      disabled: currentPage === totalPages,
+      ariaLabel: "Наступна сторінка",
+    });
   }
 
   // ---------- modal ----------
@@ -1159,6 +1227,7 @@ const StandupHub = (() => {
       let agendaTimer = null;
       agendaSearchEl.addEventListener("input", () => {
         state.agendaSearch = agendaSearchEl.value;
+        state.agendaPage = 1;
         showSuggestions();
         clearTimeout(agendaTimer);
         agendaTimer = setTimeout(renderAgenda, 120);
@@ -1175,6 +1244,7 @@ const StandupHub = (() => {
           const value = button.dataset.value || button.textContent;
           agendaSearchEl.value = value;
           state.agendaSearch = value;
+          state.agendaPage = 1;
           hideSuggestions();
           renderAgenda();
         });
