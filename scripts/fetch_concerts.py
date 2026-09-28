@@ -179,7 +179,20 @@ def post_json_with_retry(url, headers, payload):
                 time.sleep(delay)
                 continue
             response.raise_for_status()
-            return response
+            try:
+                return response.json()
+            except ValueError as error:
+                content_type = response.headers.get("Content-Type", "unknown")
+                preview = re.sub(r"\s+", " ", response.text[:160]).strip()
+                last_error = ValueError(
+                    f"invalid JSON from {url}: status={response.status_code}, "
+                    f"content-type={content_type}, bytes={len(response.content)}, body={preview!r}"
+                )
+                if attempt >= RETRY_ATTEMPTS:
+                    break
+                delay = RETRY_BACKOFF_SEC * (2 ** (attempt - 1))
+                print(f"RETRY {attempt}/{RETRY_ATTEMPTS}: {last_error}, sleep={delay:.1f}s")
+                time.sleep(delay)
         except requests.RequestException as error:
             last_error = error
             if attempt >= RETRY_ATTEMPTS or getattr(error.response, "status_code", None) == 403:
@@ -215,8 +228,7 @@ def fetch_karabas_events(headers):
         "Referer": "https://karabas.com/stand-up/",
     })
     try:
-        meta_response = post_json_with_retry(f"{KARABAS_API_URL}/events/meta", api_headers, {})
-        meta = meta_response.json()
+        meta = post_json_with_retry(f"{KARABAS_API_URL}/events/meta", api_headers, {})
     except (requests.RequestException, ValueError) as error:
         print(f"WARNING: Karabas unavailable (category metadata): {error}")
         return []
@@ -238,7 +250,7 @@ def fetch_karabas_events(headers):
                 api_headers,
                 {"categories": [standup["id"]], "page": page},
             )
-            data = response.json()
+            data = response
         except (requests.RequestException, ValueError) as error:
             print(f"WARNING: Karabas unavailable (page {page}): {error}")
             break
