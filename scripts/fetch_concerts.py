@@ -222,6 +222,7 @@ def fetch_karabas_events(headers):
     api_headers = dict(headers)
     api_headers.update({
         "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate",
         "Accept-Language": "uk",
         "Content-Type": "application/json",
         "Origin": "https://karabas.com",
