@@ -521,7 +521,10 @@ const StandupHub = (() => {
 
     const events = (Array.isArray(DATA.events?.[state.performer])
       ? DATA.events[state.performer]
-      : []).filter(isUpcomingEvent);
+      : [])
+      .filter(isUpcomingEvent)
+      .sort((a, b) => (parseDateMs(a.start) || Number.MAX_SAFE_INTEGER) - (parseDateMs(b.start) || Number.MAX_SAFE_INTEGER))
+      .slice(0, 5);
     if (!events.length){
       eventsEl.hidden = true;
       eventsEl.innerHTML = "";

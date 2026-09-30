@@ -470,7 +470,6 @@ def main():
 
     for events in events_by_performer.values():
         events.sort(key=lambda event: event["start"])
-        del events[5:]
 
     OUTPUT_PATH.write_text(
         json.dumps(events_by_performer, ensure_ascii=False, indent=2) + "\n",
