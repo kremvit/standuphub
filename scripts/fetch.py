@@ -255,7 +255,7 @@ def load_channel_exceptions(path="channel_exceptions.txt"):
 
 Rule = Callable[[Video], Tuple[bool, str]]  # (passed, reason_if_failed)
 
-STANDUP_KEYWORDS = ["стендап", "stand up", "standup", "сольний концерт"]
+STANDUP_KEYWORDS = ["стендап", "cтендап", "stand up", "standup", "сольний концерт"]
 
 CHANNEL_EXCEPTIONS = load_channel_exceptions()
 
