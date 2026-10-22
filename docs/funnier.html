@@ -535,13 +535,36 @@
       return "data:image/svg+xml," + encodeURIComponent(silhouette);
     }
 
+    let photoIndexPromise = null;
+    function loadPhotoIndex() {
+      if (!photoIndexPromise) {
+        photoIndexPromise = fetch("data/photo_index.json")
+          .then(r => r.ok ? r.json() : null)
+          .then(list => list ? new Map(list.map(p => [p.name, encodeURI(p.path)])) : null)
+          .catch(() => null);
+      }
+      return photoIndexPromise;
+    }
+
     async function getPerformerPhotoUrl(performer) {
       // Check cache first
       if (performer in photoCache) {
         return photoCache[performer];
       }
 
-      // Try jpg first, then png
+      const index = await loadPhotoIndex();
+      if (index) {
+        if (index.has(performer)) {
+          const path = index.get(performer);
+          photoCache[performer] = path;
+          return path;
+        }
+        const silhouette = generateSilhouette();
+        photoCache[performer] = silhouette;
+        return silhouette;
+      }
+
+      // Index unavailable: try jpg first, then png
       for (const format of [".jpg", ".png"]) {
         const path = `./photo/${encodeURIComponent(performer)}${format}`;
         try {
