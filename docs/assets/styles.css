@@ -414,13 +414,13 @@ body{
 }
 
 .performerCard{
+  position:relative;
   flex-shrink:0;
   width:260px;
   background:var(--panel);
   border:1px solid var(--border);
   border-radius:14px;
   box-shadow:var(--shadow);
-  overflow:hidden;
   display:none;
 }
 
@@ -429,12 +429,19 @@ body{
   flex-direction:column;
 }
 
-.performerCard img{
+.performerCardPortrait{
+  position:relative;
+  width:100%;
+  flex-shrink:0;
+}
+
+.performerCardPortrait img{
   width:100%;
   height:auto;
   display:block;
   object-fit:cover;
   aspect-ratio:1/1;
+  border-radius:13px 13px 0 0;
   background:linear-gradient(135deg,#1f1f2b,#10101a);
 }
 
@@ -445,12 +452,34 @@ body{
   gap:12px;
 }
 
+.performerCardHeading{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
 .performerCardName{
   font-size:18px;
   font-weight:950;
   line-height:1.1;
   color:var(--text);
 }
+
+.performerCard .performerCardRank{
+  position:absolute;
+  z-index:2;
+  top:-48px;
+  right:-14px;
+  width:72px;
+  height:64px;
+  transform:none;
+}
+
+.performerCard .rankBadgeGem{ width:32px; height:32px; }
+.performerCard .rankBadgeText{ font-size:11px; }
+.performerCard .rankBadgeTier{ font-size:7px; }
 
 .performerCardStat{
   display:flex;
@@ -854,16 +883,24 @@ body{
     align-items:stretch;
     flex-direction:row;
   }
-  .performerCard img{
+  .performerCardPortrait{
     width:136px;
-    height:auto;
     min-width:136px;
     align-self:stretch;
+  }
+  .performerCardPortrait img{
+    height:100%;
     aspect-ratio:auto;
+    border-radius:13px 0 0 13px;
   }
   .performerCardBody{
     flex:1;
     padding:12px;
+  }
+  .performerCard .performerCardRank{
+    position:relative;
+    top:auto;
+    right:auto;
   }
 }
 
@@ -876,13 +913,17 @@ body{
     max-width:none;
   }
 
-  .performerCard img{
+  .performerCardPortrait{
     width:140px;
-    height:auto;
     min-width:140px;
     align-self:stretch;
-    aspect-ratio:auto;
   }
+  .performerCardPortrait img{
+    height:100%;
+    aspect-ratio:auto;
+    border-radius:13px 0 0 13px;
+  }
+  .performerCardBody{ padding:12px; }
 }
 
 /* =========================
@@ -1356,13 +1397,145 @@ body{
 .comedianName{ font-weight:900; font-size:16px; }
 
 .comedianRank{
+  --rank-highlight:#fff0b8;
+  --rank-light:#f5c955;
+  --rank-mid:#ae7222;
+  --rank-dark:#52300f;
+  --rank-glow:rgba(255,190,54,.36);
+  position:relative;
+  isolation:isolate;
   font-weight:900;
-  color:#111;
-  background:var(--accent);
-  border-radius:6px;
-  padding:4px 8px;
-  font-size:12px;
+  color:#fff1c8;
+  background:none;
+  display:inline-grid;
+  grid-template-areas:"badge";
+  align-items:center;
+  justify-content:center;
+  width:88px;
+  height:78px;
+  padding:0;
+  font-size:13px;
+  line-height:1;
+  white-space:nowrap;
   flex-shrink:0;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.7));
+}
+
+.rankBadgeWings,
+.rankBadgeGem,
+.rankBadgeText{
+  grid-area:badge;
+}
+
+.rankBadgeWings{
+  position:absolute;
+  inset:5px 0 16px;
+  z-index:0;
+  opacity:.92;
+}
+
+.rankBadgeWings::before,
+.rankBadgeWings::after{
+  content:"";
+  position:absolute;
+  top:4px;
+  width:44%;
+  height:calc(100% - 8px);
+  background:
+    linear-gradient(160deg,rgba(255,255,255,.55),transparent 30%),
+    linear-gradient(135deg,var(--rank-highlight),var(--rank-mid) 42%,var(--rank-dark));
+  clip-path:polygon(0 8%,100% 26%,70% 48%,100% 72%,0 94%,22% 53%);
+  filter:drop-shadow(0 0 3px var(--rank-glow));
+}
+
+.rankBadgeWings::before{ left:0; }
+.rankBadgeWings::after{ right:0; transform:scaleX(-1); }
+
+.rankBadgeGem{
+  position:relative;
+  z-index:1;
+  width:38px;
+  height:38px;
+  transform:translateY(-5px) rotate(45deg);
+  border:2px solid var(--rank-highlight);
+  border-radius:7px;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.62),transparent 30% 67%,rgba(0,0,0,.38)),
+    linear-gradient(135deg,var(--rank-light),var(--rank-mid) 55%,var(--rank-dark));
+  box-shadow:
+    0 0 0 3px rgba(18,15,12,.9),
+    0 0 0 4px color-mix(in srgb,var(--rank-light) 75%,transparent),
+    0 0 13px var(--rank-glow),
+    inset 0 0 0 2px rgba(255,255,255,.22);
+}
+
+.rankBadgeGem::before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px solid rgba(255,246,213,.74);
+  background:linear-gradient(135deg,rgba(255,255,255,.24),transparent 55%);
+}
+
+.rankBadgeText{
+  z-index:2;
+  transform:translateY(-5px);
+  text-align:center;
+  color:#fff7df;
+  text-shadow:0 1px 2px #1a1008,0 0 5px rgba(0,0,0,.95);
+  font-size:12px;
+}
+
+.rankBadgeTier{
+  position:absolute;
+  right:0;
+  bottom:1px;
+  left:0;
+  color:var(--rank-highlight);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.12em;
+  line-height:1;
+  text-align:center;
+  text-shadow:0 1px 3px #000;
+}
+
+.comedianRank--top10{
+  --rank-highlight:#fff0a0;
+  --rank-light:#ffdc54;
+  --rank-mid:#e98619;
+  --rank-dark:#812d13;
+  --rank-glow:rgba(255,170,35,.58);
+  animation:comedianRankGlow 2.4s ease-in-out infinite alternate;
+}
+
+.comedianRank--top50{
+  --rank-highlight:#e9faff;
+  --rank-light:#76e3ec;
+  --rank-mid:#168ba8;
+  --rank-dark:#12385f;
+  --rank-glow:rgba(67,205,232,.4);
+}
+
+.comedianRank--top100{
+  --rank-highlight:#ffe6c0;
+  --rank-light:#f0a76e;
+  --rank-mid:#a95631;
+  --rank-dark:#572b2c;
+  --rank-glow:rgba(223,127,73,.34);
+}
+
+.comedianRank--other{
+  --rank-highlight:#e0e5f0;
+  --rank-light:#aebbd2;
+  --rank-mid:#65738f;
+  --rank-dark:#343b54;
+  --rank-glow:rgba(135,157,205,.24);
+}
+
+@keyframes comedianRankGlow{
+  from{ filter:drop-shadow(0 2px 3px rgba(0,0,0,.7)) drop-shadow(0 0 3px rgba(255,174,38,.22)); }
+  to{ filter:drop-shadow(0 2px 3px rgba(0,0,0,.7)) drop-shadow(0 0 10px rgba(255,174,38,.72)); }
 }
 
 .comedianMeta{
@@ -1441,6 +1614,7 @@ body{
     filter:none;
     text-shadow:none;
   }
+  .comedianRank--top10{ animation:none; }
   .performerLink,
   .performerLink:visited{
     transition:none;

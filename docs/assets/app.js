@@ -96,6 +96,18 @@ const StandupHub = (() => {
     catch { return String(n); }
   }
 
+  function rankBadgeHtml(rawRank, className = ""){
+    const rank = Number(rawRank);
+    if (!Number.isFinite(rank) || rank < 1) return "";
+
+    const tier = rank <= 10 ? "top10" : rank <= 50 ? "top50" : rank <= 100 ? "top100" : "other";
+    const tierLabel = { top10: "топ-10", top50: "топ-50", top100: "топ-100", other: "інші" }[tier];
+    const description = `Ранг #${rank}, ${tierLabel}`;
+    const extraClass = className ? ` ${className}` : "";
+    const tierText = { top10: "ТОП 10", top50: "ТОП 50", top100: "ТОП 100", other: "РЕЙТИНГ" }[tier];
+    return `<span class="comedianRank comedianRank--${tier}${extraClass}" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span class="rankBadgeWings" aria-hidden="true"></span><span class="rankBadgeGem" aria-hidden="true"></span><span class="rankBadgeText">#${rank}</span><span class="rankBadgeTier" aria-hidden="true">${tierText}</span></span>`;
+  }
+
   function fmtDate(raw){
     const ms = parseDateMs(raw);
     if (!ms) return "";
@@ -395,6 +407,7 @@ const StandupHub = (() => {
     const count = filteredAll.length;
     const views = filteredAll.reduce((s,v)=> s + getViews(v), 0);
     const performerData = DATA.performers?.[performer] || {};
+    const rating = DATA.rating.find(row => row.performer === performer);
     const instagram = performerData.instagram;
     
     let instagramHtml = "";
@@ -407,9 +420,14 @@ const StandupHub = (() => {
     }
     
     cardEl.innerHTML = `
-      <img src="${escapeAttr(imageUrl)}" alt="${escapeHtml(performer)}" />
+      <div class="performerCardPortrait">
+        <img src="${escapeAttr(imageUrl)}" alt="${escapeHtml(performer)}" />
+      </div>
       <div class="performerCardBody">
-        <div class="performerCardName">${escapeHtml(performer)}</div>
+        <div class="performerCardHeading">
+          <div class="performerCardName">${escapeHtml(performer)}</div>
+          ${rating ? rankBadgeHtml(rating.rank, "performerCardRank") : ""}
+        </div>
         <div class="performerCardStat">
           <span class="performerCardStatLabel">Відео:</span>
           <span class="performerCardStatValue">${fmtNum(count)}</span>
@@ -1618,7 +1636,7 @@ const StandupHub = (() => {
           <a class="comedianCard" href="${performerPageUrl(p)}">
             <div class="comedianTop">
               <div class="comedianName">${escapeHtml(p)}</div>
-              <div class="comedianRank">#${escapeHtml(r.rank)}</div>
+              ${rankBadgeHtml(r.rank)}
             </div>
             <div class="comedianMeta">
               <span class="badge">${fmtNum(r.total_views)} views</span>
