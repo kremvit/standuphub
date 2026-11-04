@@ -589,6 +589,28 @@ body{
   margin-bottom:20px;
 }
 
+.agendaAdPoster{
+  border-color:#ffd84d;
+}
+
+.agendaAdEvent{
+  border-color:rgba(255,216,77,.9);
+  animation:agendaAdGlow 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes agendaAdGlow{
+  from{
+    box-shadow:0 0 8px rgba(255,216,77,.3), var(--shadow);
+  }
+  to{
+    box-shadow:0 0 20px rgba(255,216,77,.72), var(--shadow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .agendaAdEvent{ animation:none; }
+}
+
 .agendaTitle{
   margin:0 0 8px;
   font-size:clamp(30px, 4vw, 48px);

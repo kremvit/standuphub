@@ -626,9 +626,20 @@ const StandupHub = (() => {
           })
       : sortedEvents;
 
+    const adMarkup = `
+      <article class="agendaEvent agendaAdEvent" aria-label="Рекламна афіша">
+        <img class="agendaEventThumb agendaAdPoster" src="./assets/openmic-bg.png" alt="" aria-hidden="true" />
+        <div class="agendaEventBody">
+          <div class="agendaEventDate">Реклама</div>
+          <h2 class="agendaEventTitle">Реклама твого концерту</h2>
+          <div class="agendaEventMeta">Розмісти свою подію серед афіш StandupHub</div>
+          <a class="comedianEventLink" href="https://www.instagram.com/kremvit/" target="_blank" rel="noopener noreferrer">Написати в Instagram ↗</a>
+        </div>
+      </article>
+    `;
+
     if (!visibleEvents.length){
-      agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій цього коміка найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
-        agendaEl.innerHTML = `<div class="agendaEmpty">${query ? "Подій за цим коміком або містом найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
+      agendaEl.innerHTML = `${adMarkup}<div class="agendaEmpty">${query ? "Подій за цим коміком або містом найближчим часом не знайдено." : "Найближчих концертів поки немає."}</div>`;
       renderAgendaPagination(0);
       return;
     }
@@ -639,7 +650,7 @@ const StandupHub = (() => {
     const pageStart = (state.agendaPage - 1) * AGENDA_PAGE_SIZE;
     const pageEvents = visibleEvents.slice(pageStart, pageStart + AGENDA_PAGE_SIZE);
 
-    agendaEl.innerHTML = pageEvents.map(event => `
+    agendaEl.innerHTML = `${adMarkup}${pageEvents.map(event => `
       <article class="agendaEvent">
         ${eventThumbHtml(event, "agendaEventThumb")}
         <div class="agendaEventBody">
@@ -654,7 +665,7 @@ const StandupHub = (() => {
           <a class="comedianEventLink" href="${escapeAttr(event.url || "#")}" target="_blank" rel="noopener noreferrer">Квитки: ${escapeHtml(event.source || "сайт події")} ↗</a>
         </div>
       </article>
-    `).join("");
+    `).join("")}`;
   }
 
   function renderAgendaPagination(totalPages){
