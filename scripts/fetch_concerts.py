@@ -145,6 +145,25 @@ def event_image(event):
     return image or ""
 
 
+def parse_underground_image(html):
+    for event in parse_json_ld(html):
+        image = event_image(event)
+        if image:
+            return urljoin(UNDERGROUND_URL, unescape(str(image)))
+
+    for tag in re.findall(r"<meta\b[^>]*>", html, flags=re.IGNORECASE):
+        if not re.search(
+            r"\b(?:property|name)\s*=\s*[\"'](?:og:image|twitter:image)[\"']",
+            tag,
+            flags=re.IGNORECASE,
+        ):
+            continue
+        match = re.search(r"\bcontent\s*=\s*([\"'])(.*?)\1", tag, flags=re.IGNORECASE)
+        if match:
+            return urljoin(UNDERGROUND_URL, unescape(match.group(2)))
+    return ""
+
+
 def get_with_retry(url, headers, params=None):
     # 403 is treated as a persistent block (bot protection), not retried.
     last_error = None
@@ -424,7 +443,7 @@ def parse_underground_events(html, headers):
             "venue": "Underground Stand Up Club",
             "city": "Київ",
             "url": url,
-            "poster": "",
+            "poster": parse_underground_image(detail.text),
             "source": "Underground Standup",
         })
     return events
