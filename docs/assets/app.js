@@ -1326,7 +1326,7 @@ const StandupHub = (() => {
       renderAgenda();
       return;
     }
-    state.pageSize = (state.mode === "all") ? 8 : 10;
+    state.pageSize = (state.mode === "all" || state.mode === "performer") ? 8 : 10;
 
     let filtered = applyFilters(DATA.videos || []);
     filtered = applySort(filtered);

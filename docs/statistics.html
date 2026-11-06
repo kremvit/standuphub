@@ -13,7 +13,7 @@
     /* --- local tweaks for statistics page only --- */
 
     /* Month picker: in site style */
-    .controls input[type="month"]{
+    .monthlyStatsControls input[type="month"]{
       width: 170px;
       padding: 10px 12px;
       border-radius: 12px;
@@ -27,9 +27,12 @@
       font-family: inherit;
       line-height: 1;
     }
-    .controls input[type="month"]:focus{
+    .monthlyStatsControls input[type="month"]:focus{
       border-color: rgba(255,255,255,.22);
     }
+    .monthlyStatsControls{ margin-top:18px; }
+    .monthlyStatsControls .control{ width:100%; }
+    .monthPickerControls{ display:flex; gap:6px; align-items:center; }
 
     /* Prev/Next buttons (use existing .pageBtn base) */
     #prevMonthBtn,
@@ -53,7 +56,7 @@
     }
     @media (max-width: 900px){
       .statsGrid{ grid-template-columns: 1fr; }
-      .controls input[type="month"]{ width: 100%; }
+      .monthlyStatsControls input[type="month"]{ width: min(190px, calc(100vw - 150px)); }
       /* buttons still ok on mobile */
     }
 
@@ -109,6 +112,25 @@
       border:0;
       display:block;
     }
+    .topVideoPreview{ position:relative; display:block; overflow:hidden; border-radius:12px; background:#08080b; }
+    .topVideoPreview img{ display:block; width:100%; aspect-ratio:16/9; object-fit:cover; }
+    .topPlayBtn{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      padding:12px 18px;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:999px;
+      background:rgba(0,0,0,.78);
+      color:#fff;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .topPlayBtn:hover{ background:rgba(255,138,0,.9); }
+    .topVideoActions{ display:flex; justify-content:flex-end; margin-top:8px; }
+    .topWatchLink{ color:var(--text); font-size:13px; text-decoration:underline; text-underline-offset:3px; }
 
     /* Laptop only: ~40% smaller (60% width), centered */
     @media (min-width: 900px) and (max-width: 1400px){
@@ -126,6 +148,149 @@
       border-radius:12px;
       border:1px solid rgba(255,120,120,.35);
       background: rgba(255,120,120,.10);
+    }
+
+    .calendarSection{
+      margin:18px 0;
+      padding:16px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      background:rgba(0,0,0,.12);
+    }
+    .calendarHeading,.calendarToolbar,.calendarModes,.calendarFilters,.calendarLegend{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .calendarHeading{ justify-content:space-between; margin-bottom:14px; }
+    .calendarTitle{ font-size:20px; font-weight:800; }
+    .calendarSubtitle{ color:var(--muted); font-size:13px; margin-top:3px; }
+    .calendarToolbar{ justify-content:space-between; margin-bottom:14px; }
+    .calendarModes{ gap:6px; }
+    .calendarMode,.calendarRangeToggle{
+      border:1px solid var(--border);
+      border-radius:9px;
+      padding:8px 11px;
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      font:inherit;
+      cursor:pointer;
+    }
+    .calendarMode[aria-pressed="true"]{
+      border-color:rgba(255,138,0,.65);
+      background:rgba(255,138,0,.15);
+    }
+    .calendarControls{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .calendarSelect{
+      min-width:130px;
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius:9px;
+      background:var(--panel);
+      color:var(--text);
+      font:inherit;
+    }
+    #calendarYear{ width:100px; }
+    #calendarPerformer{ width:190px; }
+    #calendarClub{ width:250px; }
+    .calendarSummary{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin:14px 0;
+    }
+    .calendarSummaryCard{
+      min-width:0;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(255,255,255,.025);
+    }
+    .calendarSummaryLabel{ color:var(--muted); font-size:12px; }
+    .calendarSummaryValue{ margin-top:4px; font-size:18px; font-weight:800; overflow-wrap:anywhere; }
+    .calendarHeatmapScroll{ overflow-x:hidden; padding:4px 2px 12px; }
+    .calendarHeatmap{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      gap:14px 18px;
+      width:100%;
+    }
+    .calendarMonthBlock{ flex:none; }
+    .calendarMonthLabel{ margin-bottom:5px; color:#fff; font-size:11px; font-weight:800; text-align:center; white-space:nowrap; }
+    .calendarMonthContent{ display:flex; align-items:flex-start; gap:3px; }
+    .calendarWeekdayLabels{ display:grid; width:19px; flex:none; grid-template-rows:repeat(7,16px); gap:3px; color:var(--muted); font-size:9px; text-align:right; }
+    .calendarMonthWeeks{ display:grid; grid-auto-flow:column; grid-auto-columns:16px; gap:3px; }
+    .calendarWeek{ display:grid; grid-template-rows:repeat(7,16px); gap:3px; }
+    .calendarDay{
+      display:block;
+      width:16px;
+      height:16px;
+      padding:0;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:3px;
+      background:#161b22;
+      color:#fff;
+      font-size:9px;
+      font-weight:800;
+      line-height:14px;
+      text-align:center;
+      cursor:pointer;
+    }
+    .calendarDay:disabled{ cursor:default; }
+    .calendarDayBlank{ visibility:hidden; border-color:transparent; background:transparent; }
+    .calendarDay:not(:disabled):hover,.calendarDay.isSelected{ outline:2px solid #fff; outline-offset:1px; }
+    .calendarDay[data-level="1"]{ background:#0e4429; }
+    .calendarDay[data-level="2"]{ background:#006d32; }
+    .calendarDay[data-level="3"]{ background:#26a641; }
+    .calendarDay[data-level="4"]{ background:#39d353; }
+    .calendarLegend{ justify-content:flex-end; color:var(--muted); font-size:11px; }
+    .calendarLegend .calendarDay{ cursor:default; }
+    .calendarMonthView{ display:none; }
+    .calendarDayDetails{ margin-top:14px; }
+    .calendarInlineDetails{ display:none; }
+    .calendarDetailsTitle{ margin-bottom:10px; font-weight:800; }
+    .calendarDetailsEmpty,.calendarError{ color:var(--muted); font-size:14px; }
+    .calendarError{ color:#ffb4b4; }
+    .calendarDetailList{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .calendarDetailCard{
+      display:flex;
+      min-width:0;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(255,255,255,.025);
+      color:inherit;
+      text-decoration:none;
+    }
+    .calendarDetailCard:hover{ border-color:rgba(255,138,0,.5); }
+    .calendarDetailThumb{ width:92px; height:62px; flex:none; border-radius:7px; object-fit:cover; background:var(--panel2); }
+    .calendarDetailBody{ min-width:0; }
+    .calendarDetailTitle{ font-weight:700; overflow-wrap:anywhere; }
+    .calendarDetailMeta{ margin-top:4px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+    @media (max-width: 700px){
+      .calendarSection{ padding:12px; }
+      .calendarHeading{ align-items:flex-start; }
+      .calendarToolbar{ align-items:flex-start; flex-direction:column; }
+      .calendarControls{ display:grid; grid-template-columns:1fr 1fr; width:100%; }
+      .calendarControls>label{ grid-column:1; }
+      #calendarYear{ grid-column:2; width:100%; }
+      #calendarPerformer,#calendarClub,#calendarRangeToggle{ grid-column:1 / -1; width:100%; }
+      .calendarSelect{ min-width:0; }
+      .calendarSummary{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .calendarHeatmapScroll{ display:none; }
+      .calendarMonthView{ display:grid; grid-template-columns:1fr; gap:12px; }
+      .calendarMonth{ padding:10px; border:1px solid var(--border); border-radius:10px; }
+      .calendarMonthTitle{ margin-bottom:8px; font-weight:700; }
+      .calendarDayDetails{ display:none; }
+      .calendarInlineDetails:not([hidden]){ display:block; margin-top:12px; }
+      .calendarMonthGrid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; text-align:center; }
+      .calendarWeekday{ color:var(--muted); font-size:10px; }
+      .calendarMonthGrid .calendarDay{ width:100%; height:auto; aspect-ratio:1; border-radius:5px; font-size:12px; line-height:1; }
+      .calendarDetailList{ grid-template-columns:1fr; }
+      .calendarDetailThumb{ width:78px; height:56px; }
     }
   </style>
 </head>
@@ -168,19 +333,60 @@
           </details>
         </div>
 
-        <div class="controls">
+      </header>
+
+      <section>
+        <section class="calendarSection" aria-labelledby="calendarTitle">
+          <div class="calendarHeading">
+            <div>
+              <div id="calendarTitle" class="calendarTitle">Календар стендапу</div>
+              <div id="calendarSubtitle" class="calendarSubtitle">Коли виходили українські стендап-відео</div>
+            </div>
+          </div>
+          <div class="calendarToolbar">
+            <div class="calendarModes" role="group" aria-label="Режим календаря">
+              <button class="calendarMode" type="button" data-calendar-mode="videos" aria-pressed="true">Відео</button>
+              <button class="calendarMode" type="button" data-calendar-mode="events" aria-pressed="false">Події</button>
+            </div>
+            <div class="calendarControls">
+              <label for="calendarYear">Рік</label>
+              <select id="calendarYear" class="calendarSelect"></select>
+              <select id="calendarPerformer" class="calendarSelect" aria-label="Фільтр за коміком">
+                <option value="">Усі коміки</option>
+              </select>
+              <select id="calendarClub" class="calendarSelect" aria-label="Фільтр за каналом або майданчиком">
+                <option value="">Усі клуби / канали</option>
+              </select>
+              <button id="calendarRangeToggle" class="calendarRangeToggle" type="button" hidden>Показати весь рік</button>
+            </div>
+          </div>
+          <div id="calendarSummary" class="calendarSummary" aria-live="polite"></div>
+          <div id="calendarHeatmapScroll" class="calendarHeatmapScroll">
+            <div id="calendarHeatmap" class="calendarHeatmap" role="group" aria-label="Календар активності за рік"></div>
+          </div>
+          <div id="calendarMonthView" class="calendarMonthView" aria-label="Місяці року"></div>
+          <div class="calendarLegend" aria-label="Інтенсивність активності">
+            <span>Менше</span>
+            <span class="calendarDay" data-level="0" aria-hidden="true"></span>
+            <span class="calendarDay" data-level="1" aria-hidden="true"></span>
+            <span class="calendarDay" data-level="2" aria-hidden="true"></span>
+            <span class="calendarDay" data-level="3" aria-hidden="true"></span>
+            <span class="calendarDay" data-level="4" aria-hidden="true"></span>
+            <span>Більше</span>
+          </div>
+          <div id="calendarDayDetails" class="calendarDayDetails" aria-live="polite"></div>
+          <div id="calendarError" class="calendarError" role="alert" hidden></div>
+        </section>
+        <div class="monthlyStatsControls controls">
           <div class="control">
-            <label>Місяць</label>
-            <div style="display:flex; gap:6px; align-items:center;">
+            <label for="monthPick">Статистика за місяць</label>
+            <div class="monthPickerControls">
               <button id="prevMonthBtn" class="pageBtn" type="button" aria-label="Попередній місяць">←</button>
               <input id="monthPick" type="month" />
               <button id="nextMonthBtn" class="pageBtn" type="button" aria-label="Наступний місяць">→</button>
             </div>
           </div>
         </div>
-      </header>
-
-      <section>
         <div id="statsGrid" class="statsGrid"></div>
 
         <div id="topBox" class="topBox" style="display:none;">
@@ -189,6 +395,9 @@
             <div class="topMeta" id="topMeta"></div>
           </div>
           <div class="ytWrap" id="ytWrap"></div>
+          <div class="topVideoActions">
+            <a id="topWatchLink" class="topWatchLink" target="_blank" rel="noopener noreferrer">Відкрити на YouTube ↗</a>
+          </div>
         </div>
 
         <div id="hint" class="hint">Завантажую дані…</div>
@@ -207,6 +416,7 @@
 
   <!-- app.js наповнить sidebar (через rating.json) -->
   <script src="assets/app.js"></script>
+  <script src="assets/calendar.js"></script>
   <script>
     // тільки для sidebar: підтягує rating.json і викликає renderSidebar()
     StandupHub.initAbout();
@@ -418,10 +628,11 @@
       const topBox = document.getElementById("topBox");
       const ytWrap = document.getElementById("ytWrap");
       const topMeta = document.getElementById("topMeta");
+      const topWatchLink = document.getElementById("topWatchLink");
 
       ytWrap.innerHTML = "";
       topMeta.textContent = "";
-
+      topWatchLink.removeAttribute("href");
       const top = getTopVideoByViews(selected.videos);
       const vid = top ? getVideoId(top) : "";
       if (vid){
@@ -429,13 +640,27 @@
         const title = getTitle(top);
         const vws = getViews(top);
         topMeta.textContent = `${fmtNum(vws)} переглядів${title ? " · " + title : ""}`;
-
-        const iframe = document.createElement("iframe");
-        iframe.setAttribute("allowfullscreen", "true");
-        iframe.setAttribute("loading", "lazy");
-        iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?rel=0&modestbranding=1`;
-        ytWrap.appendChild(iframe);
+        const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(vid)}`;
+        topWatchLink.href = watchUrl;
+        const preview = document.createElement("div");
+        preview.className = "topVideoPreview";
+        const image = document.createElement("img");
+        image.src = `https://i.ytimg.com/vi/${encodeURIComponent(vid)}/hqdefault.jpg`;
+        image.alt = title ? `Обкладинка відео: ${title}` : "Обкладинка найкращого відео місяця";
+        const playButton = document.createElement("button");
+        playButton.className = "topPlayBtn";
+        playButton.type = "button";
+        playButton.textContent = "▶ Дивитися тут";
+        playButton.addEventListener("click", () => {
+          const iframe = document.createElement("iframe");
+          iframe.title = title || "Найкраще відео місяця";
+          iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+          iframe.allowFullscreen = true;
+          iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?autoplay=1&rel=0&modestbranding=1`;
+          ytWrap.replaceChildren(iframe);
+        });
+        preview.append(image, playButton);
+        ytWrap.appendChild(preview);
       } else {
         topBox.style.display = "none";
       }
@@ -452,6 +677,7 @@
       try{
         const j = await fetchJson(DATA_URL);
         const videos = extractVideos(j);
+        window.StandupCalendar?.setVideos(videos);
         const months = buildMonthlyIndex(videos);
 
         monthPick.min = "2004-03";
@@ -491,6 +717,7 @@
 
         update();
       } catch(e){
+        window.StandupCalendar?.setVideoError(e);
         error.style.display = "";
         error.textContent = "Не вдалося завантажити статистику: " + (e?.message || e);
         hint.textContent = "";
