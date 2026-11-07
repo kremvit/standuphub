@@ -9,6 +9,7 @@ import argparse
 import html
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -32,10 +33,36 @@ def read_performers(path: Path) -> list[str]:
     return [line.split("|", 1)[0].strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def render_page(template: str, name: str, bio: str, url: str) -> str:
+def has_upcoming_events(events: list[dict]) -> bool:
+    now = datetime.now(timezone.utc)
+    for event in events:
+        try:
+            start = datetime.fromisoformat(str(event.get("start", "")).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        if start >= now:
+            return True
+    return False
+
+
+def render_page(template: str, name: str, bio: str, url: str, has_concerts: bool) -> str:
     safe_name = html.escape(name, quote=True)
-    page = template.replace("<title>Комік • StandupHub</title>", f"<title>{safe_name} — стендап-комік • StandupHub</title>")
-    page = page.replace('  <link rel="stylesheet" href="assets/styles.css" />', f'  <link rel="stylesheet" href="assets/styles.css" />\n  <link rel="canonical" href="{url}" />\n  <meta name="description" content="Стендап-відео, біографія та виступи коміка {safe_name} на StandupHub." />')
+    concert_text = " та концерти" if has_concerts else ""
+    title = f"{safe_name} — стендап, відео{concert_text} | StandupHub"
+    description = (
+        f"{name} на StandupHub: дивіться сольні стендап-виступи та інші відео"
+        f"{', знаходьте найближчі концерти' if has_concerts else ''} "
+        "й знайомтеся з біографією."
+    )
+    page = template.replace("<title>Комік • StandupHub</title>", f"<title>{title}</title>")
+    page = page.replace(
+        '  <link rel="stylesheet" href="assets/styles.css" />',
+        f'  <link rel="stylesheet" href="assets/styles.css" />\n'
+        f'  <link rel="canonical" href="{url}" />\n'
+        f'  <meta name="description" content="{html.escape(description, quote=True)}" />',
+    )
     page = page.replace('const p = new URLSearchParams(location.search).get("p") || "";', f'const p = new URLSearchParams(location.search).get("p") || {json.dumps(name, ensure_ascii=False)};')
     return page
 
@@ -52,6 +79,8 @@ def main() -> None:
     performers = list(dict.fromkeys(read_performers(Path("performers.txt"))))
     bios_path = docs / "comedians_bios.json"
     bios = json.loads(bios_path.read_text(encoding="utf-8")) if bios_path.exists() else {}
+    events_path = docs / "data/events.json"
+    events = json.loads(events_path.read_text(encoding="utf-8")) if events_path.exists() else {}
     base = args.base.rstrip("/")
     used_slugs: set[str] = set()
     page_map: dict[str, str] = {}
@@ -86,7 +115,11 @@ def main() -> None:
         page_map[name] = slug
         bio_data = bios.get(name, {})
         bio = str(bio_data.get("bio", "")).strip()
-        (output_dir / f"{slug}.html").write_text(render_page(template, name, bio, url), encoding="utf-8")
+        has_concerts = has_upcoming_events(events.get(name, []))
+        (output_dir / f"{slug}.html").write_text(
+            render_page(template, name, bio, url, has_concerts),
+            encoding="utf-8",
+        )
 
     (docs / "data").mkdir(parents=True, exist_ok=True)
     (docs / "data/performer_pages.json").write_text(
