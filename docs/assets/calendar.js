@@ -483,7 +483,7 @@
       document.querySelectorAll("[data-calendar-mode]").forEach((button) => {
         button.addEventListener("click", () => {
           state.mode = button.dataset.calendarMode;
-          state.wholeYear = false;
+          state.wholeYear = state.mode === "events";
           state.selectedDate = "";
           document.querySelectorAll("[data-calendar-mode]").forEach((modeButton) =>
             modeButton.setAttribute("aria-pressed", String(modeButton === button))
@@ -491,12 +491,18 @@
           updateSubtitle();
           const isEvents = state.mode === "events";
           $("calendarRangeToggle").hidden = !isEvents;
+          $("calendarRangeToggle").textContent = state.wholeYear
+            ? "Показати найближчі 3 місяці"
+            : "Показати весь рік";
           render();
         });
       });
       yearSelect.addEventListener("change", () => {
         state.year = Number(yearSelect.value);
-        state.wholeYear = false;
+        state.wholeYear = state.mode === "events";
+        $("calendarRangeToggle").textContent = state.wholeYear
+          ? "Показати найближчі 3 місяці"
+          : "Показати весь рік";
         state.selectedDate = "";
         updateSubtitle();
         render();

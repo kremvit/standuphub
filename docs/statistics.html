@@ -645,7 +645,16 @@
         const preview = document.createElement("div");
         preview.className = "topVideoPreview";
         const image = document.createElement("img");
-        image.src = `https://i.ytimg.com/vi/${encodeURIComponent(vid)}/hqdefault.jpg`;
+        const videoId = encodeURIComponent(vid);
+        const fallbackThumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        const useFallbackThumbnail = () => {
+          if (!image.src.endsWith("/hqdefault.jpg")) image.src = fallbackThumbnail;
+        };
+        image.addEventListener("error", useFallbackThumbnail);
+        image.addEventListener("load", () => {
+          if (image.naturalWidth < 500) useFallbackThumbnail();
+        });
+        image.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
         image.alt = title ? `Обкладинка відео: ${title}` : "Обкладинка найкращого відео місяця";
         const playButton = document.createElement("button");
         playButton.className = "topPlayBtn";
