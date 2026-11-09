@@ -47,11 +47,17 @@
 
   function getRange(){
     const year = Number(state.year);
-    if (state.mode === "events" && !state.wholeYear){
+    if (state.mode === "events"){
       const now = new Date();
+      if (year < now.getFullYear()){
+        const emptyRange = new Date(year + 1, 0, 1);
+        return { start: emptyRange, end: emptyRange };
+      }
       const firstMonth = year === now.getFullYear() ? now.getMonth() : 0;
       const start = new Date(year, firstMonth, 1);
-      const end = new Date(year, firstMonth + 3, 1);
+      const end = state.wholeYear
+        ? new Date(year + 1, 0, 1)
+        : new Date(year, firstMonth + 3, 1);
       return { start, end };
     }
     return { start: new Date(year, 0, 1), end: new Date(year + 1, 0, 1) };

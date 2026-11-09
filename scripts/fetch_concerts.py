@@ -99,6 +99,26 @@ def normalize_text(value):
     return re.sub(r"\s+", " ", str(value or "")).strip().casefold()
 
 
+def normalize_event_location(value):
+    return re.sub(r"[^\w]+", " ", normalize_text(value), flags=re.UNICODE).strip()
+
+
+def event_deduplication_key(event, participants):
+    city = normalize_event_location(event.get("city"))
+    venue = normalize_event_location(event.get("venue"))
+    if not city or not venue or not participants:
+        return None
+
+    try:
+        start = datetime.fromisoformat(str(event.get("start", "")).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if start.tzinfo is not None:
+        start = start.astimezone(timezone.utc)
+
+    return start.isoformat(), city, venue, tuple(sorted(participants))
+
+
 def contains_alias(text, alias):
     normalized_alias = normalize_text(alias)
     if not normalized_alias:
@@ -454,6 +474,7 @@ def main():
     performers = load_performers()
     events_by_performer = {name: [] for name in performers}
     seen = set()
+    seen_event_keys = set()
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -478,14 +499,24 @@ def main():
         if event["url"] in seen:
             continue
         haystack = normalize_text(" ".join([event["title"], event["description"]]))
-        matched = False
-        for performer, aliases in performers.items():
-            if not any(contains_name_variant(haystack, alias) for alias in aliases):
-                continue
-            events_by_performer[performer].append({key: value for key, value in event.items() if key != "description"})
-            matched = True
-        if matched:
+        matched_performers = [
+            performer
+            for performer, aliases in performers.items()
+            if any(contains_name_variant(haystack, alias) for alias in aliases)
+        ]
+        if not matched_performers:
+            continue
+
+        deduplication_key = event_deduplication_key(event, matched_performers)
+        if deduplication_key is not None and deduplication_key in seen_event_keys:
             seen.add(event["url"])
+            continue
+        if deduplication_key is not None:
+            seen_event_keys.add(deduplication_key)
+
+        for performer in matched_performers:
+            events_by_performer[performer].append({key: value for key, value in event.items() if key != "description"})
+        seen.add(event["url"])
 
     for events in events_by_performer.values():
         events.sort(key=lambda event: event["start"])
