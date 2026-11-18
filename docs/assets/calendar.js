@@ -11,7 +11,7 @@
     year: new Date().getFullYear(),
     performer: "",
     club: "",
-    wholeYear: false,
+    showAllFutureEvents: false,
     selectedDate: "",
   };
   const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
@@ -49,15 +49,18 @@
     const year = Number(state.year);
     if (state.mode === "events"){
       const now = new Date();
-      if (year < now.getFullYear()){
-        const emptyRange = new Date(year + 1, 0, 1);
-        return { start: emptyRange, end: emptyRange };
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      let end;
+      if (state.showAllFutureEvents){
+        const latestUpcomingStart = state.events.reduce(
+          (latest, event) => event.startMs >= now.getTime() ? Math.max(latest, event.startMs) : latest,
+          0
+        );
+        const latestUpcomingDate = latestUpcomingStart ? new Date(latestUpcomingStart) : start;
+        end = new Date(latestUpcomingDate.getFullYear(), latestUpcomingDate.getMonth() + 1, 1);
+      } else {
+        end = new Date(start.getFullYear(), start.getMonth() + 3, 1);
       }
-      const firstMonth = year === now.getFullYear() ? now.getMonth() : 0;
-      const start = new Date(year, firstMonth, 1);
-      const end = state.wholeYear
-        ? new Date(year + 1, 0, 1)
-        : new Date(year, firstMonth + 3, 1);
       return { start, end };
     }
     return { start: new Date(year, 0, 1), end: new Date(year + 1, 0, 1) };
@@ -236,8 +239,9 @@
         busiestCount = count;
       }
     }
+    const referenceYear = state.mode === "events" ? new Date().getFullYear() : state.year;
     const monthLabel = busiestMonth
-      ? `${monthNames[Number(busiestMonth.slice(5, 7)) - 1]} ${busiestMonth.slice(0, 4) === String(state.year) ? "" : busiestMonth.slice(0, 4)}`.trim()
+      ? `${monthNames[Number(busiestMonth.slice(5, 7)) - 1]} ${busiestMonth.slice(0, 4) === String(referenceYear) ? "" : busiestMonth.slice(0, 4)}`.trim()
       : "—";
     const cards = state.mode === "videos"
       ? [
@@ -370,10 +374,9 @@
       $("calendarSubtitle").textContent = "Коли виходили українські стендап-відео";
       return;
     }
-    const now = new Date();
-    const range = state.wholeYear
-      ? "весь вибраний рік"
-      : state.year === now.getFullYear() ? "поточний місяць і два наступні" : "перші три місяці вибраного року";
+    const range = state.showAllFutureEvents
+      ? "усі майбутні події"
+      : "поточний місяць і два наступні";
     $("calendarSubtitle").textContent = `Майбутні події з нашої афіші · показано ${range}. Порожній день означає, що подій не знайдено в афіші.`;
   }
 
@@ -489,7 +492,7 @@
       document.querySelectorAll("[data-calendar-mode]").forEach((button) => {
         button.addEventListener("click", () => {
           state.mode = button.dataset.calendarMode;
-          state.wholeYear = state.mode === "events";
+          state.showAllFutureEvents = state.mode === "events";
           state.selectedDate = "";
           document.querySelectorAll("[data-calendar-mode]").forEach((modeButton) =>
             modeButton.setAttribute("aria-pressed", String(modeButton === button))
@@ -497,18 +500,20 @@
           updateSubtitle();
           const isEvents = state.mode === "events";
           $("calendarRangeToggle").hidden = !isEvents;
-          $("calendarRangeToggle").textContent = state.wholeYear
+          $("calendarYear").hidden = isEvents;
+          document.querySelector('label[for="calendarYear"]').hidden = isEvents;
+          $("calendarRangeToggle").textContent = state.showAllFutureEvents
             ? "Показати найближчі 3 місяці"
-            : "Показати весь рік";
+            : "Показати всі майбутні";
           render();
         });
       });
       yearSelect.addEventListener("change", () => {
         state.year = Number(yearSelect.value);
-        state.wholeYear = state.mode === "events";
-        $("calendarRangeToggle").textContent = state.wholeYear
+        state.showAllFutureEvents = state.mode === "events";
+        $("calendarRangeToggle").textContent = state.showAllFutureEvents
           ? "Показати найближчі 3 місяці"
-          : "Показати весь рік";
+          : "Показати всі майбутні";
         state.selectedDate = "";
         updateSubtitle();
         render();
@@ -524,8 +529,8 @@
         render();
       });
       $("calendarRangeToggle").addEventListener("click", (event) => {
-        state.wholeYear = !state.wholeYear;
-        event.currentTarget.textContent = state.wholeYear ? "Показати найближчі 3 місяці" : "Показати весь рік";
+        state.showAllFutureEvents = !state.showAllFutureEvents;
+        event.currentTarget.textContent = state.showAllFutureEvents ? "Показати найближчі 3 місяці" : "Показати всі майбутні";
         state.selectedDate = "";
         updateSubtitle();
         render();

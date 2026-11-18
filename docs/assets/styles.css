@@ -226,6 +226,20 @@ body{
 }
 .navBtn:hover{ border-color: rgba(255,138,0,.6); }
 
+.contextLink{
+  display:inline-block;
+  margin-right:14px;
+  color:var(--accent);
+  font-weight:800;
+  text-decoration:none;
+}
+
+.contextLink:hover{
+  color:#ffb347;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+
 .navMore{ position:relative; }
 .navMore summary{
   list-style:none;
@@ -1866,12 +1880,249 @@ body{
 }
 
 /* =========================
+   UKRAINSKYI STANDUP HIGHLIGHTS
+   ========================= */
+.standupHighlights{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:14px;
+  margin:16px 0 20px;
+}
+
+.standupHighlight{
+  min-width:0;
+  min-height:220px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:linear-gradient(145deg, rgba(255,255,255,.045), rgba(18,18,26,.95));
+}
+
+.standupHighlight h2{
+  margin:0;
+  font-size:18px;
+}
+
+.highlightCta{
+  align-self:flex-start;
+  margin-top:auto;
+}
+
+.gameHighlightMatch{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items:center;
+  gap:8px;
+  flex:1;
+}
+
+.gameHighlightPerson{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  color:var(--text);
+  text-align:center;
+  font-size:13px;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.gameHighlightPerson:hover{
+  color:var(--accent);
+}
+
+.gameHighlightPerson img{
+  width:76px;
+  height:76px;
+  border-radius:12px;
+  object-fit:cover;
+}
+
+.gameHighlightVs{
+  color:var(--accent);
+  font-size:20px;
+  font-weight:1000;
+}
+
+.videoHighlightContent{
+  min-width:0;
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  gap:6px;
+}
+
+.videoHighlightPeriod{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  text-transform:capitalize;
+}
+
+.videoHighlightLink{
+  min-width:0;
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  padding:0;
+  border:0;
+  color:var(--text);
+  background:none;
+  font:inherit;
+  text-align:left;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.videoHighlightLink:hover .videoHighlightTitle{
+  color:var(--accent);
+}
+
+.videoHighlightPreview{
+  position:relative;
+  display:block;
+  width:100%;
+  overflow:hidden;
+  border-radius:10px;
+  background:var(--panel2);
+}
+
+.videoHighlightThumbnail{
+  width:100%;
+  aspect-ratio:16 / 9;
+  display:block;
+  background:var(--panel2);
+  object-fit:cover;
+}
+
+.videoHighlightPlayIcon{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:44px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#f00;
+  color:#fff;
+  font-size:16px;
+  transform:translate(-50%, -50%);
+  transition:transform 160ms ease, background-color 160ms ease;
+}
+
+.videoHighlightLink:hover .videoHighlightPlayIcon{
+  background:#c00;
+  transform:translate(-50%, -50%) scale(1.08);
+}
+
+.videoHighlightPlayer{
+  width:100%;
+  aspect-ratio:16 / 9;
+  display:block;
+  border:0;
+  border-radius:10px;
+  background:#000;
+}
+
+.videoHighlightTitle{
+  display:-webkit-box;
+  overflow:hidden;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.35;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+
+.videoHighlightLink > span:not(.videoHighlightViews){
+  color:var(--muted);
+  font-size:12px;
+}
+
+.videoHighlightViews{
+  margin-top:auto;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:800;
+}
+
+.eventsHighlightList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.eventHighlight{
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr);
+  align-items:baseline;
+  gap:2px 8px;
+  font-size:12px;
+}
+
+.eventHighlight time{
+  color:var(--accent);
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.eventHighlight strong,
+.eventHighlight span{
+  min-width:0;
+  grid-column:2;
+  overflow-wrap:anywhere;
+}
+
+.eventHighlight strong{
+  font-size:13px;
+}
+
+.eventHighlight span{
+  color:var(--muted);
+}
+
+.eventHighlight a{
+  grid-column:2;
+  width:max-content;
+  color:var(--text);
+  font-weight:800;
+  text-decoration:none;
+}
+
+.eventHighlight a:hover{
+  color:var(--accent);
+}
+
+@media (max-width: 700px){
+  .standupHighlights{
+    grid-template-columns:1fr;
+  }
+
+  .standupHighlight{
+    min-height:0;
+  }
+
+  .gameHighlightPerson img{
+    width:88px;
+    height:88px;
+  }
+}
+
+/* =========================
    UKRAINSKYI STANDUP CAROUSEL
    ========================= */
 .heroCarousel{
   display:grid;
-  grid-template-columns: minmax(220px, 300px) 1fr;
-  gap:16px;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap:14px;
   margin-bottom:18px;
   background:linear-gradient(145deg, rgba(255,138,0,.11), rgba(18,18,26,.95));
   border:1px solid rgba(255,138,0,.25);
@@ -1879,14 +2130,13 @@ body{
   box-shadow:var(--shadow);
   overflow:hidden;
   position:relative;
-  min-height:360px;
   align-items:start;
 }
 
 .heroCarouselMediaWrap{
-  height:360px;
-  min-height:360px;
-  max-height:360px;
+  width:100%;
+  align-self:stretch;
+  overflow:hidden;
   background:#101018;
   transition:opacity 220ms ease;
 }
@@ -1894,17 +2144,15 @@ body{
 .heroCarouselPhoto{
   width:100%;
   height:100%;
-  min-height:240px;
   display:block;
   object-fit:cover;
 }
 
 .heroCarouselContent{
-  padding:16px 18px;
+  padding:14px 16px;
   display:flex;
   flex-direction:column;
-  gap:10px;
-  min-height:360px;
+  gap:8px;
   transition:opacity 220ms ease, transform 220ms ease;
 }
 
@@ -1925,6 +2173,45 @@ body{
   color:var(--accent);
 }
 
+.heroCarouselHeading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.heroCarouselRank{
+  display:inline-flex;
+  width:68px;
+  height:60px;
+  flex:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.heroCarouselRank[hidden]{
+  display:none;
+}
+
+.heroCarouselRankBadge.comedianRank{
+  width:68px;
+  height:60px;
+  font-size:11px;
+}
+
+.heroCarouselRankBadge .rankBadgeGem{
+  width:30px;
+  height:30px;
+}
+
+.heroCarouselRankBadge .rankBadgeText{
+  font-size:11px;
+}
+
+.heroCarouselRankBadge .rankBadgeTier{
+  font-size:7px;
+}
+
 .heroCarouselName{
   margin:0;
   font-size:28px;
@@ -1938,7 +2225,7 @@ body{
   font-size:15px;
   display:-webkit-box;
   -webkit-box-orient:vertical;
-  -webkit-line-clamp:5;
+  -webkit-line-clamp:3;
   overflow:hidden;
 }
 
@@ -1976,6 +2263,7 @@ body{
   top:50%;
   transform:translateY(-50%);
   z-index:3;
+  background:rgba(18,18,26,.72);
 }
 
 #heroCarouselPrev{
@@ -2000,24 +2288,19 @@ body{
 
 @media (max-width: 900px){
   .heroCarousel{
-    grid-template-columns:1fr;
-    min-height:0;
-  }
-
-  .heroCarouselMediaWrap,
-  .heroCarouselPhoto{
-    height:300px;
-    min-height:300px;
-    max-height:300px;
+    grid-template-columns:160px minmax(0, 1fr);
   }
 
   .heroCarouselContent{
-    padding:14px;
-    min-height:260px;
+    padding:12px;
+  }
+
+  .heroCarouselBio{
+    -webkit-line-clamp:3;
   }
 
   .heroCarouselName{
-    font-size:24px;
+    font-size:22px;
   }
 
   #heroCarouselPrev{
@@ -2026,5 +2309,29 @@ body{
 
   #heroCarouselNext{
     right:8px;
+  }
+}
+
+@media (max-width: 540px){
+  .heroCarousel{
+    grid-template-columns:minmax(0, 1fr);
+    gap:0;
+  }
+
+  .heroCarouselMediaWrap{
+    aspect-ratio:1;
+    align-self:start;
+  }
+
+  .heroCarouselContent{
+    padding:16px;
+  }
+
+  .heroCarouselName{
+    font-size:19px;
+  }
+
+  .heroCarouselArrow{
+    top:calc((100vw - 46px) / 2);
   }
 }

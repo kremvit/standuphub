@@ -1687,5 +1687,5 @@ const StandupHub = (() => {
     renderSidebar();
   }
 
-  return { init, initRating, initComedians, initAbout, performerPageUrl };
+  return { init, initRating, initComedians, initAbout, performerPageUrl, rankBadgeHtml };
 })();

@@ -102,7 +102,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      min-height: 400px;
+      min-height: 0;
       overflow: hidden;
     }
 
@@ -121,9 +121,8 @@
     .fighterName {
       font-size: 16px;
       font-weight: 900;
-      padding: 8px;
-      word-break: break-word;
-      margin-top: auto;
+      padding: 4px 2px;
+      overflow-wrap: anywhere;
     }
 
     .fighterCard:hover {
@@ -320,6 +319,36 @@
     .copyToast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 540px) {
+      .gameSection {
+        gap: 24px;
+        padding: 24px 0;
+      }
+
+      .arena {
+        gap: 10px;
+      }
+
+      .fighterCard {
+        padding: 10px;
+        border-radius: 16px;
+        gap: 8px;
+      }
+
+      .fighterPhoto {
+        border-radius: 12px;
+      }
+
+      .fighterName {
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .vsLabel {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -539,9 +568,15 @@
     function loadPhotoIndex() {
       if (!photoIndexPromise) {
         photoIndexPromise = fetch("data/photo_index.json")
-          .then(r => r.ok ? r.json() : null)
-          .then(list => list ? new Map(list.map(p => [p.name, encodeURI(p.path)])) : null)
-          .catch(() => null);
+          .then(response => {
+            if (!response.ok) throw new Error(`Не вдалося завантажити фото коміків: ${response.status}`);
+            return response.json();
+          })
+          .then(list => {
+            if (!Array.isArray(list)) throw new Error("Невірний формат індексу фото коміків.");
+            return new Map(list.filter(item => item?.name && item?.path)
+              .map(item => [item.name, encodeURI(item.path)]));
+          });
       }
       return photoIndexPromise;
     }
@@ -600,15 +635,32 @@
       }
     }
 
-    function startGame(names) {
-      deck = shuffle(names);
-      turn = 0;
+    function startGame(names, firstVote, firstOpponent, firstRoundNames) {
+      const uniqueNames = [...new Set(names)];
+      const photoNames = [...new Set(firstRoundNames || names)].filter(name => uniqueNames.includes(name));
+      const hasFirstVote = firstVote && firstOpponent && firstVote !== firstOpponent
+        && photoNames.includes(firstVote) && photoNames.includes(firstOpponent);
 
-      // Need at least 2 comedians
-      if (deck.length < 2) return;
+      if (hasFirstVote) {
+        deck = shuffle(uniqueNames.filter(name => name !== firstVote && name !== firstOpponent));
+        if (deck.length === 0) {
+          deck = shuffle(uniqueNames.filter(name => name !== firstVote));
+        }
+        if (deck.length === 0) return;
 
-      champion  = deck.shift();
-      challenger = deck.shift();
+        champion = firstVote;
+        challenger = deck.shift();
+        turn = 1;
+      } else {
+        const firstRoundDeck = shuffle(photoNames);
+        turn = 0;
+
+        if (firstRoundDeck.length < 2) return;
+
+        champion = firstRoundDeck.shift();
+        challenger = firstRoundDeck.shift();
+        deck = shuffle(uniqueNames.filter(name => name !== champion && name !== challenger));
+      }
 
       gameSection.classList.remove("hidden");
       winnerScreen.classList.remove("visible");
@@ -655,10 +707,12 @@
 
         // Refill deck if empty (cycle)
         if (deck.length === 0) {
-          const allNames = [...document.querySelectorAll(".sideItem .sideName")]
-            .map(el => el.textContent.trim())
-            .filter(n => n && n !== winner);
-          deck = shuffle(allNames.length > 0 ? allNames : [winner + " (bis)"]);
+          const eligibleNames = (window._gameNames || []).filter(name => name !== winner);
+          if (!eligibleNames.length) {
+            showWinner(winner);
+            return;
+          }
+          deck = shuffle(eligibleNames);
         }
 
         champion  = winner;
@@ -796,40 +850,46 @@
     playAgainBtn.addEventListener("click", () => {
       history.replaceState({}, "", location.pathname);
       const names = window._gameNames;
-      if (names) startGame(names);
+      if (names) startGame(names, null, null, window._gamePhotoNames);
     });
 
     // If opened via a shared link, show the winner directly
-    const sharedWinner = new URLSearchParams(location.search).get("winner");
+    const gameParams = new URLSearchParams(location.search);
+    const sharedWinner = gameParams.get("winner");
+    const firstVote = gameParams.get("firstVote");
+    const firstOpponent = gameParams.get("opponent");
+    const gameSubtitle = document.querySelector(".gameSubtitle");
+    const arena = document.getElementById("arena");
 
-    // Load comedian names from rating.json
-    fetch("data/rating.json", { cache: "no-cache" })
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        const names = (data || []).map(r => r.performer).filter(Boolean);
+    Promise.all([
+      fetch("data/rating.json", { cache: "no-cache" }).then(response => {
+        if (!response.ok) throw new Error(`Не вдалося завантажити рейтинг: ${response.status}`);
+        return response.json();
+      }),
+      loadPhotoIndex()
+    ])
+      .then(([data, photoIndex]) => {
+        if (!Array.isArray(data)) throw new Error("Невірний формат рейтингу коміків.");
+        const names = [...new Set(data.map(row => row?.performer).filter(Boolean))];
+        const photoNames = names.filter(name => photoIndex.has(name));
         window._gameNames = names;
-        
-        // Don't preload photos - load them lazily as needed
+        window._gamePhotoNames = photoNames;
+
         if (sharedWinner) {
           showWinner(sharedWinner, true);
+        } else if (photoNames.length < 2) {
+          gameSubtitle.textContent = "Для гри потрібні щонайменше два коміки з фото.";
+          document.getElementById("roundBar").hidden = true;
+          arena.hidden = true;
         } else {
-          startGame(names);
+          startGame(names, firstVote, firstOpponent, photoNames);
         }
       })
-      .catch(() => {
-        // Fallback: read names from already-rendered sidebar
-        setTimeout(() => {
-          const names = [...document.querySelectorAll(".sideName")]
-            .map(el => el.textContent.trim())
-            .filter(Boolean);
-          window._gameNames = names;
-          
-          if (sharedWinner) {
-            showWinner(sharedWinner, true);
-          } else if (names.length >= 2) {
-            startGame(names);
-          }
-        }, 500);
+      .catch(error => {
+        console.error("Не вдалося підготувати гру.", error);
+        gameSubtitle.textContent = "Не вдалося завантажити коміків із фото. Спробуйте оновити сторінку.";
+        document.getElementById("roundBar").hidden = true;
+        arena.hidden = true;
       });
   </script>
 </body>
