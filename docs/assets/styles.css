@@ -1937,8 +1937,8 @@ body{
 }
 
 .gameHighlightPerson img{
-  width:76px;
-  height:76px;
+  width:128px;
+  height:128px;
   border-radius:12px;
   object-fit:cover;
 }
@@ -1953,36 +1953,16 @@ body{
   min-width:0;
   display:flex;
   flex:1;
-  flex-direction:column;
-  gap:6px;
-}
-
-.videoHighlightPeriod{
-  color:var(--muted);
-  font-size:12px;
-  font-weight:700;
-  text-transform:capitalize;
 }
 
 .videoHighlightLink{
   min-width:0;
-  display:flex;
-  flex:1;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:6px;
+  display:block;
+  width:100%;
   padding:0;
   border:0;
-  color:var(--text);
   background:none;
-  font:inherit;
-  text-align:left;
-  text-decoration:none;
   cursor:pointer;
-}
-
-.videoHighlightLink:hover .videoHighlightTitle{
-  color:var(--accent);
 }
 
 .videoHighlightPreview{
@@ -2030,28 +2010,6 @@ body{
   border:0;
   border-radius:10px;
   background:#000;
-}
-
-.videoHighlightTitle{
-  display:-webkit-box;
-  overflow:hidden;
-  color:var(--text);
-  font-size:13px;
-  line-height:1.35;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-}
-
-.videoHighlightLink > span:not(.videoHighlightViews){
-  color:var(--muted);
-  font-size:12px;
-}
-
-.videoHighlightViews{
-  margin-top:auto;
-  color:var(--accent);
-  font-size:12px;
-  font-weight:800;
 }
 
 .eventsHighlightList{
@@ -2111,8 +2069,8 @@ body{
   }
 
   .gameHighlightPerson img{
-    width:88px;
-    height:88px;
+    width:112px;
+    height:112px;
   }
 }
 

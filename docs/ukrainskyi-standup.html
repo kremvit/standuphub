@@ -271,11 +271,6 @@
           return;
         }
 
-        const period = document.createElement("span");
-        period.className = "videoHighlightPeriod";
-        period.textContent = new Intl.DateTimeFormat("uk-UA", { month: "long", year: "numeric" })
-          .format(new Date(`${latestMonth}-01T12:00:00`));
-
         const playButton = document.createElement("button");
         playButton.className = "videoHighlightLink";
         playButton.type = "button";
@@ -301,18 +296,7 @@
         playIcon.textContent = "▶";
         preview.append(image, playIcon);
 
-        const title = document.createElement("strong");
-        title.className = "videoHighlightTitle";
-        title.textContent = featured.title || "Дивитися відео";
-
-        const performer = document.createElement("span");
-        performer.textContent = featured.performer || "";
-
-        const views = document.createElement("span");
-        views.className = "videoHighlightViews";
-        views.textContent = `${new Intl.NumberFormat("uk-UA").format(Number(featured.view_count) || 0)} переглядів · Дивитися →`;
-
-        playButton.append(preview, title, performer, views);
+        playButton.append(preview);
         playButton.addEventListener("click", () => {
           const iframe = document.createElement("iframe");
           iframe.className = "videoHighlightPlayer";
@@ -322,7 +306,7 @@
           iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(featured.video_id)}?autoplay=1&rel=0&modestbranding=1`;
           playButton.replaceWith(iframe);
         });
-        videoContentEl.append(period, playButton);
+        videoContentEl.append(playButton);
       }
 
       function renderEvents(data){
