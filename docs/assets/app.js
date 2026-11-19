@@ -11,7 +11,8 @@ const StandupHub = (() => {
     pageSize: 10,
     search: "",
     agendaSearch: "",
-    agendaPage: 1
+    agendaPage: 1,
+    eventCarouselTimer: null
   };
 
   const AGENDA_PAGE_SIZE = 20;
@@ -583,40 +584,7 @@ const StandupHub = (() => {
     const agendaEl = qs("agendaList");
     if (!agendaEl) return;
 
-    const events = new Map();
-    for (const [performer, performerEvents] of Object.entries(DATA.events || {})){
-      if (!Array.isArray(performerEvents)) continue;
-      for (const event of performerEvents.filter(isUpcomingEvent)){
-        const title = String(event?.title || "").trim();
-        if (!title) continue;
-        const date = String(event?.start || "").slice(0, 10);
-        const city = String(event?.city || "").trim();
-        const key = `${title.toLocaleLowerCase("uk")}|${date}|${city.toLocaleLowerCase("uk")}`;
-        const existing = events.get(key);
-        if (existing){
-          existing.participants.add(performer);
-          if (existing.source === "Karabas" && event.source !== "Karabas" && event.url){
-            events.set(key, { ...event, participants: existing.participants });
-          }
-          continue;
-        }
-        events.set(key, { ...event, participants: new Set([performer]) });
-      }
-    }
-
-    const sortedEvents = [...events.values()].sort((a, b) => {
-      return (parseDateMs(a.start) || Number.MAX_SAFE_INTEGER) - (parseDateMs(b.start) || Number.MAX_SAFE_INTEGER);
-    });
-
-    for (const event of sortedEvents){
-      const title = String(event.title || "").toLocaleLowerCase("uk");
-      for (const performer of Object.keys(DATA.performers || {})){
-        const surname = String(performer).trim().split(/\s+/).pop().toLocaleLowerCase("uk");
-        if (surname && surname.length >= 4 && new RegExp(`(^|[^\\p{L}])${escapeRegExp(surname)}([^\\p{L}]|$)`, "iu").test(title)){
-          event.participants.add(performer);
-        }
-      }
-    }
+    const sortedEvents = getUpcomingAgendaEvents();
 
     const query = String(state.agendaSearch || "").trim().toLocaleLowerCase("uk");
       const visibleEvents = query
@@ -666,6 +634,52 @@ const StandupHub = (() => {
         </div>
       </article>
     `).join("")}`;
+  }
+
+  function getUpcomingAgendaEvents(){
+    const events = new Map();
+    for (const [performer, performerEvents] of Object.entries(DATA.events || {})){
+      if (!Array.isArray(performerEvents)) continue;
+      for (const event of performerEvents.filter(isUpcomingEvent)){
+        const title = String(event?.title || "").trim();
+        if (!title) continue;
+        const startMs = parseDateMs(event.start);
+        const normalizeLocation = value => String(value || "")
+          .toLocaleLowerCase("uk")
+          .replace(/[^\p{L}\p{N}_]+/gu, " ")
+          .trim();
+        const city = normalizeLocation(event.city);
+        const venue = normalizeLocation(event.venue);
+        const key = startMs != null && city && venue
+          ? `${startMs}|${city}|${venue}`
+          : Symbol();
+        const existing = events.get(key);
+        if (existing){
+          existing.participants.add(performer);
+          if (existing.source === "Karabas" && event.source !== "Karabas" && event.url){
+            events.set(key, { ...event, participants: existing.participants });
+          }
+          continue;
+        }
+        events.set(key, { ...event, participants: new Set([performer]) });
+      }
+    }
+
+    const sortedEvents = [...events.values()].sort((a, b) => {
+      return (parseDateMs(a.start) || Number.MAX_SAFE_INTEGER) - (parseDateMs(b.start) || Number.MAX_SAFE_INTEGER);
+    });
+
+    for (const event of sortedEvents){
+      const title = String(event.title || "").toLocaleLowerCase("uk");
+      for (const performer of Object.keys(DATA.performers || {})){
+        const surname = String(performer).trim().split(/\s+/).pop().toLocaleLowerCase("uk");
+        if (surname && surname.length >= 4 && new RegExp(`(^|[^\\p{L}])${escapeRegExp(surname)}([^\\p{L}]|$)`, "iu").test(title)){
+          event.participants.add(performer);
+        }
+      }
+    }
+
+    return sortedEvents;
   }
 
   function renderAgendaPagination(totalPages){
@@ -823,6 +837,86 @@ const StandupHub = (() => {
       openModal({ videoId: vid, title: title || "YouTube video" });
     });
 
+    return card;
+  }
+
+  function createEventCarouselCard(events){
+    const card = document.createElement("article");
+    card.className = "card eventCarouselCard";
+    card.innerHTML = `
+      <div class="thumb eventCarouselThumb">
+        <a class="eventCarouselPosterLink" href="./afisha.html"></a>
+        <div class="eventCarouselInfo">
+          <div class="eventCarouselEyebrow">Найближчий концерт</div>
+          <a class="eventCarouselTitle" href="./afisha.html"></a>
+          <div class="cardMeta eventCarouselMeta"></div>
+          <div class="eventCarouselActions">
+            <span class="eventCarouselCount" aria-hidden="true"></span>
+            <div class="eventCarouselControls">
+              <button class="eventCarouselControl eventCarouselPrev" type="button" aria-label="Попередня афіша">‹</button>
+              <button class="eventCarouselControl eventCarouselNext" type="button" aria-label="Наступна афіша">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cardBody">
+        <a class="eventCarouselAll" href="./afisha.html">Переглянути афішу концертів →</a>
+      </div>
+    `;
+
+    const posterLink = card.querySelector(".eventCarouselPosterLink");
+    const titleLink = card.querySelector(".eventCarouselTitle");
+    const meta = card.querySelector(".eventCarouselMeta");
+    const count = card.querySelector(".eventCarouselCount");
+    let activeIndex = 0;
+
+    function showEvent(index){
+      activeIndex = (index + events.length) % events.length;
+      const event = events[activeIndex];
+      const eventTitle = String(event.title || "Найближчий концерт");
+      const poster = String(event.poster || "").trim();
+
+      posterLink.setAttribute("aria-label", `Відкрити афішу: ${eventTitle}`);
+      posterLink.innerHTML = poster
+        ? `<img class="eventCarouselPoster" src="${escapeAttr(poster)}" alt="" />`
+        : `<span class="eventCarouselPosterEmpty" aria-hidden="true">Афіша концерту</span>`;
+      titleLink.setAttribute("aria-label", `Відкрити афішу: ${eventTitle}`);
+      titleLink.textContent = eventTitle;
+      count.textContent = `${activeIndex + 1} / ${events.length}`;
+      meta.innerHTML = `
+        <span class="badge">${escapeHtml(formatEventDate(event.start, event.source))}</span>
+        <span class="badge">${escapeHtml(event.city || "Україна")}</span>
+      `;
+    }
+
+    const previousButton = card.querySelector(".eventCarouselPrev");
+    const nextButton = card.querySelector(".eventCarouselNext");
+    previousButton.disabled = events.length < 2;
+    nextButton.disabled = events.length < 2;
+    previousButton.addEventListener("click", () => showEvent(activeIndex - 1));
+    nextButton.addEventListener("click", () => showEvent(activeIndex + 1));
+
+    function startTimer(){
+      if (events.length < 2 || state.eventCarouselTimer != null) return;
+      state.eventCarouselTimer = window.setInterval(() => {
+        if (document.visibilityState === "visible") showEvent(activeIndex + 1);
+      }, 5000);
+    }
+    function stopTimer(){
+      if (state.eventCarouselTimer == null) return;
+      window.clearInterval(state.eventCarouselTimer);
+      state.eventCarouselTimer = null;
+    }
+
+    card.addEventListener("mouseenter", stopTimer);
+    card.addEventListener("mouseleave", startTimer);
+    card.addEventListener("focusin", stopTimer);
+    card.addEventListener("focusout", event => {
+      if (!card.contains(event.relatedTarget)) startTimer();
+    });
+
+    showEvent(0);
+    startTimer();
     return card;
   }
 
@@ -1083,6 +1177,10 @@ const StandupHub = (() => {
   function renderGrid(videosPage, totalFiltered){
     const grid = qs("grid");
     if (!grid) return;
+    if (state.eventCarouselTimer != null){
+      window.clearInterval(state.eventCarouselTimer);
+      state.eventCarouselTimer = null;
+    }
     grid.innerHTML = "";
 
     if (totalFiltered === 0){
@@ -1097,8 +1195,14 @@ const StandupHub = (() => {
       return;
     }
 
-    for (const v of videosPage){
-      grid.appendChild(createVideoCard(v));
+    const showEventCarousel = state.mode === "all" && state.page === 1 && videosPage.length >= 4;
+    const upcomingEvents = showEventCarousel ? getUpcomingAgendaEvents().slice(0, 5) : [];
+    for (let index = 0; index < videosPage.length; index++){
+      if (index === 3 && upcomingEvents.length){
+        grid.appendChild(createEventCarouselCard(upcomingEvents));
+      } else {
+        grid.appendChild(createVideoCard(videosPage[index]));
+      }
     }
   }
 

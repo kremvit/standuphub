@@ -103,10 +103,10 @@ def normalize_event_location(value):
     return re.sub(r"[^\w]+", " ", normalize_text(value), flags=re.UNICODE).strip()
 
 
-def event_deduplication_key(event, participants):
+def event_deduplication_key(event):
     city = normalize_event_location(event.get("city"))
     venue = normalize_event_location(event.get("venue"))
-    if not city or not venue or not participants:
+    if not city or not venue:
         return None
 
     try:
@@ -116,7 +116,7 @@ def event_deduplication_key(event, participants):
     if start.tzinfo is not None:
         start = start.astimezone(timezone.utc)
 
-    return start.isoformat(), city, venue, tuple(sorted(participants))
+    return start.isoformat(), city, venue
 
 
 def contains_alias(text, alias):
@@ -507,7 +507,7 @@ def main():
         if not matched_performers:
             continue
 
-        deduplication_key = event_deduplication_key(event, matched_performers)
+        deduplication_key = event_deduplication_key(event)
         if deduplication_key is not None and deduplication_key in seen_event_keys:
             seen.add(event["url"])
             continue
