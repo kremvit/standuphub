@@ -15,6 +15,7 @@ const StandupHub = (() => {
   };
 
   const AGENDA_PAGE_SIZE = 20;
+  let homeConcertTimer;
 
   function qs(id){ return document.getElementById(id); }
 
@@ -579,10 +580,7 @@ const StandupHub = (() => {
     }
   }
 
-  function renderAgenda(){
-    const agendaEl = qs("agendaList");
-    if (!agendaEl) return;
-
+  function getUpcomingConcerts(){
     const events = new Map();
     for (const [performer, performerEvents] of Object.entries(DATA.events || {})){
       if (!Array.isArray(performerEvents)) continue;
@@ -604,10 +602,16 @@ const StandupHub = (() => {
       }
     }
 
-    const sortedEvents = [...events.values()].sort((a, b) => {
+    return [...events.values()].sort((a, b) => {
       return (parseDateMs(a.start) || Number.MAX_SAFE_INTEGER) - (parseDateMs(b.start) || Number.MAX_SAFE_INTEGER);
     });
+  }
 
+  function renderAgenda(){
+    const agendaEl = qs("agendaList");
+    if (!agendaEl) return;
+
+    const sortedEvents = getUpcomingConcerts();
     for (const event of sortedEvents){
       const title = String(event.title || "").toLocaleLowerCase("uk");
       for (const performer of Object.keys(DATA.performers || {})){
@@ -961,11 +965,70 @@ const StandupHub = (() => {
     ];
   }
 
+  function createHomeConcertCard(events){
+    const card = document.createElement("div");
+    card.className = "card railCard homeConcertCard";
+    card.innerHTML = `
+      <a class="homeConcertLink" href="./afisha.html">
+        <div class="thumb">
+          <span class="duration">Афіша</span>
+        </div>
+        <div class="cardBody">
+          <span class="cardTitle"></span>
+          <span class="homeConcertDetails"></span>
+        </div>
+      </a>
+    `;
+
+    const thumb = card.querySelector(".thumb");
+    const title = card.querySelector(".cardTitle");
+    const details = card.querySelector(".homeConcertDetails");
+    let index = 0;
+
+    function showConcert(){
+      const event = events[index];
+      thumb.querySelector("img, .homeConcertPosterEmpty")?.remove();
+      thumb.prepend(document.createRange().createContextualFragment(eventThumbHtml(event, "homeConcertPoster")));
+      title.textContent = event.title;
+      details.textContent = [formatEventDate(event.start, event.source), event.city].filter(Boolean).join(" · ");
+    }
+
+    showConcert();
+    if (events.length > 1){
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "playBtn";
+      let paused = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function updateToggle(){
+        toggle.textContent = paused ? "▶" : "Ⅱ";
+        toggle.setAttribute("aria-label", paused ? "Увімкнути зміну афіш" : "Призупинити зміну афіш");
+      }
+
+      toggle.addEventListener("click", () => {
+        paused = !paused;
+        updateToggle();
+      });
+      updateToggle();
+      card.appendChild(toggle);
+
+      homeConcertTimer = window.setInterval(() => {
+        if (paused || document.hidden || card.matches(":hover") || card.querySelector("a").matches(":focus")) return;
+        index = (index + 1) % events.length;
+        showConcert();
+      }, 6000);
+    }
+
+    return card;
+  }
+
   function renderHomeRows(videos){
     const host = qs("homeRows");
     if (!host) return false;
 
+    window.clearInterval(homeConcertTimer);
     host.innerHTML = "";
+    const concerts = getUpcomingConcerts().slice(0, 5);
     const rows = buildHomeRows(videos || []);
     state.homeRowOffsets = state.homeRowOffsets || {};
 
@@ -1040,9 +1103,13 @@ const StandupHub = (() => {
         empty.textContent = "Поки немає відео для цієї підбірки.";
         track.appendChild(empty);
       } else {
-        for (const item of visibleItems){
+        // The concert card occupies the fourth slot. Rail navigation still visits all videos.
+        const hasConcertCard = row.key === "best-6m" && concerts.length > 0 && visibleItems.length >= 3;
+        const videoItems = hasConcertCard ? visibleItems.slice(0, 3) : visibleItems;
+        for (const item of videoItems){
           track.appendChild(createVideoCard(item, true));
         }
+        if (hasConcertCard) track.appendChild(createHomeConcertCard(concerts));
       }
 
       function animateTrack(direction){
