@@ -1175,6 +1175,55 @@ body{
   display:none;
 }
 
+.homeConcertLink{
+  flex:1;
+  color:inherit;
+  text-decoration:none;
+}
+.homeConcertLink:focus-visible,
+.homeConcertCard .playBtn:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+}
+.homeConcertCard .thumb{
+  display:grid;
+  place-items:center;
+}
+.homeConcertPoster{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.homeConcertPosterEmpty{
+  display:grid;
+  place-items:center;
+  font-size:28px;
+}
+.homeConcertCard{
+  position:relative;
+}
+.homeConcertCard .playBtn{
+  top:8px;
+  bottom:auto;
+}
+.homeConcertCard .cardTitle{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.homeConcertLink:hover .cardTitle{
+  color:var(--accent);
+}
+.homeConcertDetails{
+  color:var(--muted);
+  font-size:11px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
 .homeRowEmpty{
   min-height:160px;
   grid-column:1 / -1;
