@@ -847,9 +847,12 @@ const StandupHub = (() => {
       <div class="thumb eventCarouselThumb">
         <a class="eventCarouselPosterLink" href="./afisha.html"></a>
         <div class="eventCarouselInfo">
-          <div class="eventCarouselEyebrow">Найближчий концерт</div>
-          <a class="eventCarouselTitle" href="./afisha.html"></a>
-          <div class="cardMeta eventCarouselMeta"></div>
+          <div class="eventCarouselDetails" tabindex="0" aria-label="Інформація про концерт">
+            <div class="eventCarouselEyebrow">Найближчий концерт</div>
+            <a class="eventCarouselTitle" href="./afisha.html"></a>
+            <div class="cardMeta eventCarouselMeta"></div>
+            <div class="eventCarouselParticipants"></div>
+          </div>
           <div class="eventCarouselActions">
             <span class="eventCarouselCount" aria-hidden="true"></span>
             <div class="eventCarouselControls">
@@ -867,6 +870,8 @@ const StandupHub = (() => {
     const posterLink = card.querySelector(".eventCarouselPosterLink");
     const titleLink = card.querySelector(".eventCarouselTitle");
     const meta = card.querySelector(".eventCarouselMeta");
+    const participants = card.querySelector(".eventCarouselParticipants");
+    const details = card.querySelector(".eventCarouselDetails");
     const count = card.querySelector(".eventCarouselCount");
     let activeIndex = 0;
 
@@ -887,6 +892,10 @@ const StandupHub = (() => {
         <span class="badge">${escapeHtml(formatEventDate(event.start, event.source))}</span>
         <span class="badge">${escapeHtml(event.city || "Україна")}</span>
       `;
+      const names = [...event.participants].map(name => name.trim()).filter(Boolean).sort((a, b) => a.localeCompare(b, "uk"));
+      participants.hidden = names.length === 0;
+      participants.textContent = names.length ? `Учасники: ${names.join(", ")}` : "";
+      details.scrollTop = 0;
     }
 
     const previousButton = card.querySelector(".eventCarouselPrev");
@@ -1196,7 +1205,7 @@ const StandupHub = (() => {
     }
 
     const showEventCarousel = state.mode === "all" && state.page === 1 && videosPage.length >= 4;
-    const upcomingEvents = showEventCarousel ? getUpcomingAgendaEvents().slice(0, 5) : [];
+    const upcomingEvents = showEventCarousel ? getUpcomingAgendaEvents().slice(0, 10) : [];
     for (let index = 0; index < videosPage.length; index++){
       if (index === 3 && upcomingEvents.length){
         grid.appendChild(createEventCarouselCard(upcomingEvents));
